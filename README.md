@@ -82,7 +82,9 @@ The performance right now is held back by my move generation algorithm. In parti
 | Negamax (AB Pruning)  |  5  |  17,352  |  559ms  |  31,000  |
 
 \*: Move Generation still lacks some chess features (en passant, castling, promotion), so the number of nodes found will be inaccurate.
+
 \**: Negamax only uses an evaluation of *material imbalance*.
+
 \***: Nodes per second is done by multiplying the nodes per millisecond value by 1000.
 
 I am currently working on optimizing performance, but the legal movegen perft is abysmally low. This will make it difficult to do many comprehensive optimizations that normal chess engines do.

@@ -1,7 +1,7 @@
 use fnv::FnvHashMap;
 use colored::{ColoredString, Colorize};
 
-use super::{PieceMap, create_piece_map, generate_moves, generate_legal_moves};
+use super::{PieceMap, create_default_piece_map, generate_moves, generate_legal_moves};
 
 //use super::Action;
 
@@ -70,7 +70,7 @@ pub struct Board {
 // TODO: Add reverse piece list to speed up removing items
 
 impl Board {
-    pub fn new(piece_types: i16, buffer_amount: i16, teams: i16, (rows, cols): (i16, i16)) -> Board {
+    pub fn new(piece_types: i16, buffer_amount: i16, teams: i16, (rows, cols): (i16, i16), piece_map: PieceMap) -> Board {
         let state = create_board_state(buffer_amount, (rows, cols));
 
         return Board {
@@ -84,7 +84,7 @@ impl Board {
             buffer_amount,
             row_gap: rows + buffer_amount,
             col_gap: cols + (buffer_amount * 2),
-            piece_map: create_piece_map(rows + buffer_amount)
+            piece_map
         };
     }
 
@@ -221,7 +221,7 @@ impl Board {
         let fen_chunks = fen.split("/");
         let mut pieces: Vec<i16> = Vec::with_capacity(32);
         let mut reverse_pieces: FnvHashMap<i16, usize> = FnvHashMap::with_capacity_and_hasher(32, Default::default());
-        let mut board = Board::new(6, 2, 2, (8, 8));
+        let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_map(10));
 
         for (row_ind, chunk) in fen_chunks.enumerate() {
             let mut col_ind: usize = 0;

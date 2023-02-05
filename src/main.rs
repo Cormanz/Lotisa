@@ -7,7 +7,7 @@ use rand::seq::{SliceRandom, IteratorRandom};
 
 use boards::Board;
 
-use crate::boards::create_piece_map;
+use crate::boards::create_default_piece_map;
 
 mod boards;
 

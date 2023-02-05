@@ -38,7 +38,7 @@ pub trait Piece {
     fn get_icon(&self) -> &str;
 }
 
-fn get_actions_delta(deltas: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+pub fn get_actions_delta(deltas: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
     let mut actions = Vec::new();
     let PieceGenInfo { pos, .. } = *piece_info;
     for delta in deltas {
@@ -47,7 +47,7 @@ fn get_actions_delta(deltas: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo
     actions
 }
     
-fn can_attack_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
+pub fn can_attack_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
     let PieceGenInfo { pos, team, .. } = *piece_info;
     let dif = target - pos;
     let dif_signum = dif.signum();
@@ -78,7 +78,7 @@ fn can_attack_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenIn
     false
 }
 
-fn get_actions_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+pub fn get_actions_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
     let mut actions = Vec::new();
     let PieceGenInfo { pos, team, .. } = *piece_info;
 

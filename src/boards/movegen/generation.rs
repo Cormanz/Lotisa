@@ -29,7 +29,7 @@ pub type PieceMap = FnvHashMap<i16, Box<dyn Piece>>;
 
     Before the implementation of PieceMap, this was about 2.7M per second, now it's 1.1M per second.
 */
-pub fn create_piece_map(row_gap: i16) -> PieceMap {
+pub fn create_default_piece_map(row_gap: i16) -> PieceMap {
     let mut map: PieceMap = FnvHashMap::with_capacity_and_hasher(6, Default::default());
     map.insert(0, Box::new(PawnPiece));
     map.insert(1, Box::new(KnightPiece::new(row_gap)));

@@ -71,6 +71,28 @@ let board = Board::new(6, 2, 2, (8, 8), piece_map);
 
 This hasn't yet been implemented, but in the future, you'll be allowed to customize **additional move restrictions** that stop specific moves from happening. Perhaps you want to make it illegal to have your king away more than 1 square away from other piece, or perhaps you want to disable checks and allow for kings to be captured. Lotisa aims to make this possible.
 
-# Performance
+# Performance Bottlenecks
 
-The performance as of right now is suboptimal, most likely due to my inexperience with Rust and my fierce battle to satisfy the borrow checker. If you spot anything that seems unoptimized, feel free to make a contribution!
+The performance right now is held back by my move generation algorithm. In particular, converting **psuedolegal moves** into **legal moves**. These are the results of a benchmark I did on the **starting position** _(that is still on the main branch as of now)_:
+
+| Stage |  Depth  |  Nodes Found  |  MS Taken  |  Nodes / S  |
+|---|---|---|---|---|
+| Psuedolegal Movegen  | 5  |  1,415,585 | 1,117ms | 1,202,000 |
+| Legal Movegen  |  4  |  79,033  |  874ms  |  90,000  |
+| Negamax (AB Pruning)  |  5  |  17,352  |  559ms  |  31,000  |
+
+\*: Move Generation still lacks some chess features (en passant, castling, promotion), so the number of nodes found will be inaccurate.
+\**: Negamax only uses an evaluation of *material imbalance*.
+\***: Nodes per second is done by multiplying the nodes per millisecond value by 1000.
+
+I am currently working on optimizing performance, but the legal movegen perft is abysmally low. This will make it difficult to do many comprehensive optimizations that normal chess engines do.
+
+The psuedolegal movegen isn't at an ideal speed in itself, but it has a rather workable speed for all intents and purposes of 1.2M nodes per second. In the future, I'd like to optimize this too, but this isn't the main bottleneck I'm facing.
+
+The main bottleneck is from Psuedolegal to Legal, which is a **13x** decrease in nodes per second (where Legal to Negamax is only about 3x.) This is an incredibly low speed. I suspect this is because of one of the following reasons:
+
+- Making and unmaking every move.
+- Having to run `can_attack` for every piece (which, despite its optimizations, could still be slow.)
+- Fetching piece maps.
+
+Until then, I'll keep working on the engine and hope hope I'll be able to optimize my move generation, or that someone would be willing to help me who's much more knowledgeable on Rust and/or Chess Programming.

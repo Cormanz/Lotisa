@@ -72,7 +72,6 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
     let mut new_actions: Vec<Action> = vec![];
 
     for action in actions {
-        let undo = board.make_move(action);
         if action.capture {
             let target_value = board.state[action.to as usize];
             let target_team = board.get_team(target_value);
@@ -80,6 +79,8 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
                 continue;
             }
         }
+
+        let undo = board.make_move(action);
 
         let king = board.get_piece_value(5, required_team);
         let king = *board.pieces.iter().find(|piece| board.state[**piece as usize] == king).unwrap();
@@ -89,7 +90,9 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
             let pos_usize = pos as usize;
             let piece = board.state[pos_usize];
             let team = board.get_team(piece);
-            if team == required_team { continue; }
+            if team == required_team { 
+                continue; 
+            }
 
             let piece_type = board.get_piece_type(piece, team);
             let piece_info = PieceGenInfo {

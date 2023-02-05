@@ -35,6 +35,7 @@ pub trait Piece {
     }
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
 
+    fn get_material_value(&self) -> i32;
     fn get_icon(&self) -> &str;
 }
 
@@ -220,6 +221,10 @@ impl Piece for PawnPiece {
         (target_right == target && board.can_capture(target_right, team))
     }
 
+    fn get_material_value(&self) -> i32 {
+        1000
+    }
+
     fn get_icon(&self) -> &str {
         "♟"
     }
@@ -248,6 +253,10 @@ impl KnightPiece {
 impl Piece for KnightPiece {
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         get_actions_delta(&self.deltas, board, piece_info)
+    }
+
+    fn get_material_value(&self) -> i32 {
+        3000
     }
     fn get_icon(&self) -> &str {
         "♞"
@@ -279,6 +288,9 @@ impl Piece for BishopPiece {
         can_attack_sliding(&self.sliders, board, piece_info, target)
     }
 
+    fn get_material_value(&self) -> i32 {
+        3250
+    }
     fn get_icon(&self) -> &str {
         "♝"
     }
@@ -308,6 +320,11 @@ impl Piece for RookPiece {
     fn can_attack(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
         can_attack_sliding(&self.sliders, board, piece_info, target)
     }
+
+    fn get_material_value(&self) -> i32 {
+        5000
+    }
+
     fn get_icon(&self) -> &str {
         "♜"
     }
@@ -342,6 +359,10 @@ impl Piece for QueenPiece {
         can_attack_sliding(&self.sliders, board, piece_info, target)
     }
 
+    fn get_material_value(&self) -> i32 {
+        9000
+    }
+
     fn get_icon(&self) -> &str {
         "♛"
     }
@@ -374,5 +395,9 @@ impl Piece for KingPiece {
     
     fn get_icon(&self) -> &str {
         "♚"
+    }
+
+    fn get_material_value(&self) -> i32 {
+        0
     }
 }

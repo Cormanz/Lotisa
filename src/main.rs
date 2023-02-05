@@ -3,13 +3,15 @@ use std::{
     env,
     time::{SystemTime, UNIX_EPOCH, Duration}, thread,
 };
+use engine::{eval_action, negamax_root};
 use rand::seq::{SliceRandom, IteratorRandom};
 
 use boards::Board;
 
-use crate::boards::create_default_piece_map;
+use crate::engine::eval_board;
 
 mod boards;
+mod engine;
 
 fn get_epoch_ms() -> u128 {
     SystemTime::now()
@@ -41,24 +43,29 @@ fn main() {
     let mut board = Board::load_fen(fen);
     let mut team = 0;
 
-    let start = get_epoch_ms();
+    /*let start = get_epoch_ms();
     let nodes = perft(&mut board, 4, 0);
     println!("perft: {}", nodes);
     let end = get_epoch_ms();
     println!("time: {}ms", end - start);
-    println!("nodes/ms: {}/ms", (nodes as u128) / (end - start));
+    println!("nodes/ms: {}/ms", (nodes as u128) / (end - start));*/
 
-    /*board.print_board();
+    board.print_board();
     loop {
-        let moves = board.generate_moves(team);
-        let action = if moves.iter().any(|action| action.capture) {
+        let moves = board.generate_legal_moves(team);
+        let start = get_epoch_ms();
+        let evaluation = negamax_root(&mut board, team, 4);
+        let end = get_epoch_ms();
+        let action = evaluation.best_move.unwrap(); /*if moves.iter().any(|action| action.capture) {
             moves.iter().filter(|action| action.capture).choose(&mut rand::thread_rng()).unwrap()
         } else {
             moves.choose(&mut rand::thread_rng()).unwrap()
-        };
-        thread::sleep(Duration::from_millis(700));
-        board.make_move(*action);
+        };*/
+        thread::sleep(Duration::from_millis(1700));
+        println!("time: {}ms", end - start);
+        println!("move score: {} for {}", evaluation.score, team);
+        board.make_move(action);
         board.print_board();
         team = if team == 0 { 1 } else { 0 };
-    }*/
+    }
 }

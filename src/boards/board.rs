@@ -1,7 +1,7 @@
 use fnv::FnvHashMap;
 use colored::{ColoredString, Colorize};
 
-use super::{PieceMap, create_default_piece_map, generate_moves, generate_legal_moves};
+use super::{PieceMap, create_default_piece_lookup, generate_moves, generate_legal_moves, Piece, PieceLookup};
 
 //use super::Action;
 
@@ -53,6 +53,12 @@ pub struct Action {
 
 pub type PieceList = FnvHashMap<i16, Vec<i16>>;
 
+pub struct PieceInfo {
+    pub pos: i16,
+    pub piece_value: i16,
+    pub team: i16,
+    pub piece_type: i16
+}
 pub struct Board {
     pub state: BoardState,
     pub pieces: Vec<i16>,
@@ -64,13 +70,13 @@ pub struct Board {
     pub buffer_amount: i16,
     pub row_gap: i16,
     pub col_gap: i16,
-    pub piece_map: PieceMap
+    pub piece_lookup: Box<dyn PieceLookup>
 }
 
 // TODO: Add reverse piece list to speed up removing items
 
 impl Board {
-    pub fn new(piece_types: i16, buffer_amount: i16, teams: i16, (rows, cols): (i16, i16), piece_map: PieceMap) -> Board {
+    pub fn new(piece_types: i16, buffer_amount: i16, teams: i16, (rows, cols): (i16, i16), piece_lookup: Box<dyn PieceLookup>) -> Board {
         let state = create_board_state(buffer_amount, (rows, cols));
 
         return Board {
@@ -84,16 +90,15 @@ impl Board {
             buffer_amount,
             row_gap: rows + buffer_amount,
             col_gap: cols + (buffer_amount * 2),
-            piece_map
+            piece_lookup
         };
     }
 
     pub fn display_board(&self) -> Vec<ColoredString> {
-        let Board { state, piece_map, .. } = self;
         let mut items: Vec<ColoredString> = vec![];
 
         let mut ind = 0;
-        for row in state.chunks(self.row_gap as usize) {
+        for row in self.state.chunks(self.row_gap as usize) {
             let all_empty = row.iter().all(|piece| *piece == 0);
             if all_empty { continue };
 
@@ -108,7 +113,8 @@ impl Board {
 
                 let team = self.get_team(piece);
                 let piece_type = self.get_piece_type(piece, team);
-                let piece_icon = piece_map[&piece_type].get_icon();
+                let piece_trait = &self.piece_lookup.lookup(piece_type);
+                let piece_icon = piece_trait.get_icon();
                 items.push(match team {
                     0 => piece_icon.white(),
                     1 => piece_icon.black(),
@@ -189,25 +195,37 @@ impl Board {
         (piece - 2) - self.piece_types * team
     }
 
-    pub fn get_row(&self, piece_index: i16) -> i16 {
-        piece_index / self.row_gap
+    pub fn get_piece_info(&self, pos: i16) -> PieceInfo {
+        let piece_value = self.state[pos as usize];
+        let team = self.get_team(piece_value);
+        let piece_type = self.get_piece_type(piece_value, team);
+        return PieceInfo {
+            pos,
+            piece_value,
+            team,
+            piece_type
+        };
     }
 
-    pub fn get_col(&self, piece_index: i16) -> i16 {
-        piece_index - (piece_index / self.row_gap)
+    pub fn get_row(&self, pos: i16) -> i16 {
+        pos / self.row_gap
     }
 
-    pub fn can_move(&self, piece_index: i16) -> bool {
-        self.state[piece_index as usize] == 1
+    pub fn get_col(&self, pos: i16) -> i16 {
+        pos - (pos / self.row_gap)
     }
 
-    pub fn can_capture(&self, piece_index: i16, team: i16) -> bool {
-        let state = self.state[piece_index as usize];
+    pub fn can_move(&self, pos: i16) -> bool {
+        self.state[pos as usize] == 1
+    }
+
+    pub fn can_capture(&self, pos: i16, team: i16) -> bool {
+        let state = self.state[pos as usize];
         state > 1 && self.get_team(state) != team
     }
 
-    pub fn can_move_capture(&self, piece_index: i16, team: i16) -> ActionType {
-        let state = self.state[piece_index as usize];
+    pub fn can_move_capture(&self, pos: i16, team: i16) -> ActionType {
+        let state = self.state[pos as usize];
         match state {
             0 => ActionType::FAIL,
             1 => ActionType::MOVE,
@@ -221,7 +239,7 @@ impl Board {
         let fen_chunks = fen.split("/");
         let mut pieces: Vec<i16> = Vec::with_capacity(32);
         let mut reverse_pieces: FnvHashMap<i16, usize> = FnvHashMap::with_capacity_and_hasher(32, Default::default());
-        let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_map(10));
+        let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10));
 
         for (row_ind, chunk) in fen_chunks.enumerate() {
             let mut col_ind: usize = 0;

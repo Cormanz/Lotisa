@@ -29,15 +29,63 @@ pub type PieceMap = FnvHashMap<i16, Box<dyn Piece>>;
 
     Before the implementation of PieceMap, this was about 2.7M per second, now it's 1.1M per second.
 */
-pub fn create_default_piece_map(row_gap: i16) -> PieceMap {
-    let mut map: PieceMap = FnvHashMap::with_capacity_and_hasher(6, Default::default());
-    map.insert(0, Box::new(PawnPiece));
-    map.insert(1, Box::new(KnightPiece::new(row_gap)));
-    map.insert(2, Box::new(BishopPiece::new(row_gap)));
-    map.insert(3, Box::new(RookPiece::new(row_gap)));
-    map.insert(4, Box::new(QueenPiece::new(row_gap)));
-    map.insert(5, Box::new(KingPiece::new(row_gap)));
-    map
+
+struct PieceMapInfo {
+    pawn: Box<dyn Piece>,
+    knight: Box<dyn Piece>,
+    bishop: Box<dyn Piece>,
+    rook: Box<dyn Piece>,
+    queen: Box<dyn Piece>,
+    king: Box<dyn Piece>
+}
+
+pub trait PieceLookup {
+    fn lookup(&self, piece_type: i16) -> &Box<dyn Piece>;
+}
+
+/*
+        pawn: Box::new(PawnPiece),
+        knight: Box::new(KnightPiece::new(row_gap)),
+        bishop: Box::new(BishopPiece::new(row_gap)),
+        rook: Box::new(RookPiece::new(row_gap)),
+        queen: Box::new(QueenPiece::new(row_gap)),
+        king: Box::new(KingPiece::new(row_gap))
+ */
+pub struct DefaultPieceLookup {
+    info: PieceMapInfo
+}
+
+impl DefaultPieceLookup {
+    fn new(row_gap: i16) -> Self {
+        DefaultPieceLookup {
+            info: PieceMapInfo {
+                pawn: Box::new(PawnPiece),
+                knight: Box::new(KnightPiece::new(row_gap)),
+                bishop: Box::new(BishopPiece::new(row_gap)),
+                rook: Box::new(RookPiece::new(row_gap)),
+                queen: Box::new(QueenPiece::new(row_gap)),
+                king: Box::new(KingPiece::new(row_gap))
+            }
+        }
+    }
+}
+
+impl PieceLookup for DefaultPieceLookup {
+    fn lookup(&self, piece_type: i16) -> &Box<dyn Piece> {
+        return match piece_type { 
+            0 => &self.info.pawn,
+            1 => &self.info.knight,
+            2 => &self.info.bishop,
+            3 => &self.info.rook,
+            4 => &self.info.queen,
+            5 => &self.info.king,
+            _ => &self.info.pawn
+        }
+    }
+}
+
+pub fn create_default_piece_lookup<'a>(row_gap: i16) -> Box<dyn PieceLookup> {
+    Box::new(DefaultPieceLookup::new(row_gap)) as Box<dyn PieceLookup>
 }
 
 pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
@@ -58,7 +106,7 @@ pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
             team,
             piece_type
         };
-        actions.extend(board.piece_map[&piece_type].get_actions(board, &piece_info));
+        actions.extend(board.piece_lookup.lookup(piece_type).get_actions(board, &piece_info));
     }
 
     actions
@@ -112,7 +160,7 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
                 5 => Box::new(KingPiece::new(row_gap)),
                 _ => Box::new(PawnPiece)
             };*/
-            let piece_handler = board.piece_map.get(&piece_type).unwrap();
+            let piece_handler = board.piece_lookup.lookup(piece_type);
             if piece_handler.can_control(board, &piece_info, &king_vec) {
                 can_add = false;
                 break;

@@ -35,7 +35,7 @@ impl Board {
 ```
 The `new` function allows for you to initialize an empty board _(with out of bounds squares and empty squares already separated.)_ You'll have to do the job of filling it yourself. `load_fen`, on the other hand, allows you to create a typical 8x8 board with a normal chess FEN. Here's code examples of both methods:
 ```rust
-let board_new = Board::new(6, 2, 2, (8, 8), create_default_piece_map(10));
+let board_new = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10));
 let board_fen = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 ```
 
@@ -59,13 +59,31 @@ pub trait Piece {
 
 The default implementation of `can_attack` is provided by `Piece` itself, which just checks if the target is threatened by any of your moves. However, you are **strongly advised** to reimplement it if possible, as it will greatly speed up the engine's legal move generation (checking if moves put you in check.)
 
-Lotisa stores a `piece_map` with every board (you may have spotted the `create_default_piece_map(10)` argument in `Board::new` earlier.) This piece map is a `FnvHashMap` that has `i16` keys of each piece type, and the `Piece` trait that describes how they move. If you choose to initialize your own board, you could inject your own piece like so:
+Lotisa stores a `piece_lookup` with every board (you may have spotted the `create_default_piece_lookup` argument in `Board::new` earlier.) This piece map is a `PieceLookup` with the following implementation:
 
 ```rust
-let mut piece_map = create_default_piece_map(10);
-piece_map.insert(6, KnookPiece::new(10));
-let board = Board::new(6, 2, 2, (8, 8), piece_map);
+pub trait PieceLookup {
+    fn lookup(&self, piece_type: i16) -> &Box<dyn Piece>;
+}
 ```
+
+You can implement your own `PieceLookup` with custom pieces as follows:
+
+```rust
+struct NewPieceLookup
+impl PieceLookup for NewPieceLookup {
+    fn lookup(&self, piece_type: i16) -> &Box<dyn Piece> {
+        return match piece_type { 
+            ...,
+            6 => &Box::new(KnookPiece::new(8))
+        }
+    }
+}
+
+let board = Board::new(6, 2, 2, (8, 8), KnookPiece);
+```
+
+`PieceLookup` is defined as a trait for ease of use in-case users would like to implement their own piece lookup styles or optimizations. In the future, `PieceMapLookup` will be implemented for incredible easy to implement _(but perhaps less efficient)_ custom piece lookups.
 
 # Custom Rules
 

@@ -3,12 +3,10 @@ use std::{
     env,
     time::{SystemTime, UNIX_EPOCH, Duration}, thread,
 };
-use engine::{eval_action, negamax_root};
+use engine::{negamax_root};
 use rand::seq::{SliceRandom, IteratorRandom};
 
 use boards::Board;
-
-use crate::engine::eval_board;
 
 mod boards;
 mod engine;

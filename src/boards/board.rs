@@ -43,7 +43,7 @@ pub enum ActionType {
 }
 
 
-#[derive(Debug, Copy, Clone)] 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)] 
 pub struct Action {
     pub from: i16,
     pub to: i16,

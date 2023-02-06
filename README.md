@@ -6,20 +6,40 @@
 [![forthebadge](https://forthebadge.com/images/badges/fuck-it-ship-it.svg)](https://forthebadge.com)
 ![have not released a version yet](https://badgen.net/badge/release/nothing%20yet!/red?)
 
-## Overview
+# Overview
 
-Lotisa is a chess movegen library and chess engine coded in Rust as part of the **Chesstastic** project. The goal of the engine is to reach a playing strength around at least 2,000 elo for the base chess game, and to be easily extendible to other variants. The engine is coded using to allow for following concepts:
+Lotisa is a chess movegen library and chess engine coded in Rust as part of the **Chesstastic** project. The goal of the engine is to reach a playing strength around at least 2,000 elo for the base chess game, and to be easily extendible to other variants.
+
+Chesstastic is a project to allow for players to fight against other players or chess bots with custom chess variants of their own choosing or creation, and to be able to analyze those very games. Lotisa is meant to allow for players to play against it on any variant, or to have it analyze games (and ideally, even explain moves.) It's also meant to validate chess moves in general for Chesstastic.
+
+# Engine
+
+The Lotisa engine uses a **10x12** board representation, where there's an **8x8** board inside of it, but additional squares are added to speed up the out of bounds check. Each piece is represented as an `i16` with the following formula: `piece_type + (PIECE_TYPES * team) + 2`, which allows for up to 16,384 piece types if there are two teams.
+
+## Search
+
+- [Alpha Beta Search](https://www.chessprogramming.org/Alpha-Beta)
+    - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
+        - [MVV-LVA](https://www.chessprogramming.org/MVV-LVA)
+        - [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic)
+
+## Evaluation
+
+- [Hand Crafted Evaluation](https://www.chessprogramming.org/Evaluation)
+    - [Material Imbalance](https://www.chessprogramming.org/Material)
+    - [Center Control](https://www.chessprogramming.org/Center_Control)
+    - [Mobility](https://www.chessprogramming.org/Mobility)
+
+# Extendibility
+
+The Lotisa engine is meant to be as extendible as possible to other variants. It's coded to allow for the following concepts:
 
 - Custom Board Sizes _(up to roughly 180x180)_
 - Custom Piece Types
 - Custom Rules _(eg. castling through check)_
 - More than 2 Teams
 
-The engine uses a **10x12** board representation, where there's an **8x8** board inside of it, but additional squares are added to speed up the out of bounds check. Each piece is represented as an `i16` with the following formula: `piece_type + (PIECE_TYPES * team) + 2`, which allows for up to 16,384 piece types if there are two teams.
-
-Chesstastic is a project to allow for players to fight against other players or chess bots with custom chess variants of their own choosing or creation, and to be able to analyze those very games. Lotisa is meant to allow for players to play against it on any variant, or to have it analyze games (and ideally, even explain moves.) It's also meant to validate chess moves in general for Chesstastic.
-
-# Custom Board Sizes
+## Custom Board Sizes
 
 Traditionally, chess engines use [Bitboards](https://www.chessprogramming.org/Bitboards) to represent the boards, where there are twelve different 64-bit integers for each piece and team, and the pieces are represented as a `1` if they exist on that bitboard, or a `0` if they don't. This allows for bitwise operators, which modern computers have already optimized into oblivion to be used to drastically increase the speed of chess move generation. Because Lotisa is meant to allow for custom board sizes, this cannot be taken advantage of _(there's the option of bitsets which would be slower, however.)_ Lotisa cannot represent the board using this model, however, because boards can be bigger than 8x8.
 
@@ -39,7 +59,7 @@ let board_new = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10));
 let board_fen = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 ```
 
-# Custom Piece Types
+## Custom Piece Types
 
 Lotisa represents each piece type as an `i16`. One option was to use an enum for each piece type, but an `i16` is easier to manipulate with math on the board itself, and allows for consumers of the Lotisa library to add their own pieces.
 
@@ -85,11 +105,11 @@ let board = Board::new(6, 2, 2, (8, 8), KnookPiece);
 
 `PieceLookup` is defined as a trait for ease of use in-case users would like to implement their own piece lookup styles or optimizations. In the future, `PieceMapLookup` will be implemented for incredible easy to implement _(but perhaps less efficient)_ custom piece lookups.
 
-# Custom Rules
+## Custom Rules
 
 This hasn't yet been implemented, but in the future, you'll be allowed to customize **additional move restrictions** that stop specific moves from happening. Perhaps you want to make it illegal to have your king away more than 1 square away from other piece, or perhaps you want to disable checks and allow for kings to be captured. Lotisa aims to make this possible.
 
-# Performance Bottlenecks
+## Performance Bottlenecks
 
 The performance right now is held back by my move generation algorithm. In particular, converting **psuedolegal moves** into **legal moves**. These are the results of a benchmark I did on the **starting position** _(that is still on the main branch as of now)_:
 

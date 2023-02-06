@@ -28,10 +28,10 @@ pub fn attempt_action(moves: &mut Vec<Action>, board: &Board, piece_info: &Piece
 
 pub trait Piece {
     /*
-        The default `can_attack` method is not very performant. Subtraits of Piece should reimplement this for the sake of performance.
+        The default `can_control` method is not very performant. Subtraits of Piece should reimplement this for the sake of performance.
     */
-    fn can_attack(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
-        self.get_actions(board, piece_info).iter().any(|action| action.to == target)
+    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+        self.get_actions(board, piece_info).iter().any(|action| targets.contains(&action.to))
     }
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
 
@@ -48,14 +48,12 @@ pub fn get_actions_delta(deltas: &Vec<i16>, board: &Board, piece_info: &PieceGen
     actions
 }
     
-pub fn can_attack_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
+pub fn can_control_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
     let PieceGenInfo { pos, team, .. } = *piece_info;
-    let dif = target - pos;
-    let dif_signum = dif.signum();
+    let mut difs = targets.iter().map(|target| target - pos);
 
     for slider in sliders {
-        if dif_signum != slider.signum() { continue; }
-        if (dif % slider) != 0 { continue; }
+        if difs.all(|dif| dif.signum() != slider.signum() ||(dif % slider) != 0) { continue; }
         
         let mut current_pos = pos;
         loop {
@@ -63,10 +61,10 @@ pub fn can_attack_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceG
 
             match board.can_move_capture(current_pos, team) {
                 ActionType::MOVE => {
-                    if current_pos == target { return true; }
+                    if targets.contains(&current_pos) { return true; }
                 }
                 ActionType::CAPTURE => {
-                    if current_pos == target { return true; }
+                    if targets.contains(&current_pos)  { return true; }
                     break;
                 }
                 ActionType::FAIL => {
@@ -202,25 +200,6 @@ impl Piece for PawnPiece {
 
     }
 
-    fn can_attack(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
-        let PieceGenInfo { pos, row_gap, team, .. } = *piece_info;
-
-        let target_left = match team {
-            0 => pos - row_gap - 1,
-            1 => pos + row_gap - 1,
-            _ => pos,
-        };    
-
-        let target_right = match team {
-            0 => pos - row_gap + 1,
-            1 => pos + row_gap + 1,
-            _ => pos,
-        };     
-        
-        (target_left == target && board.can_capture(target_left, team)) || 
-        (target_right == target && board.can_capture(target_right, team))
-    }
-
     fn get_material_value(&self) -> i32 {
         1000
     }
@@ -284,8 +263,8 @@ impl Piece for BishopPiece {
          get_actions_sliding(&self.sliders, board, piece_info)
     }
 
-    fn can_attack(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
-        can_attack_sliding(&self.sliders, board, piece_info, target)
+    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+        can_control_sliding(&self.sliders, board, piece_info, targets)
     }
 
     fn get_material_value(&self) -> i32 {
@@ -317,8 +296,8 @@ impl Piece for RookPiece {
         get_actions_sliding(&self.sliders, board, piece_info)
     }
 
-    fn can_attack(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
-        can_attack_sliding(&self.sliders, board, piece_info, target)
+    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+        can_control_sliding(&self.sliders, board, piece_info, targets)
     }
 
     fn get_material_value(&self) -> i32 {
@@ -355,8 +334,8 @@ impl Piece for QueenPiece {
         get_actions_sliding(&self.sliders, board, piece_info)
     }
 
-    fn can_attack(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool {
-        can_attack_sliding(&self.sliders, board, piece_info, target)
+    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+        can_control_sliding(&self.sliders, board, piece_info, targets)
     }
 
     fn get_material_value(&self) -> i32 {

@@ -84,6 +84,7 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
 
         let king = board.get_piece_value(5, required_team);
         let king = *board.pieces.iter().find(|piece| board.state[**piece as usize] == king).unwrap();
+        let king_vec = vec![ king ];
         let mut can_add = true;
         for pos in &board.pieces {
             let pos = *pos;
@@ -112,7 +113,7 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
                 _ => Box::new(PawnPiece)
             };*/
             let piece_handler = board.piece_map.get(&piece_type).unwrap();
-            if piece_handler.can_attack(board, &piece_info, king) {
+            if piece_handler.can_control(board, &piece_info, &king_vec) {
                 can_add = false;
                 break;
             }

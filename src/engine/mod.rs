@@ -1,48 +1,39 @@
-use crate::boards::{Board, Action};
+use crate::boards::{Board, Action, PieceGenInfo};
 
 /*
     The engine only works for TWO-PLAYER GAMES as of now.
 */
 pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
     let mut material: i32 = 0;
+    let mut center_control: i32 = 0;
+
+    let row_gap = board.row_gap;
+
+    let center_area = vec![ 66, 67, 76, 77 ];
 
     for pos in &board.pieces{ 
         let piece = board.state[*pos as usize];
         let team = board.get_team(piece);
         let piece_type = board.get_piece_type(piece, team);
 
-        let piece_material = board.piece_map[&piece_type].get_material_value();
+        let piece_trait = &board.piece_map[&piece_type];
+        let piece_material = piece_trait.get_material_value();
         let team_multiplier = if team == moving_team { 1 } else { -1 };
-
+        let piece_info = PieceGenInfo {
+            pos: *pos,
+            team: moving_team,
+            row_gap,
+            piece_type
+        };
+        let center_controlled = piece_trait.can_control(board, &piece_info, &center_area);
         material += piece_material * team_multiplier;
+        if center_controlled { center_control += team_multiplier; }
     }
-    
-    /*board.pieces.iter().map(|pos| {
-        let piece = board.state[*pos as usize];
-        let team = board.get_team(piece);
-        let piece_type = board.get_piece_type(piece, team);
 
-        let material = board.piece_map[&piece_type].get_material_value();
-        let team_multiplier = if team == moving_team { 1 } else { -1 };
+    let moves = board.generate_moves(moving_team).len() as i32;
+    let opposing_moves = board.generate_moves(moving_team).len() as i32;
 
-        return material * team_multiplier;
-    }).sum();*/
-
-    /*let possible_moves = board.generate_moves(moving_team);
-    let moves = possible_moves.len() as i32;
-    let center_moves = possible_moves.iter().filter(|action| {
-        let to = action.to;
-        to == 66 || to == 67 || to == 76 || to == 7
-    }).count() as i32;
-
-    let possible_opposing_moves = board.generate_moves(if moving_team == 0 { 1 } else { 0 });
-    let opposing_moves = possible_opposing_moves.len() as i32;
-    let opposing_center_moves = possible_opposing_moves.iter().filter(|action| {
-        let to = action.to;
-        to == 66 || to == 67 || to == 76 || to == 7
-    }).count() as i32;*/
-
-    material// + moves - opposing_moves + (10 * center_moves) - (10 * opposing_center_moves)
+    material + (20 * center_control) + moves - opposing_moves
 }
 
 pub fn eval_action(board: &mut Board, action: Action, moving_team: i16) -> i32 {

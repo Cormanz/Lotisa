@@ -30,7 +30,7 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
     let moves = board.generate_moves(moving_team).len() as i32;
     let opposing_moves = board.generate_moves(if moving_team == 0 { 1 } else { 0 }).len() as i32;
 
-    material + (20 * center_control) + moves - opposing_moves
+    material + (20 * center_control)// + moves - opposing_moves
 }
 
 pub fn eval_action(board: &mut Board, action: Action, moving_team: i16) -> i32 {

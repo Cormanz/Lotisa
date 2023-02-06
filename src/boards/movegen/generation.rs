@@ -13,8 +13,6 @@ pub struct PieceGenInfo {
     pub piece_type: i16
 }
 
-pub type PieceMap = FnvHashMap<i16, Box<dyn Piece>>;
-
 /*
     I am probably implementing this idea in a non-Rustic way, but this is the idea:
     Piece types are represented as an i16, and Piece is a special trait that defines how a piece can move
@@ -43,14 +41,48 @@ pub trait PieceLookup {
     fn lookup(&self, piece_type: i16) -> &Box<dyn Piece>;
 }
 
-/*
-        pawn: Box::new(PawnPiece),
-        knight: Box::new(KnightPiece::new(row_gap)),
-        bishop: Box::new(BishopPiece::new(row_gap)),
-        rook: Box::new(RookPiece::new(row_gap)),
-        queen: Box::new(QueenPiece::new(row_gap)),
-        king: Box::new(KingPiece::new(row_gap))
- */
+pub type PieceMap = FnvHashMap<i16, Box<dyn Piece>>;
+
+pub struct PieceMapLookup {
+    pub map: PieceMap
+}
+
+impl PieceMapLookup {
+    pub fn new(map: PieceMap) -> PieceMapLookup {
+        PieceMapLookup {
+            map
+        }
+    }
+
+    pub fn template(mut map: PieceMap, edit: Box<dyn Fn(&mut PieceMap) -> ()>) -> PieceMapLookup {
+        edit(&mut map);
+        PieceMapLookup {
+            map
+        }
+    }
+
+    pub fn default_map(row_gap: i16) -> PieceMap {
+        let mut map: PieceMap = FnvHashMap::with_capacity_and_hasher(6, Default::default());
+        map.insert(0, Box::new(PawnPiece) as Box<dyn Piece>);
+        map.insert(1, Box::new(KnightPiece::new(row_gap)) as Box<dyn Piece>);
+        map.insert(2, Box::new(BishopPiece::new(row_gap)) as Box<dyn Piece>);
+        map.insert(3, Box::new(RookPiece::new(row_gap)) as Box<dyn Piece>);
+        map.insert(4, Box::new(QueenPiece::new(row_gap)) as Box<dyn Piece>);
+        map.insert(5, Box::new(KingPiece::new(row_gap)) as Box<dyn Piece>);
+        map
+    }    
+
+    pub fn default_template(row_gap: i16, edit: Box<dyn Fn(&mut PieceMap) -> ()>) -> PieceMapLookup {
+        PieceMapLookup::template(PieceMapLookup::default_map(row_gap), edit)
+    }
+}
+
+impl PieceLookup for PieceMapLookup {
+    fn lookup(&self, piece_type: i16) -> &Box<dyn Piece> {
+        return &self.map[&piece_type];
+    }
+}
+
 pub struct DefaultPieceLookup {
     info: PieceMapInfo
 }

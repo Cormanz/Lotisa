@@ -79,7 +79,7 @@ fn main() {
     loop {
         let moves = board.generate_legal_moves(team);
         let start = get_epoch_ms();
-        let results = negamax_root(&mut board, team, 5);
+        let results = negamax_root(&mut board, team, 6);
         let end = get_epoch_ms();
         let action = results.evaluation.best_move.unwrap(); /*if moves.iter().any(|action| action.capture) {
             moves.iter().filter(|action| action.capture).choose(&mut rand::thread_rng()).unwrap()

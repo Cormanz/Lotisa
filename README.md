@@ -126,10 +126,18 @@ impl PieceLookup for NewPieceLookup {
     }
 }
 
-let board = Board::new(6, 2, 2, (8, 8), KnookPiece);
+let board = Board::new(6, 2, 2, (8, 8), NewPieceLookup);
 ```
 
-`PieceLookup` is defined as a trait for ease of use in-case users would like to implement their own piece lookup styles or optimizations. In the future, `PieceMapLookup` will be implemented for incredible easy to implement _(but perhaps less efficient)_ custom piece lookups.
+`PieceLookup` is defined as a trait for ease of use in-case users would like to implement their own piece lookup styles or optimizations. However, Lotisa makes the very specific and common use of _adding new pieces to the base chess game_ incredibly easy to implement using Piece Maps. Here's an example:
+
+```rust
+let board = Board::new(6, 2, 2, (8, 8), PieceMapLookup.default_template(8, |map| {
+    map.insert(6, KnookPiece::new(8));
+}));
+```
+
+Since FnvHashMap has a minor runtime cost, this would be slower than the default piece lookup of using a match statement, but it's incredibly developer friendly if you want to try it out.
 
 ## Custom Rules
 

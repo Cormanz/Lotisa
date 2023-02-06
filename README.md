@@ -89,12 +89,9 @@ The performance right now is held back by my move generation algorithm. In parti
 
 I am currently working on optimizing performance, but the legal movegen perft is abysmally low. This will make it difficult to do many comprehensive optimizations that normal chess engines do.
 
-The psuedolegal movegen isn't at an ideal speed in itself, but it has a rather workable speed for all intents and purposes of 1.2M nodes per second. In the future, I'd like to optimize this too, but this isn't the main bottleneck I'm facing.
+The main bottleneck is from Psuedolegal to Legal, which is a **18x** decrease in nodes per second (where Legal to Negamax is only about 3x.) This is an incredibly low speed. From the testing I've done, I believe there are two major causes of this:
 
-The main bottleneck is from Psuedolegal to Legal, which is a **13x** decrease in nodes per second (where Legal to Negamax is only about 3x.) This is an incredibly low speed. I suspect this is because of one of the following reasons:
-
-- Making and unmaking every move.
-- Having to run `can_attack` for every piece (which, despite its optimizations, could still be slow.)
-- Fetching piece maps.
+- Retrieving the piece trait information from `board.piece_maps`.
+- Having to run `can_attack`.
 
 Until then, I'll keep working on the engine and hope hope I'll be able to optimize my move generation, or that someone would be willing to help me who's much more knowledgeable on Rust and/or Chess Programming.

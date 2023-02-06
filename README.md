@@ -95,13 +95,13 @@ The performance right now is held back by my move generation algorithm. In parti
 
 | Stage |  Depth  |  Nodes Found  |  MS Taken  |  Nodes / S  |
 |---|---|---|---|---|
-| Psuedolegal Movegen  | 6  |  35,408,726 | 1034ms | 34,244,000 |
-| Legal Movegen  |  5  |  1,405,061  |  676ms  |  2,078,000  |
-| Negamax (AB Pruning)  |  7  |  479,057  |  560ms  |  855,000  |
+| Psuedolegal Movegen  | 6  |  35,408,726 | 955ms | 35,766,000 |
+| Legal Movegen  |  5  |  1,413,803  |  825ms  |  1,713,000  |
+| Negamax (AB Pruning)  |  7  |  122,048  |  390ms  |  312,000  |
 
 \*: Move Generation still lacks some chess features (en passant, castling, promotion), so the number of nodes found will be inaccurate.
 
-\**: Negamax only uses an evaluation of *material imbalance*.
+\**: Negamax only uses an evaluation of *material imbalance*, *center control* and *mobility*.
 
 \***: Nodes per second is done by multiplying the nodes per millisecond value by 1000.
 

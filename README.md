@@ -30,6 +30,32 @@ The Lotisa engine uses a **10x12** board representation, where there's an **8x8*
     - [Center Control](https://www.chessprogramming.org/Center_Control)
     - [Mobility](https://www.chessprogramming.org/Mobility)
 
+## Performance Bottlenecks
+
+The performance right now is held back by my move generation algorithm. In particular, converting **psuedolegal moves** into **legal moves**. These are the results of a benchmark I did on the **starting position** _(that is still on the main branch as of now)_:
+
+| Stage |  Depth  |  Nodes Found  |  MS Taken  |  Nodes / S  |
+|---|---|---|---|---|
+| Psuedolegal Movegen  | 6  |  35,408,726 | 955ms | 35,766,000 |
+| Legal Movegen  |  5  |  1,413,803  |  825ms  |  1,713,000  |
+| Negamax (AB Pruning)  |  7  |  122,048  |  390ms  |  312,000  |
+
+\*: Move Generation still lacks some chess features (en passant, castling, promotion), so the number of nodes found will be inaccurate.
+
+\**: Negamax only uses an evaluation of *material imbalance*, *center control* and *mobility*.
+
+\***: Nodes per second is done by multiplying the nodes per millisecond value by 1000.
+
+I am currently working on optimizing performance, but the legal movegen perft is abysmally low. This will make it difficult to do many comprehensive optimizations that normal chess engines do.
+
+The main bottleneck is from Psuedolegal to Legal, which is a **18x** decrease in nodes per second (where Legal to Negamax is only about 3x.) This is an incredibly low speed. From the testing I've done, I believe there are two major causes of this:
+
+- Retrieving the piece trait information from `board.piece_maps`.
+- Having to run `can_attack`.
+
+Until then, I'll keep working on the engine and hope hope I'll be able to optimize my move generation, or that someone would be willing to help me who's much more knowledgeable on Rust and/or Chess Programming.
+
+
 # Extendibility
 
 The Lotisa engine is meant to be as extendible as possible to other variants. It's coded to allow for the following concepts:
@@ -108,28 +134,3 @@ let board = Board::new(6, 2, 2, (8, 8), KnookPiece);
 ## Custom Rules
 
 This hasn't yet been implemented, but in the future, you'll be allowed to customize **additional move restrictions** that stop specific moves from happening. Perhaps you want to make it illegal to have your king away more than 1 square away from other piece, or perhaps you want to disable checks and allow for kings to be captured. Lotisa aims to make this possible.
-
-## Performance Bottlenecks
-
-The performance right now is held back by my move generation algorithm. In particular, converting **psuedolegal moves** into **legal moves**. These are the results of a benchmark I did on the **starting position** _(that is still on the main branch as of now)_:
-
-| Stage |  Depth  |  Nodes Found  |  MS Taken  |  Nodes / S  |
-|---|---|---|---|---|
-| Psuedolegal Movegen  | 6  |  35,408,726 | 955ms | 35,766,000 |
-| Legal Movegen  |  5  |  1,413,803  |  825ms  |  1,713,000  |
-| Negamax (AB Pruning)  |  7  |  122,048  |  390ms  |  312,000  |
-
-\*: Move Generation still lacks some chess features (en passant, castling, promotion), so the number of nodes found will be inaccurate.
-
-\**: Negamax only uses an evaluation of *material imbalance*, *center control* and *mobility*.
-
-\***: Nodes per second is done by multiplying the nodes per millisecond value by 1000.
-
-I am currently working on optimizing performance, but the legal movegen perft is abysmally low. This will make it difficult to do many comprehensive optimizations that normal chess engines do.
-
-The main bottleneck is from Psuedolegal to Legal, which is a **18x** decrease in nodes per second (where Legal to Negamax is only about 3x.) This is an incredibly low speed. From the testing I've done, I believe there are two major causes of this:
-
-- Retrieving the piece trait information from `board.piece_maps`.
-- Having to run `can_attack`.
-
-Until then, I'll keep working on the engine and hope hope I'll be able to optimize my move generation, or that someone would be willing to help me who's much more knowledgeable on Rust and/or Chess Programming.

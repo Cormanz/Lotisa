@@ -53,7 +53,7 @@ pub fn can_control_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &Piece
     let mut difs = targets.iter().map(|target| target - pos);
 
     for slider in sliders {
-        if difs.all(|dif| dif.signum() != slider.signum() ||(dif % slider) != 0) { continue; }
+        if difs.all(|dif| (dif % slider) != 0 || dif.signum() != slider.signum() ) { continue; }
         
         let mut current_pos = pos;
         loop {

@@ -8,6 +8,8 @@ use std::{
 
 use boards::Board;
 
+use crate::engine::{create_search_info, negamax_deepening};
+
 mod boards;
 mod engine;
 
@@ -79,19 +81,20 @@ fn main() {
     loop {
         let moves = board.generate_legal_moves(team);
         let start = get_epoch_ms();
-        let results = negamax_root(&mut board, team, 6);
+        let mut info = create_search_info(&mut board, 6);
+        let results = negamax_deepening(&mut board, team, 6, &mut info);
         let end = get_epoch_ms();
-        let action = results.evaluation.best_move.unwrap(); 
+        let action = results.best_move.unwrap(); 
         /*if moves.iter().any(|action| action.capture) {
             moves.iter().filter(|action| action.capture).choose(&mut rand::thread_rng()).unwrap()
         } else {
             moves.choose(&mut rand::thread_rng()).unwrap()
         };*/
         thread::sleep(Duration::from_millis(1700));
-        let positions = results.info.positions;
+        let positions = info.positions;
         println!("time: {}ms ({positions} nodes)", end - start);
-        //println!("nodes/ms: {}", positions / (end - start) as i32);
-        println!("move score: {} for {}", results.evaluation.score, team);
+        println!("nodes/ms: {}", positions / (end - start) as i32);
+        println!("move score: {} for {}", results.score, team);
         board.make_move(action);
         board.print_board();
         team = if team == 0 { 1 } else { 0 };

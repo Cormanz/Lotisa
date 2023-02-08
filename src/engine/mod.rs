@@ -25,7 +25,7 @@ pub struct ScoredMove {
 }
 
 pub type KillerMoves = Vec<Vec<Option<Action>>>;
-pub type CounterMoves = Vec<Vec<Option<Action>>>;
+pub type CounterMoves = Vec<Vec<Option<DepthMove>>>;
 pub type HistoryMoves = Vec<Vec<i32>>;
 
 
@@ -35,8 +35,15 @@ pub struct StoredEvaluationScore {
     pub depth: i16
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct DepthMove {
+    pub action: Action,
+    pub depth: i16
+}
+
 pub struct SearchInfo {
     pub positions: i32,
+    pub beta_cutoff: i32,
     pub killer_moves: KillerMoves,
     pub history_moves: HistoryMoves,
     pub counter_moves: CounterMoves,
@@ -68,14 +75,12 @@ pub fn store_killer_move(current_move: Action, depth_left: i16, search_info: &mu
     }
 }
 
-pub fn score_move(board: &mut Board, depth: i16, action: &Action, tt_move: Option<&StoredEvaluationScore>, search_info: &SearchInfo) -> i32 {
+pub fn score_move(board: &mut Board, depth: i16, action: &Action, tt_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
     let action_val = *action;
     if let Some(tt_move) = tt_move {
-        if tt_move.depth >= depth {
-            if let Some(tt_move) = tt_move.evaluation.best_move {
-                if tt_move == action_val {
-                    return 1_000_000;
-                }
+        if let Some(tt_move) = tt_move.best_move {
+            if tt_move == action_val {
+                return 1_000_000;
             }
         }
     }
@@ -115,22 +120,21 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, tt_move: Optio
         i += 1;
     }
 
-    // History Moves
-
-    let history = search_info.history_moves[action.from as usize][action.to as usize];
-
-    if history > 0 {
-        return 5_000 + history;
-    }
+    let mut score = 0;
 
     // Counter Moves
     if let Some(counter_move) = search_info.counter_moves[action.from as usize][action.to as usize] {
-        if counter_move == action_val {
-            return 500;
+        if counter_move.action == action_val {
+            score += 100;
         }
     }
 
-    0
+    // History Moves
+
+    let history = search_info.history_moves[action.from as usize][action.to as usize];
+    score += history;
+
+    score
 }
 
 pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo) -> EvaluationScore {
@@ -149,7 +153,7 @@ pub fn create_search_info(board: &mut Board, depth: i16) -> SearchInfo {
     }
 
     let positions = board.row_gap * board.col_gap;
-    let mut counter_moves: Vec<Vec<Option<Action>>> = Vec::with_capacity(positions as usize);
+    let mut counter_moves: Vec<Vec<Option<DepthMove>>> = Vec::with_capacity(positions as usize);
     for i in 0..(positions as usize) {
         counter_moves.insert(i, vec![None; positions as usize]);
     }
@@ -166,6 +170,7 @@ pub fn create_search_info(board: &mut Board, depth: i16) -> SearchInfo {
 
     SearchInfo {
         positions: 0,
+        beta_cutoff: 0,
         killer_moves,
         counter_moves,
         history_moves,
@@ -204,13 +209,17 @@ pub fn negamax(
 
     let hash = hash_board(board, moving_team, &search_info.zobrist);
     let analysises = search_info.transposition_table.get(&hash);
-    let mut tt_move: Option<&StoredEvaluationScore> = None;
+    let mut tt_move: Option<EvaluationScore> = None;
     if let Some(analysis) = analysises { 
         if analysis.depth == depth {
             return analysis.evaluation;
         }
 
-        tt_move = Some(analysis);
+        tt_move = Some(analysis.evaluation);
+    }
+
+    if tt_move.is_none() && depth > 2 {
+        tt_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta));
     }
 
     let mut best_move: Option<Action> = None;
@@ -226,8 +235,9 @@ pub fn negamax(
     moves.sort_by(|a, b| b.score.cmp(&a.score));
     //println!("{:?}", moves);
 
+    search_info.positions += moves.len() as i32;
     for ScoredMove { action, .. } in moves {
-        search_info.positions += 1;
+        search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
         let mut evaluation = negamax(
             board,
@@ -245,12 +255,19 @@ pub fn negamax(
             best_score = evaluation.score;
             if evaluation.score > alpha {
                 alpha = evaluation.score;
-                search_info.history_moves[action.from as usize][action.to as usize] += depth as i32;
+                if evaluation.score >= beta {                
+                    search_info.history_moves[action.from as usize][action.to as usize] += depth as i32;
 
-                if evaluation.score >= beta {
                     if !action.capture {
                         store_killer_move(action, depth, search_info);
-                        search_info.counter_moves[action.from as usize][action.to as usize] = Some(action);
+                        let counter = search_info.counter_moves[action.from as usize][action.to as usize];
+                        let mut can_counter = true;
+                        if let Some(counter_move) = counter {
+                            if counter_move.depth > depth { can_counter = false; }
+                        }  
+                        if can_counter {
+                            search_info.counter_moves[action.from as usize][action.to as usize] = Some(DepthMove { action, depth });
+                        }
                     }
                     break;
                 }

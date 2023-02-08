@@ -91,8 +91,10 @@ fn main() {
             moves.choose(&mut rand::thread_rng()).unwrap()
         };*/
         thread::sleep(Duration::from_millis(1700));
-        let positions = info.positions;
+        let positions = info.beta_cutoff;
+        let beta_cutoff = info.positions as f32 / info.beta_cutoff as f32;
         println!("time: {}ms ({positions} nodes)", end - start);
+        println!("beta cutoff: {}", beta_cutoff);
         println!("nodes/ms: {}", positions / (end - start) as i32);
         println!("move score: {} for {}", results.score, team);
         board.make_move(action);

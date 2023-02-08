@@ -1,10 +1,10 @@
 use core::time;
+use engine::negamax_root;
+use rand::seq::{IteratorRandom, SliceRandom};
 use std::{
-    env,
-    time::{SystemTime, UNIX_EPOCH, Duration}, thread,
+    env, thread,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
-use engine::{negamax_root};
-use rand::seq::{SliceRandom, IteratorRandom};
 
 use boards::Board;
 
@@ -81,7 +81,8 @@ fn main() {
         let start = get_epoch_ms();
         let results = negamax_root(&mut board, team, 6);
         let end = get_epoch_ms();
-        let action = results.evaluation.best_move.unwrap(); /*if moves.iter().any(|action| action.capture) {
+        let action = results.evaluation.best_move.unwrap(); 
+        /*if moves.iter().any(|action| action.capture) {
             moves.iter().filter(|action| action.capture).choose(&mut rand::thread_rng()).unwrap()
         } else {
             moves.choose(&mut rand::thread_rng()).unwrap()
@@ -89,7 +90,7 @@ fn main() {
         thread::sleep(Duration::from_millis(1700));
         let positions = results.info.positions;
         println!("time: {}ms ({positions} nodes)", end - start);
-        println!("nodes/ms: {}", positions / (end - start) as i32);
+        //println!("nodes/ms: {}", positions / (end - start) as i32);
         println!("move score: {} for {}", results.evaluation.score, team);
         board.make_move(action);
         board.print_board();

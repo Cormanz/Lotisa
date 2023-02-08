@@ -1,8 +1,8 @@
+use super::{Action, ActionType, Board};
 use std::collections::HashMap;
-use super::{Board, Action, ActionType};
 
-mod piece_types;
 mod generation;
+mod piece_types;
 
-pub use piece_types::*;
 pub use generation::*;
+pub use piece_types::*;

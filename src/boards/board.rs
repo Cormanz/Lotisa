@@ -1,7 +1,9 @@
-use fnv::FnvHashMap;
 use colored::{ColoredString, Colorize};
+use fnv::FnvHashMap;
 
-use super::{PieceMap, create_default_piece_lookup, generate_moves, generate_legal_moves, Piece, PieceLookup};
+use super::{
+    create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup, PieceMap,
+};
 
 //use super::Action;
 
@@ -32,23 +34,22 @@ pub struct MoveUndo {
     action: Action,
     from_previous: i16,
     to_previous: i16,
-    pub pieces: Vec<i16>
+    pub pieces: Vec<i16>,
 }
 
 #[derive(Debug)]
 pub enum ActionType {
     MOVE,
     CAPTURE,
-    FAIL
+    FAIL,
 }
 
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)] 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Action {
     pub from: i16,
     pub to: i16,
     pub capture: bool,
-    pub info: Option<i16>
+    pub info: Option<i16>,
 }
 
 pub type PieceList = FnvHashMap<i16, Vec<i16>>;
@@ -57,7 +58,7 @@ pub struct PieceInfo {
     pub pos: i16,
     pub piece_value: i16,
     pub team: i16,
-    pub piece_type: i16
+    pub piece_type: i16,
 }
 pub struct Board {
     pub state: BoardState,
@@ -70,13 +71,19 @@ pub struct Board {
     pub buffer_amount: i16,
     pub row_gap: i16,
     pub col_gap: i16,
-    pub piece_lookup: Box<dyn PieceLookup>
+    pub piece_lookup: Box<dyn PieceLookup>,
 }
 
 // TODO: Add reverse piece list to speed up removing items
 
 impl Board {
-    pub fn new(piece_types: i16, buffer_amount: i16, teams: i16, (rows, cols): (i16, i16), piece_lookup: Box<dyn PieceLookup>) -> Board {
+    pub fn new(
+        piece_types: i16,
+        buffer_amount: i16,
+        teams: i16,
+        (rows, cols): (i16, i16),
+        piece_lookup: Box<dyn PieceLookup>,
+    ) -> Board {
         let state = create_board_state(buffer_amount, (rows, cols));
 
         return Board {
@@ -90,7 +97,7 @@ impl Board {
             buffer_amount,
             row_gap: rows + buffer_amount,
             col_gap: cols + (buffer_amount * 2),
-            piece_lookup
+            piece_lookup,
         };
     }
 
@@ -100,7 +107,9 @@ impl Board {
         let mut ind = 0;
         for row in self.state.chunks(self.row_gap as usize) {
             let all_empty = row.iter().all(|piece| *piece == 0);
-            if all_empty { continue };
+            if all_empty {
+                continue;
+            };
 
             if ind != 0 {
                 items.push("\n".white());
@@ -108,8 +117,13 @@ impl Board {
 
             for col in row {
                 let piece = *col;
-                if piece == 0 { continue };
-                if piece == 1 { items.push("  ".white()); continue; }
+                if piece == 0 {
+                    continue;
+                };
+                if piece == 1 {
+                    items.push("  ".white());
+                    continue;
+                }
 
                 let team = self.get_team(piece);
                 let piece_type = self.get_piece_type(piece, team);
@@ -118,7 +132,7 @@ impl Board {
                 items.push(match team {
                     0 => piece_icon.white(),
                     1 => piece_icon.black(),
-                    _ => "".red()
+                    _ => "".red(),
                 });
                 items.push(" ".white());
             }
@@ -148,19 +162,27 @@ impl Board {
         self.state[to_usize] = from_state;
         self.state[from_usize] = 1;
 
-        let from_pos_all = self.pieces.iter().position(|pos| *pos == action.from).unwrap();
+        let from_pos_all = self
+            .pieces
+            .iter()
+            .position(|pos| *pos == action.from)
+            .unwrap();
         self.pieces[from_pos_all] = action.to;
 
         if action.capture {
-            let to_pos_all = self.pieces.iter().position(|pos| *pos == action.to).unwrap();
+            let to_pos_all = self
+                .pieces
+                .iter()
+                .position(|pos| *pos == action.to)
+                .unwrap();
             self.pieces.swap_remove(to_pos_all);
-        }   
+        }
 
         return MoveUndo {
             action,
             from_previous: from_state,
             to_previous: to_state,
-            pieces: old_pieces
+            pieces: old_pieces,
         };
     }
 
@@ -169,7 +191,7 @@ impl Board {
             action,
             to_previous,
             from_previous,
-            pieces
+            pieces,
         } = undo;
         self.state[action.to as usize] = to_previous;
         self.state[action.from as usize] = from_previous;
@@ -188,7 +210,7 @@ impl Board {
     }
 
     pub fn get_team(&self, piece: i16) -> i16 {
-       (piece - 2) / self.piece_types
+        (piece - 2) / self.piece_types
     }
 
     pub fn get_piece_type(&self, piece: i16, team: i16) -> i16 {
@@ -203,7 +225,7 @@ impl Board {
             pos,
             piece_value,
             team,
-            piece_type
+            piece_type,
         };
     }
 
@@ -229,16 +251,21 @@ impl Board {
         match state {
             0 => ActionType::FAIL,
             1 => ActionType::MOVE,
-            _ => if self.get_team(state) != team {
-                ActionType::CAPTURE
-            } else { ActionType::FAIL }
+            _ => {
+                if self.get_team(state) != team {
+                    ActionType::CAPTURE
+                } else {
+                    ActionType::FAIL
+                }
+            }
         }
     }
 
     pub fn load_fen(fen: &str) -> Board {
         let fen_chunks = fen.split("/");
         let mut pieces: Vec<i16> = Vec::with_capacity(32);
-        let mut reverse_pieces: FnvHashMap<i16, usize> = FnvHashMap::with_capacity_and_hasher(32, Default::default());
+        let mut reverse_pieces: FnvHashMap<i16, usize> =
+            FnvHashMap::with_capacity_and_hasher(32, Default::default());
         let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10));
 
         for (row_ind, chunk) in fen_chunks.enumerate() {
@@ -268,7 +295,6 @@ impl Board {
 
                 reverse_pieces.entry(piece_pos_i16).or_insert(pieces.len());
                 pieces.push(piece_pos_i16);
-                
             }
         }
 

@@ -2,15 +2,17 @@ use std::collections::HashMap;
 
 use fnv::FnvHashMap;
 
-use crate::boards::{ActionType, Board, Action};
+use crate::boards::{Action, ActionType, Board};
 
-use super::piece_types::{Piece, PawnPiece, KnightPiece, QueenPiece, RookPiece, KingPiece, BishopPiece};
+use super::piece_types::{
+    BishopPiece, KingPiece, KnightPiece, PawnPiece, Piece, QueenPiece, RookPiece,
+};
 
 pub struct PieceGenInfo {
     pub pos: i16,
     pub team: i16,
     pub row_gap: i16,
-    pub piece_type: i16
+    pub piece_type: i16,
 }
 
 /*
@@ -34,7 +36,7 @@ struct PieceMapInfo {
     bishop: Box<dyn Piece>,
     rook: Box<dyn Piece>,
     queen: Box<dyn Piece>,
-    king: Box<dyn Piece>
+    king: Box<dyn Piece>,
 }
 
 pub trait PieceLookup {
@@ -44,21 +46,17 @@ pub trait PieceLookup {
 pub type PieceMap = FnvHashMap<i16, Box<dyn Piece>>;
 
 pub struct PieceMapLookup {
-    pub map: PieceMap
+    pub map: PieceMap,
 }
 
 impl PieceMapLookup {
     pub fn new(map: PieceMap) -> PieceMapLookup {
-        PieceMapLookup {
-            map
-        }
+        PieceMapLookup { map }
     }
 
     pub fn template(mut map: PieceMap, edit: Box<dyn Fn(&mut PieceMap) -> ()>) -> PieceMapLookup {
         edit(&mut map);
-        PieceMapLookup {
-            map
-        }
+        PieceMapLookup { map }
     }
 
     pub fn default_map(row_gap: i16) -> PieceMap {
@@ -70,9 +68,12 @@ impl PieceMapLookup {
         map.insert(4, Box::new(QueenPiece::new(row_gap)) as Box<dyn Piece>);
         map.insert(5, Box::new(KingPiece::new(row_gap)) as Box<dyn Piece>);
         map
-    }    
+    }
 
-    pub fn default_template(row_gap: i16, edit: Box<dyn Fn(&mut PieceMap) -> ()>) -> PieceMapLookup {
+    pub fn default_template(
+        row_gap: i16,
+        edit: Box<dyn Fn(&mut PieceMap) -> ()>,
+    ) -> PieceMapLookup {
         PieceMapLookup::template(PieceMapLookup::default_map(row_gap), edit)
     }
 }
@@ -84,7 +85,7 @@ impl PieceLookup for PieceMapLookup {
 }
 
 pub struct DefaultPieceLookup {
-    info: PieceMapInfo
+    info: PieceMapInfo,
 }
 
 impl DefaultPieceLookup {
@@ -96,23 +97,23 @@ impl DefaultPieceLookup {
                 bishop: Box::new(BishopPiece::new(row_gap)),
                 rook: Box::new(RookPiece::new(row_gap)),
                 queen: Box::new(QueenPiece::new(row_gap)),
-                king: Box::new(KingPiece::new(row_gap))
-            }
+                king: Box::new(KingPiece::new(row_gap)),
+            },
         }
     }
 }
 
 impl PieceLookup for DefaultPieceLookup {
     fn lookup(&self, piece_type: i16) -> &Box<dyn Piece> {
-        return match piece_type { 
+        return match piece_type {
             0 => &self.info.pawn,
             1 => &self.info.knight,
             2 => &self.info.bishop,
             3 => &self.info.rook,
             4 => &self.info.queen,
             5 => &self.info.king,
-            _ => &self.info.pawn
-        }
+            _ => &self.info.pawn,
+        };
     }
 }
 
@@ -121,7 +122,12 @@ pub fn create_default_piece_lookup<'a>(row_gap: i16) -> Box<dyn PieceLookup> {
 }
 
 pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
-    let Board { state, row_gap, pieces, .. } = board;
+    let Board {
+        state,
+        row_gap,
+        pieces,
+        ..
+    } = board;
     let mut actions: Vec<Action> = Vec::with_capacity(64);
     let row_gap = *row_gap;
 
@@ -129,16 +135,23 @@ pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
         let pos = *pos;
         let piece = state[pos as usize];
         let team = board.get_team(piece);
-        if team != required_team { continue; }
+        if team != required_team {
+            continue;
+        }
 
         let piece_type = board.get_piece_type(piece, team);
         let piece_info = PieceGenInfo {
             pos,
             row_gap,
             team,
-            piece_type
+            piece_type,
         };
-        actions.extend(board.piece_lookup.lookup(piece_type).get_actions(board, &piece_info));
+        actions.extend(
+            board
+                .piece_lookup
+                .lookup(piece_type)
+                .get_actions(board, &piece_info),
+        );
     }
 
     actions
@@ -163,16 +176,20 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
         let undo = board.make_move(action);
 
         let king = board.get_piece_value(5, required_team);
-        let king = *board.pieces.iter().find(|piece| board.state[**piece as usize] == king).unwrap();
-        let king_vec = vec![ king ];
+        let king = *board
+            .pieces
+            .iter()
+            .find(|piece| board.state[**piece as usize] == king)
+            .unwrap();
+        let king_vec = vec![king];
         let mut can_add = true;
         for pos in &board.pieces {
             let pos = *pos;
             let pos_usize = pos as usize;
             let piece = board.state[pos_usize];
             let team = board.get_team(piece);
-            if team == required_team { 
-                continue; 
+            if team == required_team {
+                continue;
             }
 
             let piece_type = board.get_piece_type(piece, team);
@@ -180,7 +197,7 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
                 pos,
                 row_gap,
                 team,
-                piece_type
+                piece_type,
             };
 
             /*let piece_handler: Box<dyn Piece> = match piece_type {
@@ -200,7 +217,9 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
         }
 
         board.undo_move(undo);
-        if can_add { new_actions.push(action); }
+        if can_add {
+            new_actions.push(action);
+        }
     }
 
     new_actions

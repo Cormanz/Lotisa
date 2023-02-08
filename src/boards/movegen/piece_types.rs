@@ -1,9 +1,14 @@
-use crate::boards::{Action, Board, ActionType};
+use crate::boards::{Action, ActionType, Board};
 
 use super::generation::PieceGenInfo;
 
-pub fn attempt_action(moves: &mut Vec<Action>, board: &Board, piece_info: &PieceGenInfo, target: i16) {
-    let PieceGenInfo { pos, team, .. } = *piece_info; 
+pub fn attempt_action(
+    moves: &mut Vec<Action>,
+    board: &Board,
+    piece_info: &PieceGenInfo,
+    target: i16,
+) {
+    let PieceGenInfo { pos, team, .. } = *piece_info;
 
     match board.can_move_capture(target, team) {
         ActionType::MOVE => {
@@ -11,7 +16,7 @@ pub fn attempt_action(moves: &mut Vec<Action>, board: &Board, piece_info: &Piece
                 from: pos,
                 to: target,
                 capture: false,
-                info: None
+                info: None,
             });
         }
         ActionType::CAPTURE => {
@@ -19,7 +24,7 @@ pub fn attempt_action(moves: &mut Vec<Action>, board: &Board, piece_info: &Piece
                 from: pos,
                 to: target,
                 capture: true,
-                info: None
+                info: None,
             });
         }
         ActionType::FAIL => {}
@@ -31,7 +36,9 @@ pub trait Piece {
         The default `can_control` method is not very performant. Subtraits of Piece should reimplement this for the sake of performance.
     */
     fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
-        self.get_actions(board, piece_info).iter().any(|action| targets.contains(&action.to))
+        self.get_actions(board, piece_info)
+            .iter()
+            .any(|action| targets.contains(&action.to))
     }
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
 
@@ -39,7 +46,11 @@ pub trait Piece {
     fn get_icon(&self) -> &str;
 }
 
-pub fn get_actions_delta(deltas: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+pub fn get_actions_delta(
+    deltas: &Vec<i16>,
+    board: &Board,
+    piece_info: &PieceGenInfo,
+) -> Vec<Action> {
     let mut actions = Vec::new();
     let PieceGenInfo { pos, .. } = *piece_info;
     for delta in deltas {
@@ -47,24 +58,35 @@ pub fn get_actions_delta(deltas: &Vec<i16>, board: &Board, piece_info: &PieceGen
     }
     actions
 }
-    
-pub fn can_control_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+
+pub fn can_control_sliding(
+    sliders: &Vec<i16>,
+    board: &Board,
+    piece_info: &PieceGenInfo,
+    targets: &Vec<i16>,
+) -> bool {
     let PieceGenInfo { pos, team, .. } = *piece_info;
     let mut difs = targets.iter().map(|target| target - pos);
 
     for slider in sliders {
-        if difs.all(|dif| (dif % slider) != 0 || dif.signum() != slider.signum() ) { continue; }
-        
+        if difs.all(|dif| (dif % slider) != 0 || dif.signum() != slider.signum()) {
+            continue;
+        }
+
         let mut current_pos = pos;
         loop {
             current_pos += slider;
 
             match board.can_move_capture(current_pos, team) {
                 ActionType::MOVE => {
-                    if targets.contains(&current_pos) { return true; }
+                    if targets.contains(&current_pos) {
+                        return true;
+                    }
                 }
                 ActionType::CAPTURE => {
-                    if targets.contains(&current_pos)  { return true; }
+                    if targets.contains(&current_pos) {
+                        return true;
+                    }
                     break;
                 }
                 ActionType::FAIL => {
@@ -77,7 +99,11 @@ pub fn can_control_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &Piece
     false
 }
 
-pub fn get_actions_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+pub fn get_actions_sliding(
+    sliders: &Vec<i16>,
+    board: &Board,
+    piece_info: &PieceGenInfo,
+) -> Vec<Action> {
     let mut actions = Vec::new();
     let PieceGenInfo { pos, team, .. } = *piece_info;
 
@@ -91,7 +117,7 @@ pub fn get_actions_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &Piece
                         from: pos,
                         to: current_pos,
                         capture: false,
-                        info: None
+                        info: None,
                     });
                 }
                 ActionType::CAPTURE => {
@@ -99,7 +125,7 @@ pub fn get_actions_sliding(sliders: &Vec<i16>, board: &Board, piece_info: &Piece
                         from: pos,
                         to: current_pos,
                         capture: true,
-                        info: None
+                        info: None,
                     });
                     break;
                 }
@@ -118,7 +144,9 @@ impl Piece for PawnPiece {
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         let mut actions = Vec::with_capacity(2);
 
-        let PieceGenInfo { pos, row_gap, team, .. } = *piece_info;
+        let PieceGenInfo {
+            pos, row_gap, team, ..
+        } = *piece_info;
 
         let target = match team {
             0 => pos - row_gap,
@@ -131,7 +159,7 @@ impl Piece for PawnPiece {
                 from: pos,
                 to: target,
                 capture: false,
-                info: None
+                info: None,
             });
         }
 
@@ -146,7 +174,7 @@ impl Piece for PawnPiece {
         let can_move_twice = match team {
             0 => row == pawn_max_row,
             1 => row == pawn_min_row,
-            _ => false
+            _ => false,
         };
 
         if can_move_twice {
@@ -155,29 +183,29 @@ impl Piece for PawnPiece {
                 1 => pos + row_gap * 2,
                 _ => pos,
             };
-    
+
             if board.can_move(target) {
                 actions.push(Action {
                     from: pos,
                     to: target,
                     capture: false,
-                    info: None
+                    info: None,
                 });
-            }           
+            }
         }
 
         let target_left = match team {
             0 => pos - row_gap - 1,
             1 => pos + row_gap - 1,
             _ => pos,
-        };                
+        };
 
         if board.can_capture(target_left, team) {
             actions.push(Action {
                 from: pos,
                 to: target_left,
                 capture: true,
-                info: None
+                info: None,
             });
         }
 
@@ -185,19 +213,18 @@ impl Piece for PawnPiece {
             0 => pos - row_gap + 1,
             1 => pos + row_gap + 1,
             _ => pos,
-        };                
+        };
 
         if board.can_capture(target_right, team) {
             actions.push(Action {
                 from: pos,
                 to: target_right,
                 capture: true,
-                info: None
+                info: None,
             });
         }
 
         actions
-
     }
 
     fn get_material_value(&self) -> i32 {
@@ -210,7 +237,7 @@ impl Piece for PawnPiece {
 }
 
 pub struct KnightPiece {
-    deltas: Vec<i16>
+    deltas: Vec<i16>,
 }
 impl KnightPiece {
     pub fn new(row_gap: i16) -> Self {
@@ -223,8 +250,8 @@ impl KnightPiece {
                 row_gap + 2,
                 row_gap - 2,
                 -row_gap + 2,
-                -row_gap - 2
-            ]
+                -row_gap - 2,
+            ],
         }
     }
 }
@@ -243,24 +270,19 @@ impl Piece for KnightPiece {
 }
 
 pub struct BishopPiece {
-    sliders: Vec<i16>
+    sliders: Vec<i16>,
 }
 impl BishopPiece {
     pub fn new(row_gap: i16) -> Self {
         BishopPiece {
-            sliders: vec![
-                row_gap + 1,
-                row_gap - 1,
-                -row_gap + 1,
-                -row_gap - 1
-            ]
+            sliders: vec![row_gap + 1, row_gap - 1, -row_gap + 1, -row_gap - 1],
         }
     }
 }
 
 impl Piece for BishopPiece {
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
-         get_actions_sliding(&self.sliders, board, piece_info)
+        get_actions_sliding(&self.sliders, board, piece_info)
     }
 
     fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
@@ -276,17 +298,12 @@ impl Piece for BishopPiece {
 }
 
 pub struct RookPiece {
-    sliders: Vec<i16>
+    sliders: Vec<i16>,
 }
 impl RookPiece {
     pub fn new(row_gap: i16) -> Self {
         RookPiece {
-            sliders: vec![
-                1,
-                -1,
-                row_gap,
-                -row_gap
-            ]
+            sliders: vec![1, -1, row_gap, -row_gap],
         }
     }
 }
@@ -310,7 +327,7 @@ impl Piece for RookPiece {
 }
 
 pub struct QueenPiece {
-    sliders: Vec<i16>
+    sliders: Vec<i16>,
 }
 impl QueenPiece {
     pub fn new(row_gap: i16) -> Self {
@@ -323,8 +340,8 @@ impl QueenPiece {
                 row_gap + 1,
                 row_gap - 1,
                 -row_gap + 1,
-                -row_gap - 1
-            ]
+                -row_gap - 1,
+            ],
         }
     }
 }
@@ -348,7 +365,7 @@ impl Piece for QueenPiece {
 }
 
 pub struct KingPiece {
-    deltas: Vec<i16>
+    deltas: Vec<i16>,
 }
 impl KingPiece {
     pub fn new(row_gap: i16) -> Self {
@@ -361,8 +378,8 @@ impl KingPiece {
                 row_gap + 1,
                 row_gap - 1,
                 -row_gap + 1,
-                -row_gap - 1
-            ]
+                -row_gap - 1,
+            ],
         }
     }
 }
@@ -371,7 +388,7 @@ impl Piece for KingPiece {
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         get_actions_delta(&self.deltas, board, piece_info)
     }
-    
+
     fn get_icon(&self) -> &str {
         "♚"
     }

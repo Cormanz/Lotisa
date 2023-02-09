@@ -1,22 +1,19 @@
-use std::cmp::max;
-
 use fnv::FnvHashMap;
 
 use crate::boards::{Action, Board, PieceGenInfo, PieceInfo};
 
 use self::{
     evaluation::{eval_board, EvaluationScore},
-    zobrist::{generate_zobrist, hash_board},
+    zobrist::{generate_zobrist, hash_board}, ordering::{score_move, score_qs_move, MAX_KILLER_MOVES, see, store_killer_move},
 };
 
 mod evaluation;
 mod zobrist;
+mod ordering;
 
 /*
     The engine only works for TWO-PLAYER GAMES as of now.
 */
-
-const MAX_KILLER_MOVES: usize = 2;
 
 #[derive(Clone, Copy, Debug)]
 pub struct ScoredMove {
@@ -43,199 +40,13 @@ pub struct DepthMove {
 
 pub struct SearchInfo {
     pub positions: i32,
+    pub quiescence_positions: i32,
     pub beta_cutoff: i32,
     pub killer_moves: KillerMoves,
     pub history_moves: HistoryMoves,
     pub counter_moves: CounterMoves,
     pub zobrist: Vec<usize>,
     pub transposition_table: FnvHashMap<usize, StoredEvaluationScore>,
-}
-
-
-pub fn store_killer_move(current_move: Action, depth_left: i16, search_info: &mut SearchInfo) {
-    let depth = depth_left as usize;
-    let first_killer = search_info.killer_moves[0][depth];
-
-    // First killer must not be the same as the move being stored.
-    let mut can_shift = true;
-    if let Some(first_killer) = first_killer {
-        can_shift = first_killer != current_move;
-    }
-
-    if can_shift {
-        // Shift all the moves one index upward...
-        for i in (1..MAX_KILLER_MOVES).rev() {
-            let n = i as usize;
-            let previous = search_info.killer_moves[n - 1][depth];
-            search_info.killer_moves[n][depth] = previous;
-        }
-
-        // and add the new killer move in the first spot.
-        search_info.killer_moves[0][depth] = Some(current_move);
-    }
-}
-
-
-
-pub fn score_active_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, tt_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
-    let see_val = see(board, action.to, moving_team, Some(action.from));
-    if see_val > 0 {
-        100_000 + see_val
-    } else {
-        see_val - 100_000
-    }
-}
-
-pub fn score_qs_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
-    let mut score = 0;
-    let action_val = *action;
-    
-    // SEE
-    score += score_active_move(board, depth, action, moving_team, pv_move, search_info);
-
-    // Killer Moves
-    let mut i: i32 = 0;
-    while i < MAX_KILLER_MOVES as i32 {
-        let killer = search_info.killer_moves[i as usize][depth as usize];
-        if let Some(killer) = killer {
-            if action_val == killer {
-                score += 25_000 + (i + 1) * 4;
-            }
-        }
-        i += 1;
-    }
-
-    // Counter Moves
-    if let Some(counter_move) = search_info.counter_moves[action.from as usize][action.to as usize] {
-        if counter_move.action == action_val {
-            score += 100;
-        }
-    }
-
-    // History Moves
-
-    let history = search_info.history_moves[action.from as usize][action.to as usize];
-    score += history;
-
-    score
-}
-
-
-pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
-    let mut score = 0;
-    let action_val = *action;
-
-    // Order the previous best move from TT or IID first
-    if let Some(pv_move) = pv_move {
-        if let Some(pv_move) = pv_move.best_move {
-            if pv_move == action_val {
-                return 1_000_000;
-            }
-        }
-    }
-
-    // SEE
-    if action.capture {
-        score += score_active_move(board, depth, action, moving_team, pv_move, search_info);
-    }
-
-    // Killer Moves
-    let mut i: i32 = 0;
-    while i < MAX_KILLER_MOVES as i32 {
-        let killer = search_info.killer_moves[i as usize][depth as usize];
-        if let Some(killer) = killer {
-            if action_val == killer {
-                score += 25_000 + (i + 1) * 4;
-            }
-        }
-        i += 1;
-    }
-
-    // Counter Moves
-    if let Some(counter_move) = search_info.counter_moves[action.from as usize][action.to as usize] {
-        if counter_move.action == action_val {
-            score += 100;
-        }
-    }
-
-    // History Moves
-
-    let history = search_info.history_moves[action.from as usize][action.to as usize];
-    score += history;
-
-    score
-}
-
-pub fn see(board: &mut Board, square: i16, moving_team: i16, current_attacker: Option<i16>) -> i32 {
-    let row_gap = board.row_gap;
-    let targets = vec![square];
-    let attacking_pieces = board.pieces.iter().filter(|pos| {
-        let pos = **pos;
-        let PieceInfo {
-            piece_type,
-            team,
-            ..
-        } = board.get_piece_info(pos);
-        if team != moving_team { return false; }
-        let piece_trait = board.piece_lookup.lookup(piece_type);
-        piece_trait.can_control(board, &PieceGenInfo { 
-            pos,
-            team,
-            row_gap,
-            piece_type
-        }, &targets)
-    }).collect::<Vec<_>>();
-    if attacking_pieces.len() == 0 {
-        return 0;
-    }
-
-    let attacker: i16 = if let Some(attacker) = current_attacker {
-        attacker
-    } else {
-        let mut smallest_attacker: i16 = 0;
-        let mut smallest_material: i32 = 2_000_000_000;
-        for attacker in attacking_pieces {
-            let pos = *attacker;
-            let PieceInfo {
-                piece_type,
-                ..
-            } = board.get_piece_info(pos);
-            let piece_trait = board.piece_lookup.lookup(piece_type);
-            let material = piece_trait.get_material_value();
-            if material < smallest_material {
-                smallest_attacker = pos;
-                smallest_material = material;
-            }
-        }
-        smallest_attacker
-    };
-
-    let PieceInfo {
-        piece_type: captured_type,
-        ..
-    } = board.get_piece_info(square);
-    let square_value = board.piece_lookup.lookup(captured_type).get_material_value();
-
-    let undo = board.make_move(Action {
-        from: attacker,
-        to: square,
-        capture: true,
-        info: None
-    });
-
-    let value = max(0, square_value - see(board, square, if moving_team == 0 { 1 } else { 0 }, None));
-    board.undo_move(undo);
-    return value;
-
-   /* skip if the square isn't attacked anymore by this side */
-   /*if ( piece )
-   {
-      make_capture(piece, square);
-      /* Do not consider captures if they lose material, therefor max zero */
-      value = max (0, piece_just_captured() -see(square, other(side)) );
-      undo_capture(piece, square);
-   }
-   return value;*/
 }
 
 pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo) -> EvaluationScore {
@@ -271,6 +82,7 @@ pub fn create_search_info(board: &mut Board, depth: i16) -> SearchInfo {
 
     SearchInfo {
         positions: 0,
+        quiescence_positions: 0,
         beta_cutoff: 0,
         killer_moves,
         counter_moves,
@@ -337,18 +149,44 @@ pub fn negamax(
     moves.sort_by(|a, b| b.score.cmp(&a.score));
     //println!("{:?}", moves);
 
+    let mut b_search_pv = true;
     search_info.positions += moves.len() as i32;
     for ScoredMove { action, .. } in moves {
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
-        let evaluation = negamax(
-            board,
-            search_info,
-            if moving_team == 0 { 1 } else { 0 },
-            depth - 1,
-            -beta,
-            -alpha,
-        );
+        
+        let evaluation = if b_search_pv || depth < 2 {
+            negamax(
+                board,
+                search_info,
+                if moving_team == 0 { 1 } else { 0 },
+                depth - 1,
+                -beta,
+                -alpha,
+            )
+        } else {
+            let evaluation = negamax(
+                board,
+                search_info,
+                if moving_team == 0 { 1 } else { 0 },
+                depth - 2,
+                -alpha - 1,
+                -alpha,
+            );
+            if -evaluation.score > alpha {
+                negamax(
+                    board,
+                    search_info,
+                    if moving_team == 0 { 1 } else { 0 },
+                    depth - 1,
+                    -beta,
+                    -alpha,
+                )          
+            } else {
+                evaluation
+            }
+        };
+
         let score = -evaluation.score;
         board.undo_move(undo);
 
@@ -357,6 +195,7 @@ pub fn negamax(
             best_score = score;
             if score > alpha {
                 alpha = score;
+                b_search_pv = false;
                 if score >= beta {                
                     search_info.history_moves[action.from as usize][action.to as usize] += depth as i32;
 
@@ -411,19 +250,24 @@ pub fn quiescence(
     let mut moves: Vec<ScoredMove> = Vec::with_capacity(base_moves.len());
 
     for action in base_moves {
-        if action.capture {
-            moves.push(ScoredMove {
-                action,
-                score: score_qs_move(board, 0, &action, moving_team, None, search_info),
-            });
+        if !action.capture { continue; }
+
+        // Quiescence SEE Futility Pruning
+        let see_eval = see(board, action.to, moving_team, Some(action.from));
+        if (see_eval + 3000) <= alpha {
+            continue;
         }
+
+        moves.push(ScoredMove {
+            action,
+            score: score_qs_move(board, 0, &action, moving_team, None, search_info),
+        });
     }
 
     moves.sort_by(|a, b| b.score.cmp(&a.score));
 
-    //println!("{:?}", moves);
+    search_info.quiescence_positions += moves.len() as i32;
 
-    search_info.positions += moves.len() as i32;
     for ScoredMove { action, .. } in moves {
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
@@ -448,10 +292,10 @@ pub fn quiescence(
                         let counter = search_info.counter_moves[action.from as usize][action.to as usize];
                         let mut can_counter = true;
                         if let Some(counter_move) = counter {
-                            if counter_move.depth > -1 { can_counter = false; }
+                            if counter_move.depth > 0 { can_counter = false; }
                         }  
                         if can_counter {
-                            search_info.counter_moves[action.from as usize][action.to as usize] = Some(DepthMove { action, depth: -1 });
+                            search_info.counter_moves[action.from as usize][action.to as usize] = Some(DepthMove { action, depth: 0 });
                         }
                     }
                     break;
@@ -464,7 +308,7 @@ pub fn quiescence(
         score: best_score,
         best_move
     };
-    search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth: -1 });
+    search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth: 0 });
 
     return evaluation;
 }

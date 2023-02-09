@@ -19,6 +19,7 @@ The Lotisa engine uses a **10x12** board representation, where there's an **8x8*
 ## Search
 
 - [Iterative Deepening](https://www.chessprogramming.org/Iterative_Deepening)
+- [Quiescience Search](https://www.chessprogramming.org/Quiescence_Search)
 - [Alpha Beta Search](https://www.chessprogramming.org/Alpha-Beta)
     - [Pruning](https://www.chessprogramming.org/Pruning)
         - [Transposition Table Lookup](https://www.chessprogramming.org/Transposition_Table)
@@ -29,7 +30,6 @@ The Lotisa engine uses a **10x12** board representation, where there's an **8x8*
         - [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic)
         - [Countermove Heuristic](https://www.chessprogramming.org/Countermove_Heuristic)
         - [History Heuristic](https://www.chessprogramming.org/History_Heuristic)
-- [Quiescience Search](https://www.chessprogramming.org/Quiescence_Search)
 
 ## Evaluation
 

@@ -78,7 +78,12 @@ pub fn store_killer_move(current_move: Action, depth_left: i16, search_info: &mu
 
 
 pub fn score_active_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, tt_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
-    return 100_000 * see(board, action.to, moving_team, Some(action.from));
+    let see_val = see(board, action.to, moving_team, Some(action.from));
+    if see_val > 0 {
+        100_000 + see_val
+    } else {
+        see_val - 100_000
+    }
 }
 
 pub fn score_qs_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
@@ -297,7 +302,7 @@ pub fn negamax(
     mut beta: i32,
 ) -> EvaluationScore {
     if depth == 0 {
-        return quiescience(board, search_info, moving_team, alpha, beta); /*EvaluationScore {
+        return quiescence(board, search_info, moving_team, alpha, beta); /*EvaluationScore {
             score: eval_board(board, moving_team),
             best_move: None,
         };*/
@@ -380,7 +385,7 @@ pub fn negamax(
     return evaluation;
 }
 
-pub fn quiescience(
+pub fn quiescence(
     board: &mut Board,
     search_info: &mut SearchInfo,
     moving_team: i16,
@@ -416,11 +421,13 @@ pub fn quiescience(
 
     moves.sort_by(|a, b| b.score.cmp(&a.score));
 
+    //println!("{:?}", moves);
+
     search_info.positions += moves.len() as i32;
     for ScoredMove { action, .. } in moves {
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
-        let evaluation = quiescience(
+        let evaluation = quiescence(
             board,
             search_info,
             if moving_team == 0 { 1 } else { 0 },

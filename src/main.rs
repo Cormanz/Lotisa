@@ -95,7 +95,7 @@ fn main() {
         let beta_cutoff = info.positions as f32 / info.beta_cutoff as f32;
         println!("time: {}ms ({positions} nodes)", end - start);
         println!("beta cutoff: {}", beta_cutoff);
-        //println!("nodes/ms: {}", positions / (end - start) as i32);
+        println!("nodes/ms: {}", positions / (end - start) as i32);
         println!("move score: {} for {}", results.score, team);
         board.make_move(action);
         board.print_board();

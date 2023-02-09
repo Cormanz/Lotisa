@@ -8,7 +8,12 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
     let row_gap = board.row_gap;
 
     let center_area = vec![66, 67, 76, 77];
-    let center_bigger_area = vec![65, 66, 67, 68, 75, 76, 77, 78];
+    let center_bigger_area = vec![
+        55, 56, 57, 58,
+        65, 66, 67, 68, 
+        75, 76, 77, 78,
+        85, 86, 87, 88
+    ];
 
     for pos in &board.pieces {
         let piece = board.state[*pos as usize];

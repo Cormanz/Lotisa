@@ -25,10 +25,11 @@ The Lotisa engine uses a **10x12** board representation, where there's an **8x8*
     - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
         - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)
         - [Internal Iterative Deepening](https://www.chessprogramming.org/Internal_Iterative_Deepening)
-        - [MVV-LVA](https://www.chessprogramming.org/MVV-LVA)
+        - [Static Exchange Evaluation](https://www.chessprogramming.org/Static_Exchange_Evaluation)
         - [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic)
         - [Countermove Heuristic](https://www.chessprogramming.org/Countermove_Heuristic)
         - [History Heuristic](https://www.chessprogramming.org/History_Heuristic)
+- [Quiescience Search](https://www.chessprogramming.org/Quiescence_Search)
 
 ## Evaluation
 

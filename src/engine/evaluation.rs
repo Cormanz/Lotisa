@@ -2,11 +2,13 @@ use crate::boards::{Action, Board, PieceGenInfo};
 
 pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
     let mut material: i32 = 0;
+    let mut center_occupied: i32 = 0;
     let mut center_control: i32 = 0;
 
     let row_gap = board.row_gap;
 
     let center_area = vec![66, 67, 76, 77];
+    let center_bigger_area = vec![65, 66, 67, 68, 75, 76, 77, 78];
 
     for pos in &board.pieces {
         let piece = board.state[*pos as usize];
@@ -27,6 +29,9 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         if center_controlled {
             center_control += team_multiplier;
         }
+        if center_bigger_area.iter().any(|square| pos == square) {
+            center_occupied += team_multiplier;
+        }
     }
 
     let moves = board.generate_moves(moving_team).len() as i32;
@@ -34,7 +39,7 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         .generate_moves(if moving_team == 0 { 1 } else { 0 })
         .len() as i32;
 
-    material + (20 * center_control) // + moves - opposing_moves
+    material + (20 * center_control) + (5 * center_occupied) + moves - opposing_moves
 }
 
 pub fn eval_action(board: &mut Board, action: Action, moving_team: i16) -> i32 {

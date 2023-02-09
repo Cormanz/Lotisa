@@ -75,11 +75,49 @@ pub fn store_killer_move(current_move: Action, depth_left: i16, search_info: &mu
     }
 }
 
+
+
 pub fn score_active_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, tt_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
     return 100_000 * see(board, action.to, moving_team, Some(action.from));
 }
 
+pub fn score_qs_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
+    let mut score = 0;
+    let action_val = *action;
+    
+    // SEE
+    score += score_active_move(board, depth, action, moving_team, pv_move, search_info);
+
+    // Killer Moves
+    let mut i: i32 = 0;
+    while i < MAX_KILLER_MOVES as i32 {
+        let killer = search_info.killer_moves[i as usize][depth as usize];
+        if let Some(killer) = killer {
+            if action_val == killer {
+                score += 25_000 + (i + 1) * 4;
+            }
+        }
+        i += 1;
+    }
+
+    // Counter Moves
+    if let Some(counter_move) = search_info.counter_moves[action.from as usize][action.to as usize] {
+        if counter_move.action == action_val {
+            score += 100;
+        }
+    }
+
+    // History Moves
+
+    let history = search_info.history_moves[action.from as usize][action.to as usize];
+    score += history;
+
+    score
+}
+
+
 pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
+    let mut score = 0;
     let action_val = *action;
 
     // Order the previous best move from TT or IID first
@@ -93,7 +131,7 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i
 
     // SEE
     if action.capture {
-        return score_active_move(board, depth, action, moving_team, pv_move, search_info);
+        score += score_active_move(board, depth, action, moving_team, pv_move, search_info);
     }
 
     // Killer Moves
@@ -102,13 +140,11 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i
         let killer = search_info.killer_moves[i as usize][depth as usize];
         if let Some(killer) = killer {
             if action_val == killer {
-                return 25_000 + (i + 1) * 4;
+                score += 25_000 + (i + 1) * 4;
             }
         }
         i += 1;
     }
-
-    let mut score = 0;
 
     // Counter Moves
     if let Some(counter_move) = search_info.counter_moves[action.from as usize][action.to as usize] {
@@ -373,7 +409,7 @@ pub fn quiescience(
         if action.capture {
             moves.push(ScoredMove {
                 action,
-                score: score_active_move(board, 0, &action, moving_team, None, search_info),
+                score: score_qs_move(board, 0, &action, moving_team, None, search_info),
             });
         }
     }
@@ -402,7 +438,6 @@ pub fn quiescience(
                 if score >= beta {                
                     search_info.history_moves[action.from as usize][action.to as usize] += 1;
                     if !action.capture {
-                        store_killer_move(action, -1, search_info);
                         let counter = search_info.counter_moves[action.from as usize][action.to as usize];
                         let mut can_counter = true;
                         if let Some(counter_move) = counter {

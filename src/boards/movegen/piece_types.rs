@@ -36,9 +36,14 @@ pub trait Piece {
         The default `can_control` method is not very performant. Subtraits of Piece should reimplement this for the sake of performance.
     */
     fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
-        self.get_actions(board, piece_info)
-            .iter()
-            .any(|action| targets.contains(&action.to))
+        let mut can_control = false;
+        for action in self.get_actions(board, piece_info) {
+            if targets.contains(&action.to) {
+                can_control = true;
+                break;
+            }
+        }
+        can_control
     }
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
 
@@ -51,13 +56,36 @@ pub fn get_actions_delta(
     board: &Board,
     piece_info: &PieceGenInfo,
 ) -> Vec<Action> {
-    let mut actions = Vec::new();
+    let mut actions = Vec::with_capacity(deltas.len());
     let PieceGenInfo { pos, .. } = *piece_info;
     for delta in deltas {
         attempt_action(&mut actions, board, piece_info, pos + delta);
     }
     actions
 }
+
+pub fn can_control_delta(
+    deltas: &Vec<i16>,
+    board: &Board,
+    piece_info: &PieceGenInfo,
+    targets: &Vec<i16>
+) -> bool {
+    let PieceGenInfo { pos, .. } = *piece_info;
+    let positions = deltas.iter().map(|delta| pos + delta).collect::<Vec<_>>();
+    for target in targets {
+        let target_val = *target;
+        if positions.contains(target) {
+            match board.can_move_capture(target_val, piece_info.team) {
+                ActionType::MOVE | ActionType::CAPTURE => {
+                    return true;
+                }
+                _ => {}
+            }
+        }
+    }
+    false
+}
+
 
 pub fn can_control_sliding(
     sliders: &Vec<i16>,
@@ -104,7 +132,7 @@ pub fn get_actions_sliding(
     board: &Board,
     piece_info: &PieceGenInfo,
 ) -> Vec<Action> {
-    let mut actions = Vec::new();
+    let mut actions = Vec::with_capacity(sliders.len() * 2);
     let PieceGenInfo { pos, team, .. } = *piece_info;
 
     for slider in sliders {
@@ -261,9 +289,14 @@ impl Piece for KnightPiece {
         get_actions_delta(&self.deltas, board, piece_info)
     }
 
+    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+        can_control_delta(&self.deltas, board, piece_info, targets)
+    }
+
     fn get_material_value(&self) -> i32 {
         3000
     }
+
     fn get_icon(&self) -> &str {
         "♞"
     }

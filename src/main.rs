@@ -82,7 +82,7 @@ fn main() {
         let moves = board.generate_legal_moves(team);
         let start = get_epoch_ms();
         let mut info = create_search_info(&mut board, 6);
-        let results = negamax_deepening(&mut board, team, 6, &mut info);
+        let results = negamax_deepening(&mut board, team, 3, &mut info);
         let end = get_epoch_ms();
         let action = results.best_move.unwrap(); 
         /*if moves.iter().any(|action| action.capture) {
@@ -95,7 +95,7 @@ fn main() {
         let beta_cutoff = info.positions as f32 / info.beta_cutoff as f32;
         println!("time: {}ms ({positions} nodes)", end - start);
         println!("beta cutoff: {}", beta_cutoff);
-        println!("nodes/ms: {}", positions / (end - start) as i32);
+        //println!("nodes/ms: {}", positions / (end - start) as i32);
         println!("move score: {} for {}", results.score, team);
         board.make_move(action);
         board.print_board();

@@ -75,7 +75,11 @@ pub fn store_killer_move(current_move: Action, depth_left: i16, search_info: &mu
     }
 }
 
-pub fn score_move(board: &mut Board, depth: i16, action: &Action, tt_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
+pub fn score_active_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, tt_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
+    return 100_000 * see(board, action.to, moving_team, Some(action.from));
+}
+
+pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, tt_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
     let action_val = *action;
     if let Some(tt_move) = tt_move {
         if let Some(tt_move) = tt_move.best_move {
@@ -85,8 +89,13 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, tt_move: Optio
         }
     }
 
-    // MVV-LVA
+    // SEE
     if action.capture {
+        return score_active_move(board, depth, action, moving_team, tt_move, search_info);
+    }
+
+    // MVV-LVA
+    /*if action.capture {
         let PieceInfo {
             piece_type: from_piece_type,
             ..
@@ -106,7 +115,7 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, tt_move: Optio
             .get_material_value();
 
         return 100_000 + (16 * to_material) - from_material;
-    }
+    }*/
 
     // Killer Moves
     let mut i: i32 = 0;
@@ -135,6 +144,78 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, tt_move: Optio
     score += history;
 
     score
+}
+
+pub fn see(board: &mut Board, square: i16, moving_team: i16, current_attacker: Option<i16>) -> i32 {
+    let row_gap = board.row_gap;
+    let targets = vec![square];
+    let attacking_pieces = board.pieces.iter().filter(|pos| {
+        let pos = **pos;
+        let PieceInfo {
+            piece_type,
+            team,
+            ..
+        } = board.get_piece_info(pos);
+        if team != moving_team { return false; }
+        let piece_trait = board.piece_lookup.lookup(piece_type);
+        piece_trait.can_control(board, &PieceGenInfo { 
+            pos,
+            team,
+            row_gap,
+            piece_type
+        }, &targets)
+    }).collect::<Vec<_>>();
+    if attacking_pieces.len() == 0 {
+        return 0;
+    }
+
+    let attacker: i16 = if let Some(attacker) = current_attacker {
+        attacker
+    } else {
+        let mut smallest_attacker: i16 = 0;
+        let mut smallest_material: i32 = 2_000_000_000;
+        for attacker in attacking_pieces {
+            let pos = *attacker;
+            let PieceInfo {
+                piece_type,
+                ..
+            } = board.get_piece_info(pos);
+            let piece_trait = board.piece_lookup.lookup(piece_type);
+            let material = piece_trait.get_material_value();
+            if material < smallest_material {
+                smallest_attacker = pos;
+                smallest_material = material;
+            }
+        }
+        smallest_attacker
+    };
+
+    let PieceInfo {
+        piece_type: captured_type,
+        ..
+    } = board.get_piece_info(square);
+    let square_value = board.piece_lookup.lookup(captured_type).get_material_value();
+
+    let undo = board.make_move(Action {
+        from: attacker,
+        to: square,
+        capture: true,
+        info: None
+    });
+
+    let value = max(0, square_value - see(board, square, if moving_team == 0 { 1 } else { 0 }, None));
+    board.undo_move(undo);
+    return value;
+
+   /* skip if the square isn't attacked anymore by this side */
+   /*if ( piece )
+   {
+      make_capture(piece, square);
+      /* Do not consider captures if they lose material, therefor max zero */
+      value = max (0, piece_just_captured() -see(square, other(side)) );
+      undo_capture(piece, square);
+   }
+   return value;*/
 }
 
 pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo) -> EvaluationScore {
@@ -201,15 +282,15 @@ pub fn negamax(
     mut beta: i32,
 ) -> EvaluationScore {
     if depth == 0 {
-        return EvaluationScore {
+        return quiescience(board, search_info, moving_team, alpha, beta); /*EvaluationScore {
             score: eval_board(board, moving_team),
             best_move: None,
-        };
+        };*/
     }
 
+    let mut tt_move: Option<EvaluationScore> = None;
     let hash = hash_board(board, moving_team, &search_info.zobrist);
     let analysises = search_info.transposition_table.get(&hash);
-    let mut tt_move: Option<EvaluationScore> = None;
     if let Some(analysis) = analysises { 
         if analysis.depth == depth {
             return analysis.evaluation;
@@ -223,15 +304,16 @@ pub fn negamax(
     }
 
     let mut best_move: Option<Action> = None;
-    let mut best_score: i32 = -1000;
-    let mut moves = board
-        .generate_legal_moves(moving_team)
-        .iter()
-        .map(|action| ScoredMove {
-            action: *action,
-            score: score_move(board, depth, action, tt_move, search_info),
-        })
-        .collect::<Vec<_>>();
+    let mut best_score: i32 = -100_000_000;
+    let base_moves = board
+        .generate_legal_moves(moving_team);
+    let mut moves: Vec<ScoredMove> = Vec::with_capacity(base_moves.len());
+    for action in base_moves {
+        moves.push(ScoredMove {
+            action,
+            score: score_move(board, depth, &action, moving_team, tt_move, search_info),
+        });
+    }
     moves.sort_by(|a, b| b.score.cmp(&a.score));
     //println!("{:?}", moves);
 
@@ -239,7 +321,7 @@ pub fn negamax(
     for ScoredMove { action, .. } in moves {
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
-        let mut evaluation = negamax(
+        let evaluation = negamax(
             board,
             search_info,
             if moving_team == 0 { 1 } else { 0 },
@@ -247,15 +329,15 @@ pub fn negamax(
             -beta,
             -alpha,
         );
-        evaluation.score *= -1;
+        let score = -evaluation.score;
         board.undo_move(undo);
 
-        if evaluation.score > best_score {
+        if score > best_score {
             best_move = Some(action);
-            best_score = evaluation.score;
-            if evaluation.score > alpha {
-                alpha = evaluation.score;
-                if evaluation.score >= beta {                
+            best_score = score;
+            if score > alpha {
+                alpha = score;
+                if score >= beta {                
                     search_info.history_moves[action.from as usize][action.to as usize] += depth as i32;
 
                     if !action.capture {
@@ -280,5 +362,81 @@ pub fn negamax(
         best_move,
     };
     search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth });
+    return evaluation;
+}
+
+pub fn quiescience(
+    board: &mut Board,
+    search_info: &mut SearchInfo,
+    moving_team: i16,
+    mut alpha: i32,
+    mut beta: i32
+) -> EvaluationScore {
+    let mut best_move: Option<Action> = None;
+    let standing_pat = eval_board(board, moving_team);
+
+    let mut best_score: i32 = standing_pat;
+    if alpha < standing_pat {
+        alpha = standing_pat;
+    }
+
+    let base_moves = board
+        .generate_legal_moves(moving_team);
+    let mut moves: Vec<ScoredMove> = Vec::with_capacity(base_moves.len());
+
+    for action in base_moves {
+        if action.capture {
+            moves.push(ScoredMove {
+                action,
+                score: score_active_move(board, 0, &action, moving_team, None, search_info),
+            });
+        }
+    }
+
+    moves.sort_by(|a, b| b.score.cmp(&a.score));
+
+    search_info.positions += moves.len() as i32;
+    for ScoredMove { action, .. } in moves {
+        search_info.beta_cutoff += 1;
+        let undo = board.make_move(action);
+        let evaluation = quiescience(
+            board,
+            search_info,
+            if moving_team == 0 { 1 } else { 0 },
+            -beta,
+            -alpha,
+        );
+        let score = -evaluation.score;
+        board.undo_move(undo);
+
+        if score > best_score {
+            best_move = Some(action);
+            best_score = score;
+            if score > alpha {
+                alpha = score;
+                if score >= beta {                
+                    search_info.history_moves[action.from as usize][action.to as usize] += 1;
+                    if !action.capture {
+                        store_killer_move(action, -1, search_info);
+                        let counter = search_info.counter_moves[action.from as usize][action.to as usize];
+                        let mut can_counter = true;
+                        if let Some(counter_move) = counter {
+                            if counter_move.depth > -1 { can_counter = false; }
+                        }  
+                        if can_counter {
+                            search_info.counter_moves[action.from as usize][action.to as usize] = Some(DepthMove { action, depth: -1 });
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    let evaluation = EvaluationScore {
+        score: best_score,
+        best_move
+    };
+
     return evaluation;
 }

@@ -1,4 +1,13 @@
-use crate::boards::{Action, Board, PieceGenInfo};
+use crate::boards::{Action, Board, PieceGenInfo, PieceInfo};
+
+pub fn weigh_move(board: &Board, a: i32, b: &Action) -> i32 {
+    let PieceInfo { piece_type, .. } = board.get_piece_info(b.from);
+    if piece_type == 5 {
+        a + 5
+    } else {
+        a + 1
+    }
+}
 
 pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
     let mut material: i32 = 0;
@@ -15,8 +24,15 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         85, 86, 87, 88
     ];
 
+    let mut synergy = 0;
+    let mut opposing_synergy = 0;
+
+    let mut team_pieces: Vec<i16> = Vec::with_capacity(16);
+    let mut opposing_pieces: Vec<i16> = Vec::with_capacity(16);
+
     for pos in &board.pieces {
-        let piece = board.state[*pos as usize];
+        let pos = *pos;
+        let piece = board.state[pos as usize];
         let team = board.get_team(piece);
         let piece_type = board.get_piece_type(piece, team);
 
@@ -24,7 +40,7 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         let piece_material = piece_trait.get_material_value();
         let team_multiplier = if team == moving_team { 1 } else { -1 };
         let piece_info = PieceGenInfo {
-            pos: *pos,
+            pos,
             team: moving_team,
             row_gap,
             piece_type,
@@ -34,17 +50,61 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         if center_controlled {
             center_control += team_multiplier;
         }
-        if center_bigger_area.iter().any(|square| pos == square) {
+        if center_bigger_area.iter().any(|square| pos == *square) {
             center_occupied += team_multiplier;
+        }
+
+        if team == moving_team {
+            team_pieces.push(pos);
+        } else {
+            opposing_pieces.push(pos);
+        }
+    }
+    
+    let borrowed_team_pieces = &team_pieces;
+    let borrowed_opposing_pieces = &opposing_pieces;
+    for pos in borrowed_team_pieces {
+        let pos = *pos;
+        let team = board.get_team(pos);
+        let piece_type = board.get_piece_type(pos, team);
+        let piece_info = PieceGenInfo {
+            pos,
+            team: moving_team,
+            row_gap,
+            piece_type,
+        };
+        let piece_trait = board.piece_lookup.lookup(piece_type);
+        if piece_trait.can_control(board, &piece_info, borrowed_team_pieces) {
+            synergy += (10_000 - piece_trait.get_material_value()) / 1000;
         }
     }
 
-    let moves = board.generate_moves(moving_team).len() as i32;
+    
+    for pos in borrowed_opposing_pieces {
+        let pos = *pos;
+        let team = board.get_team(pos);
+        let piece_type = board.get_piece_type(pos, team);
+        let piece_info = PieceGenInfo {
+            pos,
+            team: moving_team,
+            row_gap,
+            piece_type,
+        };
+        let piece_trait = board.piece_lookup.lookup(piece_type);
+        if piece_trait.can_control(board, &piece_info, borrowed_opposing_pieces) {
+            opposing_synergy += (10_000 - piece_trait.get_material_value()) / 1000;
+        }
+    }
+
+    let moves = board
+        .generate_moves(moving_team)
+        .iter().fold(0, |a, b| weigh_move(board, a, b));
+    
     let opposing_moves = board
         .generate_moves(if moving_team == 0 { 1 } else { 0 })
-        .len() as i32;
+        .iter().fold(0, |a, b| weigh_move(board, a, b));
 
-    material + (20 * center_control) + (5 * center_occupied) + moves - opposing_moves
+    material + (2 * synergy) + (20 * center_control) + (12 * center_occupied) + moves - opposing_moves
 }
 
 pub fn eval_action(board: &mut Board, action: Action, moving_team: i16) -> i32 {

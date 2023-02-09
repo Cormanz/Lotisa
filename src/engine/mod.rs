@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::cmp::{min, max};
 
 use fnv::FnvHashMap;
 
@@ -138,6 +138,19 @@ pub fn negamax(
         pv_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta));
     }
 
+    // Null Move Pruning
+    if depth >= 2 {
+        let bound = beta;
+        let evaluation = negamax(board, search_info, moving_team, max(depth - 4 - 1, 0), -beta, 1 - beta);
+        let score = -evaluation.score;
+        if score >= bound {
+            return EvaluationScore {
+                score,
+                best_move: evaluation.best_move
+            };
+        }
+     }
+
     let mut best_move: Option<Action> = None;
     let mut best_score: i32 = -100_000_000;
     let base_moves = board
@@ -152,43 +165,40 @@ pub fn negamax(
     moves.sort_by(|a, b| b.score.cmp(&a.score));
     //println!("{:?}", moves);
 
-    let mut b_search_pv = true;
     search_info.positions += moves.len() as i32;
+    let mut ind = 0;
     for ScoredMove { action, .. } in moves {
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
-        
-        let evaluation = if true {
-            negamax(
-                board,
-                search_info,
-                if moving_team == 0 { 1 } else { 0 },
-                depth - 1,
-                -beta,
-                -alpha,
-            )
-        } else {
-            let evaluation = negamax(
-                board,
-                search_info,
-                moving_team, // Skipping opponent's turn: null move
-                depth - min(3, depth),
-                -alpha - 1,
-                -alpha,
-            );
-            if -evaluation.score > alpha {
-                negamax(
-                    board,
-                    search_info,
-                    if moving_team == 0 { 1 } else { 0 },
-                    depth - 1,
-                    -beta,
-                    -alpha,
-                )          
-            } else {
-                evaluation
+        let mut working_depth = depth - 1;
+
+        // Futility Pruning + Extended Futility Pruning
+        if depth == 1 {
+            let standing_pat = eval_board(board, moving_team);
+            if standing_pat + 3000 < alpha {
+                board.undo_move(undo);
+                continue;
             }
-        };
+        } else if depth == 2 {
+            let standing_pat = eval_board(board, moving_team);
+            if standing_pat + 5000 < alpha {
+                board.undo_move(undo);
+                continue;
+            }
+        }
+        
+        let evaluation = negamax(
+            board,
+            search_info,
+            if moving_team == 0 { 1 } else { 0 },
+            working_depth,
+            -beta,
+            -alpha,
+        );
+
+        if ind == 3 {
+            working_depth -= 1;
+        }
 
         let score = -evaluation.score;
         board.undo_move(undo);
@@ -198,7 +208,6 @@ pub fn negamax(
             best_score = score;
             if score > alpha {
                 alpha = score;
-                b_search_pv = false;
                 if score >= beta {                
                     search_info.history_moves[action.from as usize][action.to as usize] += depth as i32;
 
@@ -217,6 +226,7 @@ pub fn negamax(
                 }
             }
         }
+        ind += 1;
     }
 
     let evaluation = EvaluationScore {

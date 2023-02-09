@@ -20,9 +20,11 @@ The Lotisa engine uses a **10x12** board representation, where there's an **8x8*
 
 - [Iterative Deepening](https://www.chessprogramming.org/Iterative_Deepening)
 - [Quiescience Search](https://www.chessprogramming.org/Quiescence_Search)
-- [Principal Variation Search](https://www.chessprogramming.org/Principal_Variation_Search)
+- [Alpha Beta Search](https://www.chessprogramming.org/Alpha-Betav)
     - [Pruning](https://www.chessprogramming.org/Pruning)
         - [Transposition Table Lookup](https://www.chessprogramming.org/Transposition_Table)
+        - [Futility Pruning](https://www.chessprogramming.org/Futility_Pruning)
+            - Extended Futility Pruning
     - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
         - [Delta Pruning](https://www.chessprogramming.org/Delta_Pruning)
         - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)
@@ -60,7 +62,7 @@ I am currently working on optimizing performance, but the legal movegen perft is
 The main bottleneck is from Psuedolegal to Legal, which is a **18x** decrease in nodes per second (where Legal to Negamax is only about 3x.) This is an incredibly low speed. From the testing I've done, I believe there are two major causes of this:
 
 - Retrieving the piece trait information from `board.piece_maps`.
-- Having to run `can_attack`.
+- Having to run `can_control`.
 
 Until then, I'll keep working on the engine and hope hope I'll be able to optimize my move generation, or that someone would be willing to help me who's much more knowledgeable on Rust and/or Chess Programming.
 
@@ -102,17 +104,17 @@ Lotisa provides the following trait for implementing Piece behavior:
 
 ```rust
 pub trait Piece {
-    fn can_attack(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool;
+    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool;
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
     fn get_icon(&self) -> &str;
 }
 ```
 
-`can_attack` is used to check if a piece is threatening to _capture_ a particular square, which is used for optimizing checks.
+`can_control` is used to check if a piece is threatening to _capture_ a particular square, which is used for optimizing checks.
 `get_actions` provides all of the psuedolegal moves (all legal moves a piece can make, not accounting for king captures or checks) a piece can make.
 `get_icon` provides the emoji-icon of the piece, which makes it easy to see the board's state with `board.print_board()`.
 
-The default implementation of `can_attack` is provided by `Piece` itself, which just checks if the target is threatened by any of your moves. However, you are **strongly advised** to reimplement it if possible, as it will greatly speed up the engine's legal move generation (checking if moves put you in check.)
+The default implementation of `can_control` is provided by `Piece` itself, which just checks if the target is threatened by any of your moves. However, you are **strongly advised** to reimplement it if possible, as it will greatly speed up the engine's legal move generation (checking if moves put you in check.)
 
 Lotisa stores a `piece_lookup` with every board (you may have spotted the `create_default_piece_lookup` argument in `Board::new` earlier.) This piece map is a `PieceLookup` with the following implementation:
 

@@ -75,7 +75,7 @@ pub fn can_control_delta(
     for target in targets {
         let target_val = *target;
         if positions.contains(target) {
-            match board.can_move_capture(target_val, piece_info.team) {
+            match board.can_control(target_val, piece_info.team) {
                 ActionType::MOVE | ActionType::CAPTURE => {
                     return true;
                 }
@@ -105,7 +105,7 @@ pub fn can_control_sliding(
         loop {
             current_pos += slider;
 
-            match board.can_move_capture(current_pos, team) {
+            match board.can_control(current_pos, team) {
                 ActionType::MOVE => {
                     if targets.contains(&current_pos) {
                         return true;

@@ -261,6 +261,15 @@ impl Board {
         }
     }
 
+    pub fn can_control(&self, pos: i16, team: i16) -> ActionType {
+        let state = self.state[pos as usize];
+        match state {
+            0 => ActionType::FAIL,
+            1 => ActionType::MOVE,
+            _ => ActionType::CAPTURE
+        }
+    }
+
     pub fn load_fen(fen: &str) -> Board {
         let fen_chunks = fen.split("/");
         let mut pieces: Vec<i16> = Vec::with_capacity(32);

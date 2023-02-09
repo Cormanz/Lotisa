@@ -79,11 +79,13 @@ pub fn score_active_move(board: &mut Board, depth: i16, action: &Action, moving_
     return 100_000 * see(board, action.to, moving_team, Some(action.from));
 }
 
-pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, tt_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
+pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
     let action_val = *action;
-    if let Some(tt_move) = tt_move {
-        if let Some(tt_move) = tt_move.best_move {
-            if tt_move == action_val {
+
+    // Order the previous best move from TT or IID first
+    if let Some(pv_move) = pv_move {
+        if let Some(pv_move) = pv_move.best_move {
+            if pv_move == action_val {
                 return 1_000_000;
             }
         }
@@ -91,31 +93,8 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i
 
     // SEE
     if action.capture {
-        return score_active_move(board, depth, action, moving_team, tt_move, search_info);
+        return score_active_move(board, depth, action, moving_team, pv_move, search_info);
     }
-
-    // MVV-LVA
-    /*if action.capture {
-        let PieceInfo {
-            piece_type: from_piece_type,
-            ..
-        } = board.get_piece_info(action.from);
-        let from_material = board
-            .piece_lookup
-            .lookup(from_piece_type)
-            .get_material_value();
-
-        let PieceInfo {
-            piece_type: to_piece_type,
-            ..
-        } = board.get_piece_info(action.to);
-        let to_material = board
-            .piece_lookup
-            .lookup(to_piece_type)
-            .get_material_value();
-
-        return 100_000 + (16 * to_material) - from_material;
-    }*/
 
     // Killer Moves
     let mut i: i32 = 0;
@@ -288,19 +267,19 @@ pub fn negamax(
         };*/
     }
 
-    let mut tt_move: Option<EvaluationScore> = None;
+    let mut pv_move: Option<EvaluationScore> = None;
     let hash = hash_board(board, moving_team, &search_info.zobrist);
-    let analysises = search_info.transposition_table.get(&hash);
-    if let Some(analysis) = analysises { 
-        if analysis.depth == depth {
+    let analysis = search_info.transposition_table.get(&hash);
+    if let Some(analysis) = analysis { 
+        if analysis.depth >= depth {
             return analysis.evaluation;
         }
 
-        tt_move = Some(analysis.evaluation);
+        pv_move = Some(analysis.evaluation);
     }
 
-    if tt_move.is_none() && depth > 2 {
-        tt_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta));
+    if pv_move.is_none() && depth > 2 {
+        pv_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta));
     }
 
     let mut best_move: Option<Action> = None;
@@ -311,7 +290,7 @@ pub fn negamax(
     for action in base_moves {
         moves.push(ScoredMove {
             action,
-            score: score_move(board, depth, &action, moving_team, tt_move, search_info),
+            score: score_move(board, depth, &action, moving_team, pv_move, search_info),
         });
     }
     moves.sort_by(|a, b| b.score.cmp(&a.score));
@@ -372,6 +351,12 @@ pub fn quiescience(
     mut alpha: i32,
     mut beta: i32
 ) -> EvaluationScore {
+    let hash = hash_board(board, moving_team, &search_info.zobrist);
+    let analysis = search_info.transposition_table.get(&hash);
+    if let Some(analysis) = analysis { 
+        return analysis.evaluation;
+    }
+
     let mut best_move: Option<Action> = None;
     let standing_pat = eval_board(board, moving_team);
 
@@ -437,6 +422,7 @@ pub fn quiescience(
         score: best_score,
         best_move
     };
+    search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth: -1 });
 
     return evaluation;
 }

@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use fnv::FnvHashMap;
 
 use crate::boards::{Action, Board, PieceGenInfo, PieceInfo};
@@ -114,7 +116,8 @@ pub fn negamax(
     mut beta: i32,
 ) -> EvaluationScore {
     if depth == 0 {
-        return quiescence(board, search_info, moving_team, alpha, beta); /*EvaluationScore {
+        return quiescence(board, search_info, moving_team, alpha, beta); 
+         /*EvaluationScore {
             score: eval_board(board, moving_team),
             best_move: None,
         };*/
@@ -168,8 +171,8 @@ pub fn negamax(
             let evaluation = negamax(
                 board,
                 search_info,
-                if moving_team == 0 { 1 } else { 0 },
-                depth - 2,
+                moving_team, // Skipping opponent's turn: null move
+                depth - min(3, depth),
                 -alpha - 1,
                 -alpha,
             );
@@ -183,7 +186,8 @@ pub fn negamax(
                     -alpha,
                 )          
             } else {
-                evaluation
+                board.undo_move(undo);
+                continue;
             }
         };
 
@@ -240,8 +244,15 @@ pub fn quiescence(
     let mut best_move: Option<Action> = None;
     let standing_pat = eval_board(board, moving_team);
 
+    if standing_pat >= beta {
+        return EvaluationScore {
+            score: beta,
+            best_move: None
+        };
+    }
+
     let mut best_score: i32 = standing_pat;
-    if alpha < standing_pat {
+    if standing_pat > alpha {
         alpha = standing_pat;
     }
 
@@ -253,8 +264,12 @@ pub fn quiescence(
         if !action.capture { continue; }
 
         // Quiescence SEE Futility Pruning
-        let see_eval = see(board, action.to, moving_team, Some(action.from));
-        if (see_eval + 3000) <= alpha {
+        let PieceInfo {
+            piece_type,
+            ..
+        } = board.get_piece_info(action.to);
+        let piece_material = board.piece_lookup.lookup(piece_type).get_material_value();
+        if piece_material + 400 + standing_pat < alpha {
             continue;
         }
 

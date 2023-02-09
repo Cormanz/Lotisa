@@ -158,7 +158,7 @@ pub fn negamax(
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
         
-        let evaluation = if b_search_pv || depth < 2 {
+        let evaluation = if true {
             negamax(
                 board,
                 search_info,
@@ -186,8 +186,7 @@ pub fn negamax(
                     -alpha,
                 )          
             } else {
-                board.undo_move(undo);
-                continue;
+                evaluation
             }
         };
 
@@ -263,7 +262,7 @@ pub fn quiescence(
     for action in base_moves {
         if !action.capture { continue; }
 
-        // Quiescence SEE Futility Pruning
+        // Delta Pruning
         let PieceInfo {
             piece_type,
             ..

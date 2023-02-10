@@ -2,16 +2,15 @@ use std::{cmp::{min, max}, time::{SystemTime, UNIX_EPOCH}, ops::Neg};
 
 use fnv::FnvHashMap;
 
-use crate::boards::{Action, Board, PieceGenInfo, PieceInfo};
-
-use self::{
-    evaluation::{eval_board, EvaluationScore},
-    zobrist::{generate_zobrist, hash_board}, ordering::{score_move, score_qs_move, MAX_KILLER_MOVES, see, store_killer_move},
-};
+use crate::boards::{Action, Board, PieceGenInfo, PieceInfo, in_check};
 
 mod evaluation;
 mod zobrist;
 mod ordering;
+
+pub use evaluation::*;
+pub use ordering::*;
+pub use zobrist::*;
 
 /*
     The engine only works for TWO-PLAYER GAMES as of now.
@@ -70,7 +69,7 @@ pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, in
         out = negamax_root(board, moving_team, i, info);
         let end = get_epoch_ms();
         let new_nodes = (info.quiescence_positions + info.positions) - prev_nodes;
-        println!("depth {} nodes {} time {} nps {}", i, new_nodes, end - start, (new_nodes / ((end - start) + 1) as i32) * 1000);
+        println!("depth {} nodes {} time {} nps {} score {} out {:?}", i, new_nodes, end - start, (new_nodes / ((end - start) + 1) as i32) * 1000, out.score, out);
         prev_nodes += new_nodes;
     }
 
@@ -112,24 +111,32 @@ pub fn create_search_info(board: &mut Board, depth: i16) -> SearchInfo {
     }
 }
 
+const MIN_SCORE: i32 = -2147483647;
+const MAX_SCORE: i32 = 2147483647;
+const ENDGAME_THRESHOLD: i32 = 15_000;
+
 pub fn negamax_root(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo) -> EvaluationScore {
     let evaluation = negamax(
         board,
         info,
         moving_team,
         depth,
-        -2147483647,
-        2147483647,
+        MIN_SCORE,
+        MAX_SCORE,
     );
     //evaluation.score *= -1;
     evaluation
+}
+
+pub fn is_tactical_move(board: &mut Board, action: &Action, moving_team: i16) -> bool {
+    !action.capture && !in_check(board, if moving_team == 0 { 1 } else { 0 }, board.row_gap)
 }
 
 pub fn negamax(
     board: &mut Board,
     search_info: &mut SearchInfo,
     moving_team: i16,
-    depth: i16,
+    mut depth: i16,
     mut alpha: i32,
     mut beta: i32,
 ) -> EvaluationScore {
@@ -141,6 +148,7 @@ pub fn negamax(
         };*/
     }
 
+    let is_endgame = get_lowest_material(board, moving_team) < ENDGAME_THRESHOLD;
     let mut pv_move: Option<EvaluationScore> = None;
     let hash = hash_board(board, moving_team, &search_info.zobrist);
     let analysis = search_info.transposition_table.get(&hash);
@@ -160,23 +168,47 @@ pub fn negamax(
         pv_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta));
     }
 
-    // Null Move Pruning
     if depth >= 2 {
         let bound = beta;
-        let evaluation = negamax(board, search_info, moving_team, max(depth - 4 - 1, 0), -beta, 1 - beta);
+        let evaluation = negamax(board, search_info, moving_team, max(depth - 3 - 1, 0), -beta, 1 - beta);
         let score = -evaluation.score;
         if score >= bound {
-            return EvaluationScore {
-                score,
-                best_move: evaluation.best_move
-            };
+            if is_endgame {
+                // Null Move Reductions during the Endgame
+                depth -= 3;
+                if depth < 1 {
+                    depth = 1;
+                }
+            } else {
+                // Null Move Pruning
+                return EvaluationScore {
+                    score,
+                    best_move: evaluation.best_move
+                };
+            }
         }
      }
 
     let mut best_move: Option<Action> = None;
-    let mut best_score: i32 = -100_000_000;
+
+    let mut best_score: i32 = MIN_SCORE;
     let base_moves = board
         .generate_legal_moves(moving_team);
+
+    if base_moves.len() == 0 {
+        if in_check(board, moving_team, board.row_gap) {
+            return EvaluationScore {
+                score: MIN_SCORE + 10,
+                best_move: None
+            };      
+        }
+
+        return EvaluationScore {
+            score: 0,
+            best_move: None
+        };      
+    }
+
     let mut moves: Vec<ScoredMove> = Vec::with_capacity(base_moves.len());
     for action in base_moves {
         moves.push(ScoredMove {
@@ -192,18 +224,20 @@ pub fn negamax(
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
 
-        // Futility Pruning + Extended Futility Pruning
-        if depth == 1 {
-            let standing_pat = eval_board(board, moving_team);
-            if standing_pat + 3000 < alpha {
-                board.undo_move(undo);
-                continue;
-            }
-        } else if depth == 2 {
-            let standing_pat = eval_board(board, moving_team);
-            if standing_pat + 5000 < alpha {
-                board.undo_move(undo);
-                continue;
+        if action.capture {
+            // Futility Pruning + Extended Futility Pruning
+            if depth == 1 {
+                let standing_pat = eval_board(board, moving_team);
+                if standing_pat + 3000 < alpha {
+                    board.undo_move(undo);
+                    continue;
+                }
+            } else if depth == 2 {
+                let standing_pat = eval_board(board, moving_team);
+                if standing_pat + 5000 < alpha {
+                    board.undo_move(undo);
+                    continue;
+                }
             }
         }
         
@@ -217,7 +251,7 @@ pub fn negamax(
         );
 
         // Late Move Reductions
-        if ind == 2 && working_depth > 0 {
+        if ind == 3 && working_depth > 0 {
             working_depth -= 1;
         }
 
@@ -250,9 +284,12 @@ pub fn negamax(
         ind += 1;
     }
 
+    if depth == search_info.root_depth {
+
+    }
     let evaluation = EvaluationScore {
         score: best_score,
-        best_move,
+        best_move
     };
     if depth >= analysis_depth {
         search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth });
@@ -265,7 +302,7 @@ pub fn quiescence(
     search_info: &mut SearchInfo,
     moving_team: i16,
     mut alpha: i32,
-    mut beta: i32
+    beta: i32
 ) -> EvaluationScore {
     let hash = hash_board(board, moving_team, &search_info.zobrist);
     let analysis = search_info.transposition_table.get(&hash);

@@ -1,4 +1,6 @@
-use crate::boards::{Action, Board, PieceGenInfo, PieceInfo};
+use crate::boards::{Action, Board, PieceGenInfo, PieceInfo, in_check};
+
+use super::MIN_SCORE;
 
 pub fn weigh_move(board: &Board, a: i32, b: &Action) -> i32 {
     let PieceInfo { piece_type, .. } = board.get_piece_info(b.from);
@@ -9,7 +11,34 @@ pub fn weigh_move(board: &Board, a: i32, b: &Action) -> i32 {
     }
 }
 
-pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
+pub fn get_lowest_material(board: &mut Board, moving_team: i16) -> i32 {
+    let mut material = 0;
+    let mut opposing_material = 0;
+    let row_gap = board.row_gap;
+
+    for pos in &board.pieces {
+        let pos = *pos;
+        let piece = board.state[pos as usize];
+        let team = board.get_team(piece);
+        let piece_type = board.get_piece_type(piece, team);
+
+        let piece_trait = &board.piece_lookup.lookup(piece_type);
+        let piece_material = piece_trait.get_material_value();
+        if team == moving_team {
+            material += piece_material;
+        } else {
+            opposing_material += opposing_material;
+        }
+    }
+
+    if material < opposing_material {
+        material
+    } else {
+        opposing_material
+    }
+}
+
+pub fn eval_board(board: &mut Board, moving_team: i16) -> i32 {
     let mut material: i32 = 0;
     let mut center_occupied: i32 = 0;
     let mut center_control: i32 = 0;
@@ -96,10 +125,11 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         }
     }
 
-    let moves = board
-        .generate_moves(moving_team)
-        .iter().fold(0, |a, b| weigh_move(board, a, b));
-    
+    let base_moves = board
+        .generate_legal_moves(moving_team);
+        
+    let moves = base_moves.iter().fold(0, |a, b| weigh_move(board, a, b));
+ 
     let opposing_moves = board
         .generate_moves(if moving_team == 0 { 1 } else { 0 })
         .iter().fold(0, |a, b| weigh_move(board, a, b));

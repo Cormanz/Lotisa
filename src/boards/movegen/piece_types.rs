@@ -94,10 +94,10 @@ pub fn can_control_sliding(
     targets: &Vec<i16>,
 ) -> bool {
     let PieceGenInfo { pos, team, .. } = *piece_info;
-    let mut difs = targets.iter().map(|target| target - pos);
+    let mut difs = targets.iter().map(|target| target - pos).collect::<Vec<_>>();
 
     for slider in sliders {
-        if difs.all(|dif| (dif % slider) != 0 || dif.signum() != slider.signum()) {
+        if difs.iter().all(|dif| (dif % slider) != 0 || dif.signum() != slider.signum()) {
             continue;
         }
 

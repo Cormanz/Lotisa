@@ -30,6 +30,7 @@ The Lotisa engine uses a **10x12** board representation, where there's an **8x8*
         - [Quiescence SEE Pruning](https://www.chessprogramming.org/Static_Exchange_Evaluation)
     - [Reductions]
         - [Late Move Reductions](https://www.chessprogramming.org/Late_Move_Reductions)
+        - [Null Move Reductions](https://www.chessprogramming.org/Null_Move_Reductions)
     - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
         - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)
         - [Internal Iterative Deepening](https://www.chessprogramming.org/Internal_Iterative_Deepening)

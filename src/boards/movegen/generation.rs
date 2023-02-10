@@ -157,6 +157,40 @@ pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
     actions
 }
 
+pub fn in_check(board: &mut Board, moving_team: i16, row_gap: i16) -> bool {
+    let king = board.get_piece_value(5, moving_team);
+    let king = *board
+        .pieces
+        .iter()
+        .find(|piece| board.state[**piece as usize] == king)
+        .unwrap();
+    let king_vec = vec![king];
+    for pos in &board.pieces {
+        let pos = *pos;
+        let pos_usize = pos as usize;
+        let piece = board.state[pos_usize];
+        let team = board.get_team(piece);
+        if team == moving_team {
+            continue;
+        }
+
+        let piece_type = board.get_piece_type(piece, team);
+        let piece_info = PieceGenInfo {
+            pos,
+            row_gap,
+            team,
+            piece_type,
+        };
+        
+        let piece_handler = board.piece_lookup.lookup(piece_type);
+        if piece_handler.can_control(board, &piece_info, &king_vec) {
+            return true;
+        }
+    }
+    
+    false
+}
+
 pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action> {
     let Board { row_gap, .. } = board;
     let row_gap = *row_gap;
@@ -174,49 +208,9 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
         }
 
         let undo = board.make_move(action);
-
-        let king = board.get_piece_value(5, required_team);
-        let king = *board
-            .pieces
-            .iter()
-            .find(|piece| board.state[**piece as usize] == king)
-            .unwrap();
-        let king_vec = vec![king];
-        let mut can_add = true;
-        for pos in &board.pieces {
-            let pos = *pos;
-            let pos_usize = pos as usize;
-            let piece = board.state[pos_usize];
-            let team = board.get_team(piece);
-            if team == required_team {
-                continue;
-            }
-
-            let piece_type = board.get_piece_type(piece, team);
-            let piece_info = PieceGenInfo {
-                pos,
-                row_gap,
-                team,
-                piece_type,
-            };
-
-            /*let piece_handler: Box<dyn Piece> = match piece_type {
-                0 => Box::new(PawnPiece),
-                1 => Box::new(KnightPiece::new(row_gap)),
-                2 => Box::new(BishopPiece::new(row_gap)),
-                3 => Box::new(RookPiece::new(row_gap)),
-                4 => Box::new(QueenPiece::new(row_gap)),
-                5 => Box::new(KingPiece::new(row_gap)),
-                _ => Box::new(PawnPiece)
-            };*/
-            let piece_handler = board.piece_lookup.lookup(piece_type);
-            if piece_handler.can_control(board, &piece_info, &king_vec) {
-                can_add = false;
-                break;
-            }
-        }
-
+        let can_add = !in_check(board, required_team, row_gap);
         board.undo_move(undo);
+
         if can_add {
             new_actions.push(action);
         }

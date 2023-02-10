@@ -81,8 +81,8 @@ fn main() {
     loop {
         let moves = board.generate_legal_moves(team);
         let start = get_epoch_ms();
-        let mut info = create_search_info(&mut board, 6);
-        let results = negamax_deepening(&mut board, team, 6, &mut info);
+        let mut info = create_search_info(&mut board, 15);
+        let results = negamax_deepening(&mut board, team, 10, &mut info);
         let end = get_epoch_ms();
         let action = results.best_move.unwrap(); 
         /*if moves.iter().any(|action| action.capture) {
@@ -90,15 +90,15 @@ fn main() {
         } else {
             moves.choose(&mut rand::thread_rng()).unwrap()
         };*/
-        thread::sleep(Duration::from_millis(1700));
-        let total_positions = info.positions + info.quiescence_positions;
+        thread::sleep(Duration::from_millis(500));
+        /*let total_positions = info.positions + info.quiescence_positions;
         let positions = info.beta_cutoff;
         let beta_cutoff = total_positions as f32 / info.beta_cutoff as f32;
         println!("time: {}ms ({positions} nodes)", end - start);
         println!("detected: {} nodes vs {} quiescence nodes", info.positions, info.quiescence_positions);
         println!("beta cutoff: {}", beta_cutoff);
         println!("nodes/ms: {}", total_positions / (end - start) as i32);
-        println!("move score: {} for {}", results.score, team);
+        println!("move score: {} for {}", results.score, team);*/
         board.make_move(action);
         board.print_board();
         team = if team == 0 { 1 } else { 0 };

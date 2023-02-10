@@ -80,7 +80,7 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i
     if let Some(pv_move) = pv_move {
         if let Some(pv_move) = pv_move.best_move {
             if pv_move == action_val {
-                return 1_000_000;
+                return 100_000_000;
             }
         }
     }

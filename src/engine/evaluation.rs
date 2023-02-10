@@ -75,7 +75,7 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         };
         let piece_trait = board.piece_lookup.lookup(piece_type);
         if piece_trait.can_control(board, &piece_info, borrowed_team_pieces) {
-            synergy += (10_000 - piece_trait.get_material_value()) / 1000;
+            synergy += 1;
         }
     }
 
@@ -92,7 +92,7 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         };
         let piece_trait = board.piece_lookup.lookup(piece_type);
         if piece_trait.can_control(board, &piece_info, borrowed_opposing_pieces) {
-            opposing_synergy += (10_000 - piece_trait.get_material_value()) / 1000;
+            opposing_synergy += 1;
         }
     }
 
@@ -104,7 +104,7 @@ pub fn eval_board(board: &Board, moving_team: i16) -> i32 {
         .generate_moves(if moving_team == 0 { 1 } else { 0 })
         .iter().fold(0, |a, b| weigh_move(board, a, b));
 
-    material + (2 * synergy) + (20 * center_control) + (12 * center_occupied) + moves - opposing_moves
+    material + (2 * synergy) - (2 * opposing_synergy) + (20 * center_control) + (12 * center_occupied) + moves - opposing_moves
 }
 
 pub fn eval_action(board: &mut Board, action: Action, moving_team: i16) -> i32 {

@@ -1,4 +1,4 @@
-use std::cmp::{min, max};
+use std::{cmp::{min, max}, time::{SystemTime, UNIX_EPOCH}, ops::Neg};
 
 use fnv::FnvHashMap;
 
@@ -49,12 +49,29 @@ pub struct SearchInfo {
     pub counter_moves: CounterMoves,
     pub zobrist: Vec<usize>,
     pub transposition_table: FnvHashMap<usize, StoredEvaluationScore>,
+    pub root_depth: i16
 }
+
+fn get_epoch_ms() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
+}
+
 
 pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo) -> EvaluationScore {
     let mut out = EvaluationScore { score: 0, best_move: None };
+    let mut prev_nodes = 0;
     for i in 1..(depth + 1) {
+        //if i != depth { continue; }
+        info.root_depth = i;
+        let start = get_epoch_ms();
         out = negamax_root(board, moving_team, i, info);
+        let end = get_epoch_ms();
+        let new_nodes = (info.quiescence_positions + info.positions) - prev_nodes;
+        println!("depth {} nodes {} time {} nps {}", i, new_nodes, end - start, (new_nodes / ((end - start) + 1) as i32) * 1000);
+        prev_nodes += new_nodes;
     }
 
     out
@@ -78,7 +95,7 @@ pub fn create_search_info(board: &mut Board, depth: i16) -> SearchInfo {
     }
 
     let transposition_table: FnvHashMap<usize, StoredEvaluationScore> = FnvHashMap::with_capacity_and_hasher(
-        4usize.pow((depth + 1) as u32),
+        2usize.pow((depth + 1) as u32),
         Default::default()
     );
 
@@ -89,6 +106,7 @@ pub fn create_search_info(board: &mut Board, depth: i16) -> SearchInfo {
         killer_moves,
         counter_moves,
         history_moves,
+        root_depth: 0,
         zobrist: generate_zobrist(board.piece_types, board.teams, board.rows * board.cols),
         transposition_table
     }
@@ -126,12 +144,16 @@ pub fn negamax(
     let mut pv_move: Option<EvaluationScore> = None;
     let hash = hash_board(board, moving_team, &search_info.zobrist);
     let analysis = search_info.transposition_table.get(&hash);
+    let mut analysis_depth = -1;
     if let Some(analysis) = analysis { 
-        if analysis.depth >= depth {
+        analysis_depth = analysis.depth;
+        if analysis_depth >= depth {
             return analysis.evaluation;
         }
 
-        pv_move = Some(analysis.evaluation);
+        if depth - analysis_depth <= 2 {
+            pv_move = Some(analysis.evaluation);
+        }
     }
 
     if pv_move.is_none() && depth > 2 {
@@ -163,14 +185,12 @@ pub fn negamax(
         });
     }
     moves.sort_by(|a, b| b.score.cmp(&a.score));
-    //println!("{:?}", moves);
-
     search_info.positions += moves.len() as i32;
     let mut ind = 0;
+    let mut working_depth = depth - 1;
     for ScoredMove { action, .. } in moves {
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
-        let mut working_depth = depth - 1;
 
         // Futility Pruning + Extended Futility Pruning
         if depth == 1 {
@@ -196,7 +216,8 @@ pub fn negamax(
             -alpha,
         );
 
-        if ind == 3 {
+        // Late Move Reductions
+        if ind == 2 && working_depth > 0 {
             working_depth -= 1;
         }
 
@@ -233,7 +254,9 @@ pub fn negamax(
         score: best_score,
         best_move,
     };
-    search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth });
+    if depth >= analysis_depth {
+        search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth });
+    }
     return evaluation;
 }
 
@@ -279,6 +302,11 @@ pub fn quiescence(
         } = board.get_piece_info(action.to);
         let piece_material = board.piece_lookup.lookup(piece_type).get_material_value();
         if piece_material + 400 + standing_pat < alpha {
+            continue;
+        }
+
+        // SEE Pruning
+        if see(board, action.to, moving_team, Some(action.from)) < 0 {
             continue;
         }
 

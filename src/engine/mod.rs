@@ -69,7 +69,7 @@ pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, in
         out = negamax_root(board, moving_team, i, info);
         let end = get_epoch_ms();
         let new_nodes = (info.quiescence_positions + info.positions) - prev_nodes;
-        println!("depth {} nodes {} time {} nps {} score {} out {:?}", i, new_nodes, end - start, (new_nodes / ((end - start) + 1) as i32) * 1000, out.score, out);
+        println!("info depth {} nodes {} time {} nps {} score {} out {:?}", i, new_nodes, end - start, (new_nodes / ((end - start) + 1) as i32) * 1000, out.score, out);
         prev_nodes += new_nodes;
     }
 
@@ -148,7 +148,8 @@ pub fn negamax(
         };*/
     }
 
-    let is_endgame = get_lowest_material(board, moving_team) < ENDGAME_THRESHOLD;
+    let lowest_material = get_lowest_material(board, moving_team);
+    let is_endgame = lowest_material < ENDGAME_THRESHOLD;
     let mut pv_move: Option<EvaluationScore> = None;
     let hash = hash_board(board, moving_team, &search_info.zobrist);
     let analysis = search_info.transposition_table.get(&hash);

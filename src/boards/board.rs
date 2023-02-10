@@ -233,8 +233,8 @@ impl Board {
         pos / self.row_gap
     }
 
-    pub fn get_col(&self, pos: i16) -> i16 {
-        pos - (pos / self.row_gap)
+    pub fn get_col(&self, pos: i16, row: i16) -> i16 {
+        pos - (self.row_gap * row)
     }
 
     pub fn can_move(&self, pos: i16) -> bool {

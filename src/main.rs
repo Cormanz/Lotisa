@@ -1,17 +1,19 @@
 use core::time;
+use communication::UCICommunicator;
 use engine::{eval_board, negamax_root};
 use rand::seq::{IteratorRandom, SliceRandom};
 use std::{
     env, thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, SystemTime, UNIX_EPOCH}, io::{self, BufRead},
 };
 
 use boards::Board;
 
-use crate::{engine::{create_search_info, negamax_deepening}, boards::in_check};
+use crate::{engine::{create_search_info, negamax_deepening}, boards::in_check, communication::Communicator};
 
 mod boards;
 mod engine;
+mod communication;
 
 fn get_epoch_ms() -> u128 {
     SystemTime::now()
@@ -55,10 +57,16 @@ pub fn perft(board: &mut Board, depth: i16, team: i16) -> u64 {
 }
 
 fn main() {
-    env::set_var("RUST_BACKTRACE", "FULL");
+    let mut board: Board;
+    let stdin = io::stdin();
+    for line in stdin.lock().lines() {
+        println!("{}", line.unwrap());
+    }
+
+    /*env::set_var("RUST_BACKTRACE", "FULL");
     let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
     let mut board = Board::load_fen(fen);
-    let mut team = 1;
+    let mut team = 0;*/
 
     /*println!("sadly!");
     let start = get_epoch_ms();
@@ -79,16 +87,18 @@ fn main() {
 
     println!("-----");*/
 
-    board.print_board();
+    /*board.print_board();
+    let uci = UCICommunicator { board: &mut board };
 
-    let mut info = create_search_info(&mut board, 17);
+    let mut info = create_search_info(uci.board, 17);
     loop {
-        let results = negamax_deepening(&mut board, team, 8, &mut info);
+        let results = negamax_deepening(uci.board, team, 6, &mut info);
         let action = results.best_move.unwrap(); 
         thread::sleep(Duration::from_millis(1000));
-        board.make_move(action);
-        board.print_board();
+        println!("{}", uci.encode(&action));
+        uci.board.make_move(action);
+        uci.board.print_board();
         team = if team == 0 { 1 } else { 0 };
         println!("-----");
-    }
+    }*/
 }

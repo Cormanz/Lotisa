@@ -14,7 +14,6 @@ pub fn weigh_move(board: &Board, a: i32, b: &Action) -> i32 {
 pub fn get_lowest_material(board: &mut Board, moving_team: i16) -> i32 {
     let mut material = 0;
     let mut opposing_material = 0;
-    let row_gap = board.row_gap;
 
     for pos in &board.pieces {
         let pos = *pos;
@@ -27,7 +26,7 @@ pub fn get_lowest_material(board: &mut Board, moving_team: i16) -> i32 {
         if team == moving_team {
             material += piece_material;
         } else {
-            opposing_material += opposing_material;
+            opposing_material += piece_material;
         }
     }
 

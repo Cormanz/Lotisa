@@ -4,7 +4,7 @@ use engine::{eval_board, negamax_root};
 use rand::seq::{IteratorRandom, SliceRandom};
 use std::{
     env, thread,
-    time::{Duration, SystemTime, UNIX_EPOCH}, io::{self, BufRead},
+    time::{Duration, SystemTime, UNIX_EPOCH}, io::{self, BufRead, Stdin},
 };
 
 use boards::Board;
@@ -56,35 +56,7 @@ pub fn perft(board: &mut Board, depth: i16, team: i16) -> u64 {
     nodes
 }
 
-fn main() {
-    /*let mut uci = UCICommunicator { board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") };
-    let stdin = io::stdin();
-    let mut team = 0;
-    for line in stdin.lock().lines() {
-        let line = line.unwrap();
-        if line == "uci" {
-            println!("id name Lotisa 0.0.0");
-            println!("id author Corman"); 
-            println!("uciok");
-        } else if line == "ucinewgame" {
-            uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-        } else if line.starts_with("position startpos moves ") {
-            let moves = &line[24..].split(" ").collect::<Vec<_>>();
-            uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-            team = (moves.len() % 2) as i16;
-            for action in moves {
-                let action = uci.decode(action.to_string());
-                uci.board.make_move(action);
-            }
-        } else if line.starts_with("go") {
-            let mut info = create_search_info(&mut uci.board, 17);
-            let results = negamax_deepening(&mut uci.board, team, 8, &mut info);
-            println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
-        } else if line == "isready" {
-            println!("readyok");
-        }
-    }*/
-
+fn test_mode() {
     env::set_var("RUST_BACKTRACE", "FULL");
     let fen = "r1bqk2r/2p2ppp/p1p2n2/2bpp3/7Q/4PP2/PPPPK1PP/RNB3NR";
     let mut team = 0;
@@ -121,5 +93,45 @@ fn main() {
         uci.board.print_board();
         team = if team == 0 { 1 } else { 0 };
         println!("-----");
+    }
+}
+
+fn uci_mode(stdin: Stdin) {
+    let mut uci = UCICommunicator { board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") };
+    let mut team = 0;
+
+    for line in stdin.lock().lines() {
+        let line = line.unwrap();
+        if line == "uci" {
+        } else if line == "ucinewgame" {
+            uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        } else if line.starts_with("position startpos moves ") {
+            let moves = &line[24..].split(" ").collect::<Vec<_>>();
+            uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+            team = (moves.len() % 2) as i16;
+            for action in moves {
+                let action = uci.decode(action.to_string());
+                uci.board.make_move(action);
+            }
+        } else if line.starts_with("go") {
+            let mut info = create_search_info(&mut uci.board, 17);
+            let results = negamax_deepening(&mut uci.board, team, 8, &mut info);
+            println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
+        } else if line == "isready" {
+            println!("readyok");
+        }
+    }
+}
+
+fn main() {
+    let stdin = io::stdin();
+    let first_line = stdin.lock().lines().next().unwrap().unwrap();
+    if first_line == "uci" {
+        println!("id name Lotisa 0.0.0");
+        println!("id author Corman"); 
+        println!("uciok");
+        uci_mode(stdin);
+    } else if first_line == "test" {
+        test_mode();
     }
 }

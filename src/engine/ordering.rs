@@ -42,7 +42,9 @@ pub fn score_qs_move(board: &mut Board, depth: i16, action: &Action, moving_team
     let action_val = *action;
     
     // SEE
-    score += score_active_move(board, depth, action, moving_team, pv_move, search_info);
+    if action.capture {
+        return score_active_move(board, depth, action, moving_team, pv_move, search_info);
+    }
 
     // Killer Moves
     let mut i: i32 = 0;

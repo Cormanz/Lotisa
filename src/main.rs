@@ -86,8 +86,7 @@ fn main() {
     }
 
     /*env::set_var("RUST_BACKTRACE", "FULL");
-    let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-    let mut board = Board::load_fen(fen);
+    let fen = "r1b1kb1r/pppp1ppp/2n2n2/8/4q3/4P1P1/PPPP1P1P/RNB1KBNR";
     let mut team = 0;*/
 
     /*println!("sadly!");
@@ -109,12 +108,12 @@ fn main() {
 
     println!("-----");*/
 
-    /*board.print_board();
-    let uci = UCICommunicator { board: &mut board };
+    /*let mut uci = UCICommunicator { board: Board::load_fen(fen) };
+    uci.board.print_board();
 
-    let mut info = create_search_info(uci.board, 17);
+    let mut info = create_search_info(&mut uci.board, 17);
     loop {
-        let results = negamax_deepening(uci.board, team, 6, &mut info);
+        let results = negamax_deepening(&mut uci.board, team, 8, &mut info);
         let action = results.best_move.unwrap(); 
         thread::sleep(Duration::from_millis(1000));
         println!("{}", uci.encode(&action));

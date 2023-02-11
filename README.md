@@ -28,7 +28,6 @@ The Lotisa engine uses a **10x12** board representation, where there's an **8x8*
     - [Pruning](https://www.chessprogramming.org/Pruning)
         - [Transposition Table Lookup](https://www.chessprogramming.org/Transposition_Table)
         - [Delta Pruning](https://www.chessprogramming.org/Delta_Pruning)
-        - [Null Move Pruning](https://www.chessprogramming.org/Null_Move_Pruning)
         - [Futility Pruning](https://www.chessprogramming.org/Futility_Pruning)
             - Extended Futility Pruning
         - [Quiescence SEE Pruning](https://www.chessprogramming.org/Static_Exchange_Evaluation)

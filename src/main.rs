@@ -57,10 +57,26 @@ pub fn perft(board: &mut Board, depth: i16, team: i16) -> u64 {
 }
 
 fn main() {
-    let mut board: Board;
+    let mut uci = UCICommunicator { board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") };
     let stdin = io::stdin();
+    let mut team = 0;
     for line in stdin.lock().lines() {
-        println!("{}", line.unwrap());
+        let line = line.unwrap();
+        if line == "ucinewgame" {
+            uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        } else if line.starts_with("position startpos moves ") {
+            let moves = &line[24..].split(" ").collect::<Vec<_>>();
+            uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+            team = (moves.len() % 2) as i16;
+            for action in moves {
+                let action = uci.decode(action.to_string());
+                uci.board.make_move(action);
+            }
+        } else if line.starts_with("go") {
+            let mut info = create_search_info(&mut uci.board, 17);
+            let results = negamax_deepening(&mut uci.board, team, 7, &mut info);
+            println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
+        }
     }
 
     /*env::set_var("RUST_BACKTRACE", "FULL");

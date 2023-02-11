@@ -162,6 +162,15 @@ impl Board {
         self.state[to_usize] = from_state;
         self.state[from_usize] = 1;
 
+        let to_pos_all = if action.capture {
+            self
+                .pieces
+                .iter()
+                .position(|pos| *pos == action.to)
+        } else {
+            None
+        };
+
         let from_pos_all = self
             .pieces
             .iter()
@@ -169,12 +178,7 @@ impl Board {
             .unwrap();
         self.pieces[from_pos_all] = action.to;
 
-        if action.capture {
-            let to_pos_all = self
-                .pieces
-                .iter()
-                .position(|pos| *pos == action.to)
-                .unwrap();
+        if let Some(to_pos_all) = to_pos_all {
             self.pieces.swap_remove(to_pos_all);
         }
 

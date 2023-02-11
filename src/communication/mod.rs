@@ -5,8 +5,8 @@ pub trait Communicator {
     fn decode(&self, action: String) -> Action;
 }
 
-pub struct UCICommunicator<'a> {
-    pub board: &'a mut Board
+pub struct UCICommunicator {
+    pub board: Board
 }
 
 fn encode_uci_pos(board: &Board, pos: i16, buffer_amount: i16) -> String {
@@ -21,27 +21,27 @@ fn encode_uci_pos(board: &Board, pos: i16, buffer_amount: i16) -> String {
 fn decode_uci_pos(board: &Board, pos: &str, buffer_amount: i16) -> i16 {
     let mut abcs = "abcdefghijklmnopqrstuvwxyz".chars();
     let col_char = pos.chars().nth(0).unwrap();
-    let mut col = abcs.position(|char| char == col_char).unwrap() as i16 + buffer_amount;
-    let mut row = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as i16;
+    let mut col = abcs.position(|char| char == col_char).unwrap() as i16;
+    let mut row = board.rows - (pos.chars().nth(1).unwrap().to_digit(10).unwrap() as i16);
     col += buffer_amount / 2;
     row += buffer_amount;
     return (row * board.row_gap) + col;
 }
 
 
-impl Communicator for UCICommunicator<'_> {
+impl Communicator for UCICommunicator {
     fn encode(&self, action: &Action) -> String {
         let buffer_amount = self.board.buffer_amount;
         return format!("{}{}", 
-            encode_uci_pos(self.board, action.from, buffer_amount),
-            encode_uci_pos(self.board, action.to, buffer_amount)
+            encode_uci_pos(&self.board, action.from, buffer_amount),
+            encode_uci_pos(&self.board, action.to, buffer_amount)
         );
     }
 
     fn decode(&self, action: String) -> Action {
         let buffer_amount = self.board.buffer_amount;
-        let from = decode_uci_pos(self.board, &action[0..2], buffer_amount);
-        let to = decode_uci_pos(self.board, &action[2..4], buffer_amount);
+        let from = decode_uci_pos(&self.board, &action[0..2], buffer_amount);
+        let to = decode_uci_pos(&self.board, &action[2..4], buffer_amount);
         Action {
             from,
             to,

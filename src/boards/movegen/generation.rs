@@ -159,11 +159,22 @@ pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
 
 pub fn in_check(board: &mut Board, moving_team: i16, row_gap: i16) -> bool {
     let king = board.get_piece_value(5, moving_team);
-    let king = *board
+    let king_test = board
         .pieces
         .iter()
-        .find(|piece| board.state[**piece as usize] == king)
-        .unwrap();
+        .find(|piece| board.state[**piece as usize] == king);
+    let king = if let Some(king) = king_test {
+        *king
+    } else {
+        println!("WHAT DA HELLLLLL OH MY GOD {moving_team} {king} {:?} OH {:?}", board.state, board
+            .pieces
+            .iter()
+            .map(|piece| board.state[*piece as usize]
+        )
+        .collect::<Vec<_>>());
+        board.print_board();
+        *king_test.unwrap()
+    };
     let king_vec = vec![king];
     for pos in &board.pieces {
         let pos = *pos;

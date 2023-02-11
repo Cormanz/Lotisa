@@ -214,6 +214,7 @@ pub fn negamax(
     search_info.positions += moves.len() as i32;
     let mut ind = 0;
     let mut working_depth = depth - 1;
+    let mut b_search_pv = false;
     for ScoredMove { action, .. } in moves {
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
@@ -235,13 +236,13 @@ pub fn negamax(
             }
         }
         
-        let evaluation = if let Some(_) = best_move {
+        let evaluation = if b_search_pv {
             let evaluation = negamax(
                 board,
                 search_info,
                 if moving_team == 0 { 1 } else { 0 },
                 working_depth,
-                -alpha + 1,
+                -alpha - 1,
                 -alpha
             );
             if -evaluation.score > alpha && -evaluation.score < beta {
@@ -279,6 +280,7 @@ pub fn negamax(
             best_move = Some(action);
             best_score = score;
             if score > alpha {
+                b_search_pv = true;
                 alpha = score;
                 if score >= beta {                
                     search_info.history_moves[action.from as usize][action.to as usize] += ((depth * depth) + 2) as i32;

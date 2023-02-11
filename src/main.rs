@@ -58,7 +58,7 @@ pub fn perft(board: &mut Board, depth: i16, team: i16) -> u64 {
 
 fn test_mode() {
     env::set_var("RUST_BACKTRACE", "FULL");
-    let fen = "r1bqk2r/2p2ppp/p1p2n2/2bpp3/7Q/4PP2/PPPPK1PP/RNB3NR";
+    let fen = "r5nr/p2k1p1p/n7/3pQ1P1/8/7N/PB1PPPBP/RN2K2R";
     let mut team = 0;
 
     /*println!("sadly!");

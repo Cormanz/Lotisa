@@ -241,8 +241,8 @@ pub fn negamax(
                 search_info,
                 if moving_team == 0 { 1 } else { 0 },
                 working_depth,
-                0 - beta,
-                1 - beta
+                -alpha + 1,
+                -alpha
             );
             if -evaluation.score > alpha && -evaluation.score < beta {
                 negamax(

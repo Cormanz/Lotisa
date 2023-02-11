@@ -62,7 +62,11 @@ fn main() {
     let mut team = 0;
     for line in stdin.lock().lines() {
         let line = line.unwrap();
-        if line == "ucinewgame" {
+        if line == "uci" {
+            println!("id name Lotisa 0.0.0");
+            println!("id author Corman"); 
+            println!("uciok");
+        } else if line == "ucinewgame" {
             uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
         } else if line.starts_with("position startpos moves ") {
             let moves = &line[24..].split(" ").collect::<Vec<_>>();
@@ -76,6 +80,8 @@ fn main() {
             let mut info = create_search_info(&mut uci.board, 17);
             let results = negamax_deepening(&mut uci.board, team, 7, &mut info);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
+        } else if line == "isready" {
+            println!("readyok");
         }
     }
 

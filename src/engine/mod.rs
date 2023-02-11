@@ -172,11 +172,10 @@ pub fn negamax(
     }
 
     if depth >= 2 {
-        let bound = beta;
-        let evaluation = negamax(board, search_info, moving_team, max(depth - 4 - 1, 0), -beta, 1 - beta);
+        let evaluation = negamax(board, search_info, if moving_team == 0 { 1 } else { 0 }, max(depth - 3 - 1, 0), 0 - beta, 1 - beta);
         let score = -evaluation.score;
-        if score >= bound {
-            // Null Move Reductions (not Pruning because bot misses tons of lines if it does that)
+        if score >= beta {
+            // Null Move Reductions during the Endgame
             depth -= 4;
             if depth < 1 {
                 depth = 1;
@@ -236,22 +235,14 @@ pub fn negamax(
             }
         }
         
-        let evaluation = negamax(
-            board,
-            search_info,
-            if moving_team == 0 { 1 } else { 0 },
-            working_depth,
-            -beta,
-            -alpha,
-        );
-        /*if let Some(_) = best_move {
-            let evaluation =             negamax(
+        let evaluation = if let Some(_) = best_move {
+            let evaluation = negamax(
                 board,
                 search_info,
                 if moving_team == 0 { 1 } else { 0 },
                 working_depth,
-                -alpha - 1,
-                -alpha
+                0 - beta,
+                1 - beta
             );
             if -evaluation.score > alpha && -evaluation.score < beta {
                 negamax(
@@ -274,7 +265,7 @@ pub fn negamax(
                 -beta,
                 -alpha,
             )
-        };*/
+        };
 
         // Late Move Reductions
         if ind == 2 && working_depth > 0 {

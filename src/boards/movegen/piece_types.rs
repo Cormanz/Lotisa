@@ -427,6 +427,6 @@ impl Piece for KingPiece {
     }
 
     fn get_material_value(&self) -> i32 {
-        0
+        1000
     }
 }

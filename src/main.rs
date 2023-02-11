@@ -57,7 +57,7 @@ pub fn perft(board: &mut Board, depth: i16, team: i16) -> u64 {
 }
 
 fn main() {
-    let mut uci = UCICommunicator { board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") };
+    /*let mut uci = UCICommunicator { board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") };
     let stdin = io::stdin();
     let mut team = 0;
     for line in stdin.lock().lines() {
@@ -83,11 +83,11 @@ fn main() {
         } else if line == "isready" {
             println!("readyok");
         }
-    }
+    }*/
 
-    /*env::set_var("RUST_BACKTRACE", "FULL");
-    let fen = "r1b1kb1r/pppp1ppp/2n2n2/8/4q3/4P1P1/PPPP1P1P/RNB1KBNR";
-    let mut team = 0;*/
+    env::set_var("RUST_BACKTRACE", "FULL");
+    let fen = "r1bqk2r/2p2ppp/p1p2n2/2bpp3/7Q/4PP2/PPPPK1PP/RNB3NR";
+    let mut team = 0;
 
     /*println!("sadly!");
     let start = get_epoch_ms();
@@ -108,7 +108,7 @@ fn main() {
 
     println!("-----");*/
 
-    /*let mut uci = UCICommunicator { board: Board::load_fen(fen) };
+    let mut uci = UCICommunicator { board: Board::load_fen(fen) };
     uci.board.print_board();
 
     let mut info = create_search_info(&mut uci.board, 17);
@@ -121,5 +121,5 @@ fn main() {
         uci.board.print_board();
         team = if team == 0 { 1 } else { 0 };
         println!("-----");
-    }*/
+    }
 }

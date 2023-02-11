@@ -16,6 +16,8 @@ Chesstastic is a project to allow for players to fight against other players or 
 
 Lotisa will play the base chess variant by default using the `uci` interface. You can play with Lotisa by loading it into a Chess GUI such as [Tarrasch](http://www.triplehappy.com/), and then playing against it.
 
+In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/Lotisa) if I have it online.
+
 # Engine
 
 The Lotisa engine uses a **10x12** board representation, where there's an **8x8** board inside of it, but additional squares are added to speed up the out of bounds check. Each piece is represented as an `i16` with the following formula: `piece_type + (PIECE_TYPES * team) + 2`, which allows for up to 16,384 piece types if there are two teams.

@@ -175,10 +175,17 @@ pub fn negamax(
         let evaluation = negamax(board, search_info, if moving_team == 0 { 1 } else { 0 }, max(depth - 3 - 1, 0), 0 - beta, 1 - beta);
         let score = -evaluation.score;
         if score >= beta {
-            // Null Move Reductions during the Endgame
-            depth -= 4;
-            if depth < 1 {
-                depth = 1;
+            if is_endgame {
+                // Null Move Reductions during the Endgame
+                depth -= 4;
+                if depth < 1 {
+                    depth = 1;
+                }
+            } else {
+                return EvaluationScore {
+                    score,
+                    best_move: None
+                };
             }
         }
      }

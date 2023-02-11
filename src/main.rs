@@ -78,7 +78,7 @@ fn main() {
             }
         } else if line.starts_with("go") {
             let mut info = create_search_info(&mut uci.board, 17);
-            let results = negamax_deepening(&mut uci.board, team, 9, &mut info);
+            let results = negamax_deepening(&mut uci.board, team, 8, &mut info);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {
             println!("readyok");

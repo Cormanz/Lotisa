@@ -244,7 +244,15 @@ pub fn negamax(
             }
         }
         
-        let evaluation = if let Some(_) = best_move {
+        let evaluation = negamax(
+            board,
+            search_info,
+            if moving_team == 0 { 1 } else { 0 },
+            working_depth,
+            -beta,
+            -alpha,
+        );
+        /*if let Some(_) = best_move {
             let evaluation =             negamax(
                 board,
                 search_info,
@@ -274,7 +282,7 @@ pub fn negamax(
                 -beta,
                 -alpha,
             )
-        };
+        };*/
 
         // Late Move Reductions
         if ind == 2 && working_depth > 0 {

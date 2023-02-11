@@ -96,7 +96,7 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i
         let killer = search_info.killer_moves[i as usize][depth as usize];
         if let Some(killer) = killer {
             if action_val == killer {
-                score += 25_000 + (i + 1) * 4;
+                score += 50_000 + (i + 1) * 4;
             }
         }
         i += 1;
@@ -105,7 +105,7 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i
     // Counter Moves
     if let Some(counter_move) = search_info.counter_moves[action.from as usize][action.to as usize] {
         if counter_move.action == action_val {
-            score += 100;
+            score += 10_000;
         }
     }
 

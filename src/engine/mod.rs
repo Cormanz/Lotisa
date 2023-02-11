@@ -2,7 +2,7 @@ use std::{cmp::{min, max}, time::{SystemTime, UNIX_EPOCH}, ops::Neg};
 
 use fnv::FnvHashMap;
 
-use crate::boards::{Action, Board, PieceGenInfo, PieceInfo, in_check};
+use crate::{boards::{Action, Board, PieceGenInfo, PieceInfo, in_check}, communication::Communicator};
 
 mod evaluation;
 mod zobrist;
@@ -69,7 +69,9 @@ pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, in
         out = negamax_root(board, moving_team, i, info);
         let end = get_epoch_ms();
         let new_nodes = (info.quiescence_positions + info.positions) - prev_nodes;
-        println!("info depth {} nodes {} time {} nps {} score {} out {:?}", i, new_nodes, end - start, (new_nodes / ((end - start) + 1) as i32) * 1000, out.score, out);
+        println!("info depth {} nodes {} time {} nps {} score cp {}", 
+            i, new_nodes, end - start, (new_nodes / ((end - start) + 1) as i32) * 1000, out.score / 10
+        );
         prev_nodes += new_nodes;
     }
 
@@ -171,12 +173,12 @@ pub fn negamax(
 
     if depth >= 2 {
         let bound = beta;
-        let evaluation = negamax(board, search_info, moving_team, max(depth - 3 - 1, 0), -beta, 1 - beta);
+        let evaluation = negamax(board, search_info, moving_team, max(depth - 4 - 1, 0), -beta, 1 - beta);
         let score = -evaluation.score;
         if score >= bound {
             if is_endgame {
                 // Null Move Reductions during the Endgame
-                depth -= 3;
+                depth -= 4;
                 if depth < 1 {
                     depth = 1;
                 }
@@ -225,7 +227,7 @@ pub fn negamax(
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
 
-        if action.capture {
+        if !action.capture {
             // Futility Pruning + Extended Futility Pruning
             if depth == 1 {
                 let standing_pat = eval_board(board, moving_team);
@@ -242,17 +244,40 @@ pub fn negamax(
             }
         }
         
-        let evaluation = negamax(
-            board,
-            search_info,
-            if moving_team == 0 { 1 } else { 0 },
-            working_depth,
-            -beta,
-            -alpha,
-        );
+        let evaluation = if let Some(_) = best_move {
+            let evaluation =             negamax(
+                board,
+                search_info,
+                if moving_team == 0 { 1 } else { 0 },
+                working_depth,
+                -alpha - 1,
+                -alpha
+            );
+            if -evaluation.score > alpha && -evaluation.score < beta {
+                negamax(
+                    board,
+                    search_info,
+                    if moving_team == 0 { 1 } else { 0 },
+                    working_depth,
+                    -beta,
+                    -alpha,
+                )
+            } else {
+                evaluation
+            }
+        } else {
+            negamax(
+                board,
+                search_info,
+                if moving_team == 0 { 1 } else { 0 },
+                working_depth,
+                -beta,
+                -alpha,
+            )
+        };
 
         // Late Move Reductions
-        if ind == 3 && working_depth > 0 {
+        if ind == 2 && working_depth > 0 {
             working_depth -= 1;
         }
 
@@ -265,7 +290,7 @@ pub fn negamax(
             if score > alpha {
                 alpha = score;
                 if score >= beta {                
-                    search_info.history_moves[action.from as usize][action.to as usize] += depth as i32;
+                    search_info.history_moves[action.from as usize][action.to as usize] += ((depth * depth) + 2) as i32;
 
                     if !action.capture {
                         store_killer_move(action, depth, search_info);

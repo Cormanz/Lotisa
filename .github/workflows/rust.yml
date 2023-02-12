@@ -15,5 +15,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build
+    - name: Linux Build
       run: cargo build --release --verbose
+    - name: Windows Build
+      run: cargo build --release --verbose --target x86_64-pc-windows-gnu
+    - name: Archive Linux Build
+      uses: actions/upload-artifact@v3
+      with:
+        name: lotisa
+        path: release/lotisa
+    - name: Archive Github Build
+      uses: actions/upload-artifact@v3
+      with:
+        name: lotisa
+        path: x86_64-pc-windows-gnu/lotisa.exe
+        

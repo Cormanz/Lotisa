@@ -103,7 +103,7 @@ fn test_mode() {
         internal_iterative_deepening: true
     });
     loop {
-        let results = negamax_deepening(&mut uci.board, team, 8, &mut info);
+        let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 3000);
         let action = results.best_move.unwrap(); 
         thread::sleep(Duration::from_millis(500));
         println!("{}", uci.encode(&action));
@@ -114,14 +114,13 @@ fn test_mode() {
     }
 }
 
-fn uci_mode(stdin: Stdin) {
+fn uci_mode(stdin: Stdin, a_mode: bool) {
     let mut uci = UCICommunicator { board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") };
     let mut team = 0;
 
     for line in stdin.lock().lines() {
         let line = line.unwrap();
-        if line == "uci" {
-        } else if line == "ucinewgame" {
+        if line == "ucinewgame" {
             uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
         } else if line.starts_with("position startpos moves ") {
             let moves = &line[24..].split(" ").collect::<Vec<_>>();
@@ -134,20 +133,20 @@ fn uci_mode(stdin: Stdin) {
         } else if line.starts_with("go") {
             let mut info = create_search_info(&mut uci.board, 17, SearchOptions {
                 null_move_pruning: false,
-                null_move_reductions: true,
+                null_move_reductions: false,
                 late_move_reductions_limit: 1000,
-                delta_pruning: true,
-                see_pruning: true,
-                futility_pruning: true,
-                extended_futility_pruning: true,
+                delta_pruning: false,
+                see_pruning: false,
+                futility_pruning: false,
+                extended_futility_pruning: false,
                 move_ordering: true,
                 ab_pruning: true,
-                quiescience: true,
-                transposition_table: true,
-                pvs_search: true,
-                internal_iterative_deepening: true
+                quiescience: false,
+                transposition_table: a_mode,
+                pvs_search: false,
+                internal_iterative_deepening: false
             });
-            let results = negamax_deepening(&mut uci.board, team, 8, &mut info);
+            let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 200);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {
             println!("readyok");
@@ -156,14 +155,34 @@ fn uci_mode(stdin: Stdin) {
 }
 
 fn main() {
+    let mut args = env::args().collect::<Vec<_>>();
     let stdin = io::stdin();
-    let first_line = stdin.lock().lines().next().unwrap().unwrap();
-    if first_line == "uci" {
-        println!("id name Lotisa 0.0.0");
-        println!("id author Corman"); 
-        println!("uciok");
-        uci_mode(stdin);
-    } else if first_line == "test" {
-        test_mode();
+    let arg = &args[1];
+    if arg == &"A".to_string() {
+        let first_line = stdin.lock().lines().next().unwrap().unwrap();
+        if first_line == "uci" {
+            println!("id name Lotisa 0.0.1A");
+            println!("id author Corman"); 
+            println!("uciok");
+            uci_mode(stdin, true);
+        }
+    } else if arg == &"B".to_string() {
+        let first_line = stdin.lock().lines().next().unwrap().unwrap();
+        if first_line == "uci" {
+            println!("id name Lotisa 0.0.1B");
+            println!("id author Corman"); 
+            println!("uciok");
+            uci_mode(stdin, false);
+        }
+    } else {
+        let first_line = stdin.lock().lines().next().unwrap().unwrap();
+        if first_line == "uci" {
+            println!("id name Lotisa 0.0.1");
+            println!("id author Corman"); 
+            println!("uciok");
+            uci_mode(stdin, true);
+        } else if first_line == "test" {
+            test_mode();
+        }
     }
 }

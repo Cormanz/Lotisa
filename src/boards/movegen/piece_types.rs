@@ -182,7 +182,8 @@ impl Piece for PawnPiece {
             _ => pos,
         };
 
-        if board.can_move(target) {
+        let can_move_once = board.can_move(target);
+        if can_move_once {
             actions.push(Action {
                 from: pos,
                 to: target,
@@ -205,7 +206,7 @@ impl Piece for PawnPiece {
             _ => false,
         };
 
-        if can_move_twice {
+        if can_move_once && can_move_twice {
             let target = match team {
                 0 => pos - row_gap * 2,
                 1 => pos + row_gap * 2,

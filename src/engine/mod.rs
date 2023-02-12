@@ -76,7 +76,7 @@ fn get_epoch_ms() -> u128 {
 }
 
 
-pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo) -> EvaluationScore {
+pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo, max_time: u128) -> EvaluationScore {
     let mut out = EvaluationScore { score: 0, best_move: None };
     let mut prev_nodes = 0;
     for i in 1..(depth + 1) {
@@ -86,10 +86,15 @@ pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, in
         out = negamax_root(board, moving_team, i, info);
         let end = get_epoch_ms();
         let new_nodes = (info.quiescence_positions + info.positions) - prev_nodes;
-        println!("info depth {} nodes {} time {} nps {} score cp {} pv {:?}", 
-            i, new_nodes, end - start, (new_nodes / ((end - start) + 1) as i32) * 1000, out.score / 10, out.best_move
+        let time = end - start;
+        println!("info depth {} nodes {} time {} nps {} score cp {}", 
+            i, new_nodes, end - start, (new_nodes / (time + 1) as i32) * 1000, out.score / 10
         );
         prev_nodes += new_nodes;
+
+        if time > max_time {
+            return out;
+        }
     }
 
     out

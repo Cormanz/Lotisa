@@ -99,7 +99,7 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, prev_action: &
 
     let undo = board.make_move(action_val);
     if in_check(board, moving_team, board.row_gap) {
-        score += 25_000;
+        score += 100;
     }
     board.undo_move(undo);
 

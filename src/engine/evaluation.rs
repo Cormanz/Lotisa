@@ -111,7 +111,7 @@ pub fn eval_board(board: &mut Board, moving_team: i16) -> i32 {
         .generate_moves(if moving_team == 0 { 1 } else { 0 })
         .iter().fold(0, |a, b| weigh_move(board, a, b));
 
-    let tempo_bonus = 100;
+    let tempo_bonus = 200;
 
     material + (40 * center_occupied) + (20 * center_control) + moves - opposing_moves + tempo_bonus
 }

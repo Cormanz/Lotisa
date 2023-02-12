@@ -1,6 +1,6 @@
 use core::time;
 use communication::UCICommunicator;
-use engine::{eval_board, negamax_root};
+use engine::{eval_board, negamax_root, hash_board, generate_zobrist};
 use rand::seq::{IteratorRandom, SliceRandom};
 use std::{
     env, thread,
@@ -58,7 +58,7 @@ pub fn perft(board: &mut Board, depth: i16, team: i16) -> u64 {
 
 fn test_mode() {
     env::set_var("RUST_BACKTRACE", "FULL");
-    let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+    let fen = "q7/1k6/8/8/3K4/8/8/8";
     let mut team = 0;
 
     /*println!("sadly!");
@@ -87,20 +87,20 @@ fn test_mode() {
     println!("DONE!");
     uci.board.print_board();
 
-    let mut info = create_search_info(&mut uci.board, 17, SearchOptions {
-        null_move_pruning: false,
+    let mut info = create_search_info(&mut uci.board, 17, vec![], SearchOptions {
+        null_move_pruning: true,
         null_move_reductions: false,
         late_move_reductions_limit: 1000,
         delta_pruning: true,
-        see_pruning: true,
-        futility_pruning: true,
-        extended_futility_pruning: true,
+        futility_pruning: false,
+        extended_futility_pruning: false,
         move_ordering: true,
         ab_pruning: true,
         quiescience: true,
-        transposition_table: true,
+        transposition_table: false,
         pvs_search: true,
-        internal_iterative_deepening: true
+        internal_iterative_deepening: true,
+        draw_by_repetition: true
     });
     loop {
         let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 3000);
@@ -117,6 +117,7 @@ fn test_mode() {
 fn uci_mode(stdin: Stdin, a_mode: bool) {
     let mut uci = UCICommunicator { board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") };
     let mut team = 0;
+    let mut last_boards: Vec<usize> = vec![];
 
     for line in stdin.lock().lines() {
         let line = line.unwrap();
@@ -126,27 +127,30 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
             let moves = &line[24..].split(" ").collect::<Vec<_>>();
             uci.board = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
             team = (moves.len() % 2) as i16;
+            let mut team = 0;
             for action in moves {
                 let action = uci.decode(action.to_string());
                 uci.board.make_move(action);
+                last_boards.push(hash_board(&uci.board, team, &generate_zobrist(6, 2, 64)));
+                team = (team + 1) % 2;
             }
         } else if line.starts_with("go") {
-            let mut info = create_search_info(&mut uci.board, 17, SearchOptions {
-                null_move_pruning: true,
+            let mut info = create_search_info(&mut uci.board, 17, last_boards.clone(), SearchOptions {
+                null_move_pruning: false,
                 null_move_reductions: false,
                 late_move_reductions_limit: 1000,
                 delta_pruning: true,
-                see_pruning: true,
-                futility_pruning: true,
-                extended_futility_pruning: true,
+                futility_pruning: false,
+                extended_futility_pruning: false,
                 move_ordering: true,
                 ab_pruning: true,
                 quiescience: true,
                 transposition_table: true,
                 pvs_search: true,
-                internal_iterative_deepening: true
+                internal_iterative_deepening: a_mode,
+                draw_by_repetition: false
             });
-            let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 100);
+            let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 50);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {
             println!("readyok");
@@ -157,6 +161,20 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
 fn main() {
     let mut args = env::args().collect::<Vec<_>>();
     let stdin = io::stdin();
+
+    if args.len() == 1 {
+        let first_line = stdin.lock().lines().next().unwrap().unwrap();
+        if first_line == "uci" {
+            println!("id name Lotisa 0.0.1");
+            println!("id author Corman"); 
+            println!("uciok");
+            uci_mode(stdin, true);
+        } else if first_line == "test" {
+            test_mode();
+        }
+        return;
+    }
+
     let arg = &args[1];
     if arg == &"A".to_string() {
         let first_line = stdin.lock().lines().next().unwrap().unwrap();
@@ -173,16 +191,6 @@ fn main() {
             println!("id author Corman"); 
             println!("uciok");
             uci_mode(stdin, false);
-        }
-    } else {
-        let first_line = stdin.lock().lines().next().unwrap().unwrap();
-        if first_line == "uci" {
-            println!("id name Lotisa 0.0.1");
-            println!("id author Corman"); 
-            println!("uciok");
-            uci_mode(stdin, true);
-        } else if first_line == "test" {
-            test_mode();
         }
     }
 }

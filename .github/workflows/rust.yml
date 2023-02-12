@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  Build:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +18,7 @@ jobs:
     - name: Linux Build
       run: cargo build --release --verbose
     - name: Windows Build
-      run: cargo build --release --verbose --target x86_64-pc-windows-gnu
+      run: rustup target add x86_64-pc-windows-gnu && cargo build --release --verbose --target x86_64-pc-windows-gnu
     - name: Archive Linux Build
       uses: actions/upload-artifact@v3
       with:

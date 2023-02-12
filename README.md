@@ -4,7 +4,7 @@
 [![forthebadge](https://forthebadge.com/images/badges/powered-by-oxygen.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/not-a-bug-a-feature.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/fuck-it-ship-it.svg)](https://forthebadge.com)
-![have not released a version yet](https://badgen.net/badge/release/nothing%20yet!/red?)
+![v0.0.1](https://badgen.net/badge/release/v0.0.1/red?)
 
 # Overview
 

@@ -2,7 +2,7 @@ use colored::{ColoredString, Colorize};
 use fnv::FnvHashMap;
 
 use super::{
-    create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup, PieceMap,
+    create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup, PieceMap, PieceMapLookup,
 };
 
 //use super::Action;

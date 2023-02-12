@@ -7,9 +7,9 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH}, io::{self, BufRead, Stdin},
 };
 
-use boards::Board;
+use boards::{Board, PieceMapLookup, AmazonPiece, Piece};
 
-use crate::{engine::{create_search_info, negamax_deepening}, boards::in_check, communication::Communicator};
+use crate::{engine::{create_search_info, negamax_deepening, SearchOptions}, boards::in_check, communication::Communicator};
 
 mod boards;
 mod engine;
@@ -58,7 +58,7 @@ pub fn perft(board: &mut Board, depth: i16, team: i16) -> u64 {
 
 fn test_mode() {
     env::set_var("RUST_BACKTRACE", "FULL");
-    let fen = "r5nr/p2k1p1p/n7/3pQ1P1/8/7N/PB1PPPBP/RN2K2R";
+    let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
     let mut team = 0;
 
     /*println!("sadly!");
@@ -81,13 +81,31 @@ fn test_mode() {
     println!("-----");*/
 
     let mut uci = UCICommunicator { board: Board::load_fen(fen) };
+    //let mut lookup = PieceMapLookup::new(PieceMapLookup::default_map(10));
+    //lookup.map.insert(4, Box::new(AmazonPiece::new(10)) as Box<dyn Piece>);
+    //uci.board.piece_lookup = Box::new(lookup);
+    println!("DONE!");
     uci.board.print_board();
 
-    let mut info = create_search_info(&mut uci.board, 17);
+    let mut info = create_search_info(&mut uci.board, 17, SearchOptions {
+        null_move_pruning: false,
+        null_move_reductions: false,
+        late_move_reductions_limit: 1000,
+        delta_pruning: true,
+        see_pruning: true,
+        futility_pruning: true,
+        extended_futility_pruning: true,
+        move_ordering: true,
+        ab_pruning: true,
+        quiescience: true,
+        transposition_table: true,
+        pvs_search: true,
+        internal_iterative_deepening: true
+    });
     loop {
         let results = negamax_deepening(&mut uci.board, team, 8, &mut info);
         let action = results.best_move.unwrap(); 
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(500));
         println!("{}", uci.encode(&action));
         uci.board.make_move(action);
         uci.board.print_board();
@@ -114,7 +132,21 @@ fn uci_mode(stdin: Stdin) {
                 uci.board.make_move(action);
             }
         } else if line.starts_with("go") {
-            let mut info = create_search_info(&mut uci.board, 17);
+            let mut info = create_search_info(&mut uci.board, 17, SearchOptions {
+                null_move_pruning: false,
+                null_move_reductions: true,
+                late_move_reductions_limit: 1000,
+                delta_pruning: true,
+                see_pruning: true,
+                futility_pruning: true,
+                extended_futility_pruning: true,
+                move_ordering: true,
+                ab_pruning: true,
+                quiescience: true,
+                transposition_table: true,
+                pvs_search: true,
+                internal_iterative_deepening: true
+            });
             let results = negamax_deepening(&mut uci.board, team, 8, &mut info);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {

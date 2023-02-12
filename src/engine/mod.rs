@@ -48,7 +48,24 @@ pub struct SearchInfo {
     pub counter_moves: CounterMoves,
     pub zobrist: Vec<usize>,
     pub transposition_table: FnvHashMap<usize, StoredEvaluationScore>,
-    pub root_depth: i16
+    pub root_depth: i16,
+    pub options: SearchOptions
+}
+
+pub struct SearchOptions {
+    pub null_move_pruning: bool,
+    pub null_move_reductions: bool,
+    pub late_move_reductions_limit: i16,
+    pub futility_pruning: bool,
+    pub extended_futility_pruning: bool,
+    pub delta_pruning: bool,
+    pub see_pruning: bool,
+    pub move_ordering: bool,
+    pub ab_pruning: bool,
+    pub quiescience: bool,
+    pub pvs_search: bool,
+    pub transposition_table: bool,
+    pub internal_iterative_deepening: bool
 }
 
 fn get_epoch_ms() -> u128 {
@@ -78,7 +95,7 @@ pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, in
     out
 }
 
-pub fn create_search_info(board: &mut Board, depth: i16) -> SearchInfo {
+pub fn create_search_info(board: &mut Board, depth: i16, options: SearchOptions) -> SearchInfo {
     let mut killer_moves: Vec<Vec<Option<Action>>> = Vec::with_capacity(MAX_KILLER_MOVES);
     for i in 0..MAX_KILLER_MOVES {
         killer_moves.insert(i, vec![None; (depth + 1) as usize]);
@@ -109,7 +126,8 @@ pub fn create_search_info(board: &mut Board, depth: i16) -> SearchInfo {
         history_moves,
         root_depth: 0,
         zobrist: generate_zobrist(board.piece_types, board.teams, board.rows * board.cols),
-        transposition_table
+        transposition_table,
+        options
     }
 }
 
@@ -125,6 +143,8 @@ pub fn negamax_root(board: &mut Board, moving_team: i16, depth: i16, info: &mut 
         depth,
         MIN_SCORE,
         MAX_SCORE,
+        None,
+        false
     );
     //evaluation.score *= -1;
     evaluation
@@ -141,13 +161,18 @@ pub fn negamax(
     mut depth: i16,
     mut alpha: i32,
     mut beta: i32,
+    prev_action: Option<Action>,
+    is_pv: bool
 ) -> EvaluationScore {
     if depth == 0 {
-        return quiescence(board, search_info, moving_team, alpha, beta); 
-         /*EvaluationScore {
-            score: eval_board(board, moving_team),
-            best_move: None,
-        };*/
+        return if search_info.options.quiescience {
+            quiescence(board, search_info, moving_team, alpha, beta)
+        } else {
+            EvaluationScore {
+                score: eval_board(board, moving_team),
+                best_move: None
+            }
+        }
     }
 
     let lowest_material = get_lowest_material(board, moving_team);
@@ -167,28 +192,29 @@ pub fn negamax(
         }
     }
 
-    if pv_move.is_none() && depth > 2 {
-        pv_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta));
+    if pv_move.is_none() && depth >= 4 && search_info.options.internal_iterative_deepening {
+        pv_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta, prev_action, is_pv));
     }
 
-    if depth >= 2 {
-        let evaluation = negamax(board, search_info, if moving_team == 0 { 1 } else { 0 }, max(depth - 3 - 1, 0), 0 - beta, 1 - beta);
+    if depth >= 3 && !in_check(board, moving_team, board.row_gap) && !is_pv {
+        let evaluation = negamax(board, search_info, if moving_team == 0 { 1 } else { 0 }, depth - 2, -beta, -beta + 1, None, false);
         let score = -evaluation.score;
         if score >= beta {
-            if is_endgame {
-                // Null Move Reductions during the Endgame
+            // Null Move Reductions
+            if (is_endgame || !search_info.options.null_move_pruning) && search_info.options.null_move_reductions {
                 depth -= 4;
                 if depth < 1 {
                     depth = 1;
                 }
-            } else {
+            // Null Move Pruning
+            } else if search_info.options.null_move_pruning {
                 return EvaluationScore {
                     score,
                     best_move: None
                 };
             }
         }
-     }
+    }
 
     let mut best_move: Option<Action> = None;
 
@@ -198,26 +224,38 @@ pub fn negamax(
 
     if base_moves.len() == 0 {
         if in_check(board, moving_team, board.row_gap) {
-            return EvaluationScore {
-                score: MIN_SCORE + 10,
+            let evaluation = EvaluationScore {
+                score: MIN_SCORE + 100 - (depth as i32),
                 best_move: None
             };      
+            if depth >= analysis_depth {
+                search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth });
+            }
+            return evaluation; 
         }
 
-        return EvaluationScore {
+        let evaluation = EvaluationScore {
             score: 0,
             best_move: None
-        };      
+        };     
+        if depth >= analysis_depth {
+            search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth });
+        }
+        return evaluation; 
     }
 
     let mut moves: Vec<ScoredMove> = Vec::with_capacity(base_moves.len());
     for action in base_moves {
         moves.push(ScoredMove {
             action,
-            score: score_move(board, depth, &action, moving_team, pv_move, search_info),
+            score: score_move(board, depth, &action, &prev_action, moving_team, pv_move, search_info),
         });
     }
-    moves.sort_by(|a, b| b.score.cmp(&a.score));
+
+    if search_info.options.move_ordering {
+        moves.sort_by(|a, b| b.score.cmp(&a.score));
+    }
+
     search_info.positions += moves.len() as i32;
     let mut ind = 0;
     let mut working_depth = depth - 1;
@@ -226,15 +264,15 @@ pub fn negamax(
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
 
-        if !action.capture {
+        if !action.capture && !in_check(board, moving_team, board.row_gap) && !is_pv {
             // Futility Pruning + Extended Futility Pruning
-            if depth == 1 {
-                let standing_pat = eval_board(board, moving_team);
+            if search_info.options.futility_pruning && depth == 1 {
+                let standing_pat = eval_material(board, moving_team);
                 if standing_pat + 3000 < alpha {
                     board.undo_move(undo);
                     continue;
                 }
-            } else if depth == 2 {
+            } else if search_info.options.extended_futility_pruning && depth == 2 {
                 let standing_pat = eval_board(board, moving_team);
                 if standing_pat + 5000 < alpha {
                     board.undo_move(undo);
@@ -243,14 +281,16 @@ pub fn negamax(
             }
         }
         
-        let evaluation = if b_search_pv {
+        let evaluation = if b_search_pv && search_info.options.pvs_search {
             let evaluation = negamax(
                 board,
                 search_info,
                 if moving_team == 0 { 1 } else { 0 },
                 working_depth,
                 -alpha - 1,
-                -alpha
+                -alpha,
+                Some(action),
+                true
             );
             if -evaluation.score > alpha && -evaluation.score < beta {
                 negamax(
@@ -260,6 +300,8 @@ pub fn negamax(
                     working_depth,
                     -beta,
                     -alpha,
+                    Some(action),
+                    false
                 )
             } else {
                 evaluation
@@ -272,11 +314,13 @@ pub fn negamax(
                 working_depth,
                 -beta,
                 -alpha,
+                Some(action),
+                false
             )
         };
 
         // Late Move Reductions
-        if ind == 2 && working_depth > 0 {
+        if ind == search_info.options.late_move_reductions_limit && working_depth > 0 {
             working_depth -= 1;
         }
 
@@ -300,24 +344,25 @@ pub fn negamax(
                             if counter_move.depth > depth { can_counter = false; }
                         }  
                         if can_counter {
-                            search_info.counter_moves[action.from as usize][action.to as usize] = Some(DepthMove { action, depth });
+                            if let Some(prev_action) = prev_action {
+                                search_info.counter_moves[prev_action.from as usize][prev_action.to as usize] = Some(DepthMove { action, depth });
+                            }
                         }
                     }
-                    break;
+                    if search_info.options.ab_pruning {
+                        break;
+                    }
                 }
             }
         }
         ind += 1;
     }
 
-    if depth == search_info.root_depth {
-
-    }
     let evaluation = EvaluationScore {
         score: best_score,
         best_move
     };
-    if depth >= analysis_depth {
+    if depth >= analysis_depth && search_info.options.transposition_table {
         search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth });
     }
     return evaluation;
@@ -356,21 +401,32 @@ pub fn quiescence(
     let mut moves: Vec<ScoredMove> = Vec::with_capacity(base_moves.len());
 
     for action in base_moves {
-        if !action.capture { continue; }
-
-        // Delta Pruning
-        let PieceInfo {
-            piece_type,
-            ..
-        } = board.get_piece_info(action.to);
-        let piece_material = board.piece_lookup.lookup(piece_type).get_material_value();
-        if piece_material + 400 + standing_pat < alpha {
-            continue;
+        if !action.capture {
+            let undo = board.make_move(action);
+            let in_check = in_check(board, moving_team, board.row_gap);
+            board.undo_move(undo);
+            if !in_check {
+                continue;
+            }
         }
 
-        // SEE Pruning
-        if see(board, action.to, moving_team, Some(action.from)) < 0 {
-            continue;
+        if action.capture {
+            if search_info.options.delta_pruning {
+                // Delta Pruning
+                let PieceInfo {
+                    piece_type,
+                    ..
+                } = board.get_piece_info(action.to);
+                let piece_material = board.piece_lookup.lookup(piece_type).get_material_value();
+                if piece_material + 400 + standing_pat < alpha {
+                    continue;
+                }
+
+                // SEE Pruning
+                if search_info.options.see_pruning && see(board, action.to, moving_team, Some(action.from)) < 0 {
+                    continue;
+                }
+            }
         }
 
         moves.push(ScoredMove {
@@ -379,7 +435,9 @@ pub fn quiescence(
         });
     }
 
-    moves.sort_by(|a, b| b.score.cmp(&a.score));
+    if search_info.options.move_ordering {
+        moves.sort_by(|a, b| b.score.cmp(&a.score));
+    }
 
     search_info.quiescence_positions += moves.len() as i32;
 
@@ -413,7 +471,9 @@ pub fn quiescence(
                             search_info.counter_moves[action.from as usize][action.to as usize] = Some(DepthMove { action, depth: 0 });
                         }
                     }
-                    break;
+                    if search_info.options.ab_pruning {
+                        break;
+                    }
                 }
             }
         }
@@ -423,7 +483,9 @@ pub fn quiescence(
         score: best_score,
         best_move
     };
-    search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth: 0 });
+    if search_info.options.transposition_table {
+        search_info.transposition_table.insert(hash, StoredEvaluationScore { evaluation, depth: 0 });
+    }
 
     return evaluation;
 }

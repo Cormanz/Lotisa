@@ -397,6 +397,57 @@ impl Piece for QueenPiece {
     }
 }
 
+pub struct AmazonPiece {
+    sliders: Vec<i16>,
+    deltas: Vec<i16>
+}
+impl AmazonPiece {
+    pub fn new(row_gap: i16) -> Self {
+        AmazonPiece {
+            sliders: vec![
+                1,
+                -1,
+                row_gap,
+                -row_gap,
+                row_gap + 1,
+                row_gap - 1,
+                -row_gap + 1,
+                -row_gap - 1,
+            ],
+            deltas: vec![
+                2 * row_gap + 1,
+                2 * row_gap - 1,
+                -2 * row_gap + 1,
+                -2 * row_gap - 1,
+                row_gap + 2,
+                row_gap - 2,
+                -row_gap + 2,
+                -row_gap - 2,
+            ]
+        }
+    }
+}
+
+impl Piece for AmazonPiece {
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+        let mut actions = get_actions_sliding(&self.sliders, board, piece_info);
+        actions.extend(get_actions_delta(&self.deltas, board, piece_info));
+        actions
+    }
+
+    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+        can_control_sliding(&self.sliders, board, piece_info, targets) || can_control_delta(&self.deltas, board, piece_info, targets)
+    }
+
+    fn get_material_value(&self) -> i32 {
+        12000
+    }
+
+    fn get_icon(&self) -> &str {
+        "☀︎"
+    }
+}
+
 pub struct KingPiece {
     deltas: Vec<i16>,
 }

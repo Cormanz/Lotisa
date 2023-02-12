@@ -1,7 +1,7 @@
-use crate::boards::{Action, Board, PieceInfo, PieceGenInfo};
+use crate::boards::{Action, Board, PieceInfo, PieceGenInfo, in_check};
 use std::cmp::max;
 
-use super::{evaluation::EvaluationScore, SearchInfo};
+use super::{evaluation::EvaluationScore, SearchInfo, eval_board};
 
 pub const MAX_KILLER_MOVES: usize = 2;
 
@@ -33,7 +33,7 @@ pub fn score_active_move(board: &mut Board, depth: i16, action: &Action, moving_
     if see_val > 0 {
         100_000 + see_val
     } else {
-        see_val - 100_000
+        -1_000_000
     }
 }
 
@@ -58,13 +58,6 @@ pub fn score_qs_move(board: &mut Board, depth: i16, action: &Action, moving_team
         i += 1;
     }
 
-    // Counter Moves
-    if let Some(counter_move) = search_info.counter_moves[action.from as usize][action.to as usize] {
-        if counter_move.action == action_val {
-            score += 100;
-        }
-    }
-
     // History Moves
 
     let history = search_info.history_moves[action.from as usize][action.to as usize];
@@ -74,7 +67,7 @@ pub fn score_qs_move(board: &mut Board, depth: i16, action: &Action, moving_team
 }
 
 
-pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
+pub fn score_move(board: &mut Board, depth: i16, action: &Action, prev_action: &Option<Action>, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
     let mut score = 0;
     let action_val = *action;
 
@@ -104,10 +97,18 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, moving_team: i
         i += 1;
     }
 
+    let undo = board.make_move(action_val);
+    if in_check(board, moving_team, board.row_gap) {
+        score += 25_000;
+    }
+    board.undo_move(undo);
+
     // Counter Moves
-    if let Some(counter_move) = search_info.counter_moves[action.from as usize][action.to as usize] {
-        if counter_move.action == action_val {
-            score += 10_000;
+    if let Some(prev_action) = prev_action {
+        if let Some(counter_move) = search_info.counter_moves[prev_action.from as usize][prev_action.to as usize] {
+            if counter_move.action == action_val {
+                score += 10_000;
+            }
         }
     }
 
@@ -176,7 +177,7 @@ pub fn see(board: &mut Board, square: i16, moving_team: i16, current_attacker: O
         info: None
     });
 
-    let value = max(0, square_value - see(board, square, if moving_team == 0 { 1 } else { 0 }, None));
+    let value = square_value - see(board, square, if moving_team == 0 { 1 } else { 0 }, None);
     board.undo_move(undo);
     return value;
 

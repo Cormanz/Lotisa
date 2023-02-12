@@ -132,21 +132,21 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
             }
         } else if line.starts_with("go") {
             let mut info = create_search_info(&mut uci.board, 17, SearchOptions {
-                null_move_pruning: false,
+                null_move_pruning: true,
                 null_move_reductions: false,
                 late_move_reductions_limit: 1000,
-                delta_pruning: false,
-                see_pruning: false,
-                futility_pruning: false,
-                extended_futility_pruning: false,
+                delta_pruning: true,
+                see_pruning: true,
+                futility_pruning: true,
+                extended_futility_pruning: true,
                 move_ordering: true,
                 ab_pruning: true,
-                quiescience: false,
-                transposition_table: a_mode,
-                pvs_search: false,
-                internal_iterative_deepening: false
+                quiescience: true,
+                transposition_table: true,
+                pvs_search: true,
+                internal_iterative_deepening: true
             });
-            let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 200);
+            let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 100);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {
             println!("readyok");

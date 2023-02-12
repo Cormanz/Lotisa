@@ -51,6 +51,40 @@ The Lotisa engine uses a **10x12** board representation, where there's an **8x8*
     - [Center Control](https://www.chessprogramming.org/Center_Control)
     - [Mobility](https://www.chessprogramming.org/Mobility)
 
+## Sprt Tests
+
+Each feature was tested one at a time with SPRT Testing.
+
+**Transposition Tables**
+```
+Elo difference: 30.2 +/- 23.0, LOS: 99.5 %, DrawRatio: 55.1 %
+SPRT: llr 2.96 (100.4%), lbound -2.94, ubound 2.94 - H1 was accepted
+```
+
+**Quiescence (Delta Pruning + SEE Pruning)**
+```
+Elo difference: 60.0 +/- 48.5, LOS: 99.2 %, DrawRatio: 41.9 %
+SPRT: llr 2.96 (100.6%), lbound -2.94, ubound 2.94 - H1 was accepted
+```
+
+**Internal Iterative Deepening**
+```
+Elo difference: 48.8 +/- 24.0, LOS: 100.0 %, DrawRatio: 51.9 %
+SPRT: llr 2.99 (101.6%), lbound -2.94, ubound 2.94 - H1 was accepted
+```
+
+**Principal Variation Search**
+```
+Elo difference: 48.4 +/- 34.2, LOS: 99.7 %, DrawRatio: 59.7 %
+SPRT: llr 3.06 (103.9%), lbound -2.94, ubound 2.94 - H1 was accepted
+```
+
+**Futility Pruning + Extended Futility Pruning**
+```
+Elo difference: 52.1 +/- 36.3, LOS: 99.7 %, DrawRatio: 59.6 %
+SPRT: llr 3 (102.0%), lbound -2.94, ubound 2.94 - H1 was accepted
+```
+
 ## Performance Bottlenecks
 
 The performance right now is held back by my move generation algorithm. In particular, converting **psuedolegal moves** into **legal moves**. These are the results of a benchmark I did on the **starting position** _(that is still on the main branch as of now)_:

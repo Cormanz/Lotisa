@@ -212,7 +212,7 @@ pub fn negamax(
     }
 
     if pv_move.is_none() && depth >= 4 && search_info.options.internal_iterative_deepening {
-        pv_move = Some(negamax(board, search_info, moving_team, depth - 3, alpha, beta, prev_action, is_pv));
+        pv_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta, prev_action, is_pv));
     }
     if depth >= 3 && !in_check(board, moving_team, board.row_gap) && !is_pv {
         let evaluation = negamax(board, search_info, if moving_team == 0 { 1 } else { 0 }, depth - 2, -beta, -beta + 1, None, false);

@@ -38,32 +38,12 @@ pub fn score_active_move(board: &mut Board, depth: i16, action: &Action, moving_
 }
 
 pub fn score_qs_move(board: &mut Board, depth: i16, action: &Action, moving_team: i16, pv_move: Option<EvaluationScore>, search_info: &SearchInfo) -> i32 {
-    let mut score = 0;
-    let action_val = *action;
-    
     // SEE
     if action.capture {
         return score_active_move(board, depth, action, moving_team, pv_move, search_info);
     }
 
-    // Killer Moves
-    let mut i: i32 = 0;
-    while i < MAX_KILLER_MOVES as i32 {
-        let killer = search_info.killer_moves[i as usize][depth as usize];
-        if let Some(killer) = killer {
-            if action_val == killer {
-                score += 25_000 + (i + 1) * 4;
-            }
-        }
-        i += 1;
-    }
-
-    // History Moves
-
-    let history = search_info.history_moves[action.from as usize][action.to as usize];
-    score += history;
-
-    score
+    0    
 }
 
 
@@ -71,53 +51,61 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, prev_action: &
     let mut score = 0;
     let action_val = *action;
 
-    // Order the previous best move from TT or IID first
-    if let Some(pv_move) = pv_move {
-        if let Some(pv_move) = pv_move.best_move {
-            if pv_move == action_val {
-                return 100_000_000;
+    if search_info.options.pv_sort {
+        // Order the previous best move from TT or IID first
+        if let Some(pv_move) = pv_move {
+            if let Some(pv_move) = pv_move.best_move {
+                if pv_move == action_val {
+                    return 100_000_000;
+                }
             }
         }
     }
 
     // SEE
-    if action.capture {
-        score += score_active_move(board, depth, action, moving_team, pv_move, search_info);
+    if search_info.options.see && action.capture {
+        return score_active_move(board, depth, action, moving_team, pv_move, search_info);
     }
 
     // Killer Moves
     let mut i: i32 = 0;
-    while i < MAX_KILLER_MOVES as i32 {
-        let killer = search_info.killer_moves[i as usize][depth as usize];
-        if let Some(killer) = killer {
-            if action_val == killer {
-                score += 50_000 + (i + 1) * 4;
+    if search_info.options.killer_moves {
+        while i < MAX_KILLER_MOVES as i32 {
+            let killer = search_info.killer_moves[i as usize][depth as usize];
+            if let Some(killer) = killer {
+                if action_val == killer {
+                    return 50_000 + (i + 1) * 4;
+                }
             }
+            i += 1;
         }
-        i += 1;
     }
 
-    let undo = board.make_move(action_val);
+    /*let undo = board.make_move(action_val);
     if in_check(board, moving_team, board.row_gap) {
         score += 100;
     }
-    board.undo_move(undo);
+    board.undo_move(undo);*/
 
     // Counter Moves
-    if let Some(prev_action) = prev_action {
-        if let Some(counter_move) = search_info.counter_moves[prev_action.from as usize][prev_action.to as usize] {
-            if counter_move.action == action_val {
-                score += 10_000;
+    if search_info.options.counter_moves {
+        if let Some(prev_action) = prev_action {
+            if let Some(counter_move) = search_info.counter_moves[prev_action.from as usize][prev_action.to as usize] {
+                if counter_move.action == action_val {
+                    return 10_000;
+                }
             }
         }
     }
 
     // History Moves
 
-    let history = search_info.history_moves[action.from as usize][action.to as usize];
-    score += history;
+    if search_info.options.history_moves {
+        let history = search_info.history_moves[action.from as usize][action.to as usize];
+        return history;
+    }
 
-    score
+    return 0;
 }
 
 pub fn see(board: &mut Board, square: i16, moving_team: i16, current_attacker: Option<i16>) -> i32 {

@@ -105,15 +105,16 @@ pub fn eval_board(board: &mut Board, moving_team: i16) -> i32 {
     let base_moves = board
         .generate_legal_moves(moving_team);
         
-    let moves = base_moves.iter().fold(0, |a, b| weigh_move(board, a, b));
+    let moves = base_moves.len() as i32;
  
-    let opposing_moves = board
-        .generate_moves(if moving_team == 0 { 1 } else { 0 })
-        .iter().fold(0, |a, b| weigh_move(board, a, b));
+    let base_opposing_moves = board
+        .generate_moves(if moving_team == 0 { 1 } else { 0 });
+
+    let opposing_moves = base_opposing_moves.len() as i32;
 
     let tempo_bonus = 200;
 
-    material + (40 * center_occupied) + (20 * center_control) + moves - opposing_moves + tempo_bonus
+    material + (20 * center_occupied) + (10 * center_control) + moves - opposing_moves + tempo_bonus
 }
 
 pub fn eval_action(board: &mut Board, action: Action, moving_team: i16) -> i32 {

@@ -91,6 +91,7 @@ fn test_mode() {
         null_move_pruning: true,
         null_move_reductions: false,
         late_move_reductions_limit: 1000,
+        late_move_margin: 400,
         delta_pruning: true,
         futility_pruning: false,
         extended_futility_pruning: false,
@@ -100,7 +101,13 @@ fn test_mode() {
         transposition_table: false,
         pvs_search: true,
         internal_iterative_deepening: true,
-        draw_by_repetition: true
+        draw_by_repetition: true,
+        quiescence_lazy_eval: true,
+        pv_sort: false,
+        see: false,
+        killer_moves: false,
+        counter_moves: false,
+        history_moves: false
     });
     loop {
         let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 3000);
@@ -136,21 +143,28 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
             }
         } else if line.starts_with("go") {
             let mut info = create_search_info(&mut uci.board, 17, last_boards.clone(), SearchOptions {
-                null_move_pruning: false,
+                null_move_pruning: true,
                 null_move_reductions: false,
-                late_move_reductions_limit: 1000,
+                late_move_reductions_limit: 3,
+                late_move_margin: 0, // Failed SPRT Testing
                 delta_pruning: true,
-                futility_pruning: false,
-                extended_futility_pruning: false,
+                futility_pruning: true,
+                extended_futility_pruning: true,
                 move_ordering: true,
                 ab_pruning: true,
                 quiescience: true,
                 transposition_table: true,
                 pvs_search: true,
-                internal_iterative_deepening: a_mode,
-                draw_by_repetition: false
+                internal_iterative_deepening: a_mode, // FAILED SPRT TEST
+                draw_by_repetition: false, // FAILED SPRT TEST
+                quiescence_lazy_eval: false,
+                pv_sort: true,
+                see: true,
+                killer_moves: true,
+                counter_moves: false, // FAILED SPRT TEST
+                history_moves: true
             });
-            let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 50);
+            let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 20);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {
             println!("readyok");

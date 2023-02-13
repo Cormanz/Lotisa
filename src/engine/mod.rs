@@ -57,6 +57,7 @@ pub struct SearchOptions {
     pub null_move_pruning: bool,
     pub null_move_reductions: bool,
     pub late_move_reductions_limit: i16,
+    pub late_move_margin: i32,
     pub futility_pruning: bool,
     pub extended_futility_pruning: bool,
     pub delta_pruning: bool,
@@ -66,7 +67,13 @@ pub struct SearchOptions {
     pub pvs_search: bool,
     pub transposition_table: bool,
     pub internal_iterative_deepening: bool,
-    pub draw_by_repetition: bool
+    pub draw_by_repetition: bool,
+    pub quiescence_lazy_eval: bool,
+    pub pv_sort: bool,
+    pub see: bool,
+    pub killer_moves: bool,
+    pub counter_moves: bool,
+    pub history_moves: bool
 }
 
 fn get_epoch_ms() -> u128 {
@@ -214,7 +221,9 @@ pub fn negamax(
     if pv_move.is_none() && depth >= 4 && search_info.options.internal_iterative_deepening {
         pv_move = Some(negamax(board, search_info, moving_team, depth - 2, alpha, beta, prev_action, is_pv));
     }
-    if depth >= 3 && !in_check(board, moving_team, board.row_gap) && !is_pv {
+    
+    let in_check = in_check(board, moving_team, board.row_gap) ;
+    if depth >= 3 && !in_check && !is_pv {
         let evaluation = negamax(board, search_info, if moving_team == 0 { 1 } else { 0 }, depth - 2, -beta, -beta + 1, None, false);
         let score = -evaluation.score;
         if score >= beta {
@@ -234,6 +243,27 @@ pub fn negamax(
         }
     }
 
+    if !in_check && !is_pv {
+        // Futility Pruning + Extended Futility Pruning
+        if search_info.options.futility_pruning && depth == 1 {
+            let standing_pat = eval_material(board, moving_team);
+            if standing_pat + 2000 < alpha {
+                return EvaluationScore {
+                    score: standing_pat,
+                    best_move: None
+                };
+            }
+        } else if search_info.options.extended_futility_pruning && depth == 2 {
+            let standing_pat = eval_material(board, moving_team);
+            if standing_pat + 4000 < alpha {
+                return EvaluationScore {
+                    score: standing_pat,
+                    best_move: None
+                };
+            }
+        }
+    }
+
     let mut best_move: Option<Action> = None;
 
     let mut best_score: i32 = MIN_SCORE;
@@ -241,7 +271,7 @@ pub fn negamax(
         .generate_legal_moves(moving_team);
 
     if base_moves.len() == 0 {
-        if in_check(board, moving_team, board.row_gap) {
+        if in_check {
             let evaluation = EvaluationScore {
                 score: MIN_SCORE + 100 - (depth as i32),
                 best_move: None
@@ -282,37 +312,28 @@ pub fn negamax(
         search_info.beta_cutoff += 1;
         let undo = board.make_move(action);
         search_info.last_boards.push(hash_board(&board, moving_team, &search_info.zobrist));
- 
-        if !action.capture && !in_check(board, moving_team, board.row_gap) && !is_pv {
-            // Futility Pruning + Extended Futility Pruning
-            if search_info.options.futility_pruning && depth == 1 {
-                let standing_pat = eval_material(board, moving_team);
-                if standing_pat + 3000 < alpha {
-                    board.undo_move(undo);
-                    search_info.last_boards.pop();
-                    continue;
-                }
-            } else if search_info.options.extended_futility_pruning && depth == 2 {
-                let standing_pat = eval_board(board, moving_team);
-                if standing_pat + 5000 < alpha {
-                    board.undo_move(undo);
-                    search_info.last_boards.pop();
-                    continue;
-                }
-            }
-        }
         
         let evaluation = if b_search_pv && search_info.options.pvs_search {
+            let late_move_reductions = ind >= search_info.options.late_move_reductions_limit;
             let evaluation = negamax(
                 board,
                 search_info,
                 if moving_team == 0 { 1 } else { 0 },
-                working_depth,
+                if late_move_reductions {
+                    max(working_depth - 1, 0)
+                } else {
+                    working_depth
+                },
                 -alpha - 1,
                 -alpha,
                 Some(action),
                 true
             );
+            let mut score = -evaluation.score;
+            if late_move_reductions {
+                score += search_info.options.late_move_margin; // Since we're searching at depth - 1, let's add an additional margin.
+            }
+
             if -evaluation.score > alpha && -evaluation.score < beta {
                 negamax(
                     board,
@@ -339,11 +360,6 @@ pub fn negamax(
                 false
             )
         };
-
-        // Late Move Reductions
-        if ind == search_info.options.late_move_reductions_limit && working_depth > 0 {
-            working_depth -= 1;
-        }
 
         let score = -evaluation.score;
         search_info.last_boards.pop();
@@ -404,8 +420,8 @@ pub fn quiescence(
     }
 
     let mut best_move: Option<Action> = None;
-    let standing_pat = eval_board(board, moving_team);
 
+    let standing_pat = eval_board(board, moving_team);
     if standing_pat >= beta {
         return EvaluationScore {
             score: beta,
@@ -480,16 +496,6 @@ pub fn quiescence(
                 alpha = score;
                 if score >= beta {                
                     search_info.history_moves[action.from as usize][action.to as usize] += 1;
-                    if !action.capture {
-                        let counter = search_info.counter_moves[action.from as usize][action.to as usize];
-                        let mut can_counter = true;
-                        if let Some(counter_move) = counter {
-                            if counter_move.depth > 0 { can_counter = false; }
-                        }  
-                        if can_counter {
-                            search_info.counter_moves[action.from as usize][action.to as usize] = Some(DepthMove { action, depth: 0 });
-                        }
-                    }
                     if search_info.options.ab_pruning {
                         break;
                     }

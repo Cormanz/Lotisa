@@ -88,34 +88,34 @@ fn test_mode() {
     uci.board.print_board();
 
     let mut info = create_search_info(&mut uci.board, 25, vec![], SearchOptions {
-        null_move_pruning: true,
-        adaptive_r: true,
-        null_move_reductions: true,
-        late_move_reductions_limit: 2,
-        late_move_reductions_upper_limit: 5,
+        null_move_pruning: false,
+        adaptive_r: false,
+        null_move_reductions: false,
+        late_move_reductions_limit: 112,
+        late_move_reductions_upper_limit: 115,
         late_move_margin: 0, // Failed SPRT TEST
-        delta_pruning: true,
-        futility_pruning: true,
-        extended_futility_pruning: true,
-        move_ordering: true,
+        delta_pruning: false,
+        futility_pruning: false,
+        extended_futility_pruning: false,
+        move_ordering: false,
         ab_pruning: true,
-        quiescience: true,
-        transposition_table: true,
-        pvs_search: true,
+        quiescience: false,
+        transposition_table: false,
+        pvs_search: false,
         internal_iterative_deepening: false,
         draw_by_repetition: false, // FAILED SPRT TEST
         quiescence_lazy_eval: false,
-        pv_sort: true,
-        see: true,
-        killer_moves: true,
-        counter_moves: true, // FAILED SPRT TEST
-        history_moves: true,
+        pv_sort: false,
+        see: false,
+        killer_moves: false,
+        counter_moves: false, // FAILED SPRT TEST
+        history_moves: false,
         material: true,
         center_control: false,
         center_occupied: false,
-        mobility: false,
+        mobility: true,
         tempo_bonus: false,
-        king_safety: true
+        king_safety: false
     });
     loop {
         let results = negamax_deepening(&mut uci.board, team, 17, &mut info, 25000);
@@ -151,36 +151,36 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
             }
         } else if line.starts_with("go") {
             let mut info = create_search_info(&mut uci.board, 25, last_boards.clone(), SearchOptions {
-                null_move_pruning: true,
-                adaptive_r: true,
-                null_move_reductions: true,
-                late_move_reductions_limit: 2,
-                late_move_reductions_upper_limit: 5,
+                null_move_pruning: false,
+                adaptive_r: false,
+                null_move_reductions: false,
+                late_move_reductions_limit: 112,
+                late_move_reductions_upper_limit: 115,
                 late_move_margin: 0, // Failed SPRT TEST
-                delta_pruning: true,
-                futility_pruning: true,
-                extended_futility_pruning: true,
-                move_ordering: true,
+                delta_pruning: false,
+                futility_pruning: false,
+                extended_futility_pruning: false,
+                move_ordering: false,
                 ab_pruning: true,
-                quiescience: true,
-                transposition_table: true,
-                pvs_search: true,
+                quiescience: false,
+                transposition_table: false,
+                pvs_search: false,
                 internal_iterative_deepening: false,
                 draw_by_repetition: false, // FAILED SPRT TEST
                 quiescence_lazy_eval: false,
-                pv_sort: true,
-                see: true,
-                killer_moves: true,
-                counter_moves: true, // FAILED SPRT TEST
-                history_moves: true,
+                pv_sort: false,
+                see: false,
+                killer_moves: false,
+                counter_moves: false, // FAILED SPRT TEST
+                history_moves: false,
                 material: true,
-                center_control: true,
-                center_occupied: true,
-                mobility: true,
+                center_control: false,
+                center_occupied: false,
+                mobility: a_mode,
                 tempo_bonus: false,
-                king_safety: true
+                king_safety: false
             });
-            let results = negamax_deepening(&mut uci.board, team, 25, &mut info, 4000);
+            let results = negamax_deepening(&mut uci.board, team, 25, &mut info, 30);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {
             println!("readyok");

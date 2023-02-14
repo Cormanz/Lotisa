@@ -55,8 +55,10 @@ pub struct SearchInfo {
 
 pub struct SearchOptions {
     pub null_move_pruning: bool,
+    pub adaptive_r: bool,
     pub null_move_reductions: bool,
     pub late_move_reductions_limit: i16,
+    pub late_move_reductions_upper_limit: i16,
     pub late_move_margin: i32,
     pub futility_pruning: bool,
     pub extended_futility_pruning: bool,
@@ -73,7 +75,13 @@ pub struct SearchOptions {
     pub see: bool,
     pub killer_moves: bool,
     pub counter_moves: bool,
-    pub history_moves: bool
+    pub history_moves: bool,
+    pub mobility: bool,
+    pub tempo_bonus: bool,
+    pub center_control: bool,
+    pub center_occupied: bool,
+    pub king_safety: bool,
+    pub material: bool
 }
 
 fn get_epoch_ms() -> u128 {
@@ -91,6 +99,7 @@ pub fn is_draw_by_repetition(last_boards: &Vec<usize>) -> bool {
 pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo, max_time: u128) -> EvaluationScore {
     let mut out = EvaluationScore { score: 0, best_move: None };
     let mut prev_nodes = 0;
+    let mut total_time = 0;
     for i in 1..(depth + 1) {
         //if i != depth { continue; }
         info.root_depth = i;
@@ -104,7 +113,8 @@ pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, in
         );
         prev_nodes += new_nodes;
 
-        if time > max_time {
+        total_time += time;
+        if total_time > max_time {
             return out;
         }
     }
@@ -187,7 +197,7 @@ pub fn negamax(
             quiescence(board, search_info, moving_team, alpha, beta)
         } else {
             EvaluationScore {
-                score: eval_board(board, moving_team),
+                score: eval_board(board, moving_team, &search_info),
                 best_move: None
             }
         }
@@ -224,21 +234,44 @@ pub fn negamax(
     
     let in_check = in_check(board, moving_team, board.row_gap) ;
     if depth >= 3 && !in_check && !is_pv {
-        let evaluation = negamax(board, search_info, if moving_team == 0 { 1 } else { 0 }, depth - 2, -beta, -beta + 1, None, false);
+        let mut working_depth = if search_info.options.adaptive_r {
+            depth / 2
+        } else {
+            depth - 2
+        };
+        if working_depth < 0 {
+            working_depth = 0;
+        }
+        if working_depth > depth - 2 {
+            working_depth = depth - 2;
+        }
+        let evaluation = negamax(
+            board, search_info, 
+            if moving_team == 0 { 1 } else { 0 }, 
+            working_depth, -beta, 
+            -beta + 1, None, false
+        );
         let score = -evaluation.score;
         if score >= beta {
             // Null Move Reductions
-            if (is_endgame || !search_info.options.null_move_pruning) && search_info.options.null_move_reductions {
-                depth -= 4;
-                if depth < 1 {
-                    depth = 1;
-                }
-            // Null Move Pruning
-            } else if search_info.options.null_move_pruning {
+            if (depth >= 5 || is_endgame) && search_info.options.null_move_reductions {
                 return EvaluationScore {
                     score,
                     best_move: None
-                };
+                }
+            } else {
+                depth = max(0, depth - 4);
+
+                if depth == 0 {
+                    return if search_info.options.quiescience {
+                        quiescence(board, search_info, moving_team, alpha, beta)
+                    } else {
+                        EvaluationScore {
+                            score: eval_board(board, moving_team, &search_info),
+                            best_move: None
+                        }
+                    }
+                }
             }
         }
     }
@@ -306,7 +339,7 @@ pub fn negamax(
 
     search_info.positions += moves.len() as i32;
     let mut ind = 0;
-    let mut working_depth = depth - 1;
+    let working_depth = depth - 1;
     let mut b_search_pv = false;
     for ScoredMove { action, .. } in moves {
         search_info.beta_cutoff += 1;
@@ -315,11 +348,14 @@ pub fn negamax(
         
         let evaluation = if b_search_pv && search_info.options.pvs_search {
             let late_move_reductions = ind >= search_info.options.late_move_reductions_limit;
+            let late_move_reductions_upper = ind >= search_info.options.late_move_reductions_upper_limit;
             let evaluation = negamax(
                 board,
                 search_info,
                 if moving_team == 0 { 1 } else { 0 },
-                if late_move_reductions {
+                 if late_move_reductions_upper {
+                    max((2 * working_depth) / 3, 0)
+                } else if late_move_reductions {
                     max(working_depth - 1, 0)
                 } else {
                     working_depth
@@ -421,7 +457,7 @@ pub fn quiescence(
 
     let mut best_move: Option<Action> = None;
 
-    let standing_pat = eval_board(board, moving_team);
+    let standing_pat = eval_board(board, moving_team, &search_info);
     if standing_pat >= beta {
         return EvaluationScore {
             score: beta,

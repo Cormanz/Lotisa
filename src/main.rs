@@ -58,7 +58,7 @@ pub fn perft(board: &mut Board, depth: i16, team: i16) -> u64 {
 
 fn test_mode() {
     env::set_var("RUST_BACKTRACE", "FULL");
-    let fen = "q7/1k6/8/8/3K4/8/8/8";
+    let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
     let mut team = 0;
 
     /*println!("sadly!");
@@ -83,34 +83,42 @@ fn test_mode() {
     let mut uci = UCICommunicator { board: Board::load_fen(fen) };
     //let mut lookup = PieceMapLookup::new(PieceMapLookup::default_map(10));
     //lookup.map.insert(4, Box::new(AmazonPiece::new(10)) as Box<dyn Piece>);
-    //uci.board.piece_lookup = Box::new(lookup);
+    //uci.board.pfiece_lookup = Box::new(lookup);
     println!("DONE!");
     uci.board.print_board();
 
-    let mut info = create_search_info(&mut uci.board, 17, vec![], SearchOptions {
+    let mut info = create_search_info(&mut uci.board, 25, vec![], SearchOptions {
         null_move_pruning: true,
-        null_move_reductions: false,
-        late_move_reductions_limit: 1000,
-        late_move_margin: 400,
+        adaptive_r: true,
+        null_move_reductions: true,
+        late_move_reductions_limit: 2,
+        late_move_reductions_upper_limit: 5,
+        late_move_margin: 0, // Failed SPRT TEST
         delta_pruning: true,
-        futility_pruning: false,
-        extended_futility_pruning: false,
+        futility_pruning: true,
+        extended_futility_pruning: true,
         move_ordering: true,
         ab_pruning: true,
         quiescience: true,
-        transposition_table: false,
+        transposition_table: true,
         pvs_search: true,
-        internal_iterative_deepening: true,
-        draw_by_repetition: true,
-        quiescence_lazy_eval: true,
-        pv_sort: false,
-        see: false,
-        killer_moves: false,
-        counter_moves: false,
-        history_moves: false
+        internal_iterative_deepening: false,
+        draw_by_repetition: false, // FAILED SPRT TEST
+        quiescence_lazy_eval: false,
+        pv_sort: true,
+        see: true,
+        killer_moves: true,
+        counter_moves: true, // FAILED SPRT TEST
+        history_moves: true,
+        material: true,
+        center_control: false,
+        center_occupied: false,
+        mobility: false,
+        tempo_bonus: false,
+        king_safety: true
     });
     loop {
-        let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 3000);
+        let results = negamax_deepening(&mut uci.board, team, 17, &mut info, 25000);
         let action = results.best_move.unwrap(); 
         thread::sleep(Duration::from_millis(500));
         println!("{}", uci.encode(&action));
@@ -142,11 +150,13 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
                 team = (team + 1) % 2;
             }
         } else if line.starts_with("go") {
-            let mut info = create_search_info(&mut uci.board, 17, last_boards.clone(), SearchOptions {
+            let mut info = create_search_info(&mut uci.board, 25, last_boards.clone(), SearchOptions {
                 null_move_pruning: true,
+                adaptive_r: a_mode,
                 null_move_reductions: false,
                 late_move_reductions_limit: 3,
-                late_move_margin: 0, // Failed SPRT Testing
+                late_move_reductions_upper_limit: 6,
+                late_move_margin: 0, // Failed SPRT TEST
                 delta_pruning: true,
                 futility_pruning: true,
                 extended_futility_pruning: true,
@@ -155,16 +165,22 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
                 quiescience: true,
                 transposition_table: true,
                 pvs_search: true,
-                internal_iterative_deepening: a_mode, // FAILED SPRT TEST
+                internal_iterative_deepening: true,
                 draw_by_repetition: false, // FAILED SPRT TEST
                 quiescence_lazy_eval: false,
                 pv_sort: true,
                 see: true,
                 killer_moves: true,
                 counter_moves: false, // FAILED SPRT TEST
-                history_moves: true
+                history_moves: true,
+                material: true,
+                center_control: true,
+                center_occupied: true,
+                mobility: true,
+                tempo_bonus: false,
+                king_safety: false
             });
-            let results = negamax_deepening(&mut uci.board, team, 8, &mut info, 20);
+            let results = negamax_deepening(&mut uci.board, team, 25, &mut info, 50);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {
             println!("readyok");

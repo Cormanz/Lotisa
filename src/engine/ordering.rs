@@ -87,25 +87,27 @@ pub fn score_move(board: &mut Board, depth: i16, action: &Action, prev_action: &
     }
     board.undo_move(undo);*/
 
+    // History Moves
+
+    let mut score = 0;
+    if search_info.options.history_moves {
+        let history = search_info.history_moves[action.from as usize][action.to as usize];
+        score = history;
+    }
+
+    
     // Counter Moves
     if search_info.options.counter_moves {
         if let Some(prev_action) = prev_action {
             if let Some(counter_move) = search_info.counter_moves[prev_action.from as usize][prev_action.to as usize] {
                 if counter_move.action == action_val {
-                    return 10_000;
+                    return 100;
                 }
             }
         }
     }
 
-    // History Moves
-
-    if search_info.options.history_moves {
-        let history = search_info.history_moves[action.from as usize][action.to as usize];
-        return history;
-    }
-
-    return 0;
+    return score;
 }
 
 pub fn see(board: &mut Board, square: i16, moving_team: i16, current_attacker: Option<i16>) -> i32 {

@@ -278,6 +278,16 @@ impl Piece for PawnPiece {
             }
         }
 
+        /*
+        TODO: EN PASSANT
+
+        Restrictions:
+            - The enemy pawn moved 2 squares forward in a previous move
+            - This pawn is right next to it 
+
+        If both of those are true, we can take the pawn by moving to where it would've been 1 square from there
+        */
+
         let target_left = match team {
             0 => pos - row_gap - 1,
             1 => pos + row_gap - 1,

@@ -174,7 +174,12 @@ pub fn eval_board(board: &mut Board, moving_team: i16, search_info: &SearchInfo)
 
     let tempo_bonus = if search_info.options.tempo_bonus { 200 } else { 0 };
 
-    material + center_control + center_occupied + moves + opposing_moves + tempo_bonus + king_safety
+    material
+        + (0 * center_control)
+        + (0 * center_occupied)
+        + (0 * moves) - (0 * opposing_moves)
+        + king_safety
+        + 0
 }
 
 #[derive(Clone, Copy, Debug)]

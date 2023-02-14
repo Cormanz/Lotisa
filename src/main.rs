@@ -103,7 +103,7 @@ fn test_mode() {
         transposition_table: true,
         pvs_search: true,
         internal_iterative_deepening: false,
-        draw_by_repetition: true, // FAILED SPRT TEST
+        draw_by_repetition: false, // FAILED SPRT TEST
         quiescence_lazy_eval: false,
         pv_sort: true,
         see: true,
@@ -166,7 +166,7 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
                 transposition_table: true,
                 pvs_search: true,
                 internal_iterative_deepening: false,
-                draw_by_repetition: true, // FAILED SPRT TEST
+                draw_by_repetition: false, // FAILED SPRT TEST
                 quiescence_lazy_eval: false,
                 pv_sort: true,
                 see: true,
@@ -174,13 +174,13 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
                 counter_moves: true, // FAILED SPRT TEST
                 history_moves: true,
                 material: true,
-                center_control: a_mode,
-                center_occupied: a_mode,
-                mobility: a_mode,
+                center_control: true,
+                center_occupied: true,
+                mobility: true,
                 tempo_bonus: false,
                 king_safety: true
             });
-            let results = negamax_deepening(&mut uci.board, team, 25, &mut info, 50);
+            let results = negamax_deepening(&mut uci.board, team, 25, &mut info, 4000);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));
         } else if line == "isready" {
             println!("readyok");

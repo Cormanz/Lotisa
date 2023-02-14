@@ -1,4 +1,4 @@
-use std::{cmp::{min, max}, time::{SystemTime, UNIX_EPOCH}, ops::Neg, collections::HashMap};
+use std::{cmp::{min, max}, time::{SystemTime, UNIX_EPOCH}, ops::Neg, collections::HashMap, f64::MIN};
 
 use fnv::FnvHashMap;
 
@@ -216,7 +216,7 @@ pub fn negamax(
 
     if search_info.options.draw_by_repetition && is_draw_by_repetition(&search_info.last_boards) {
         return EvaluationScore {
-            score: 0,
+            score: MAX_SCORE - 100,
             best_move: None
         };   
     }

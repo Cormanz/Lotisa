@@ -149,7 +149,6 @@ pub fn eval_board(board: &mut Board, moving_team: i16, search_info: &SearchInfo)
                     _ => {}
                 }
             }
-            println!("beep boop {} {}", empty_squares, open_squares);
 
             let blocked_squares: i32 = empty_squares - open_squares;
             let ratio = (blocked_squares.pow(2) as f32) / (empty_squares.pow(2) as f32);

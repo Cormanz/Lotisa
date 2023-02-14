@@ -93,7 +93,11 @@ fn get_epoch_ms() -> u128 {
 
 pub fn is_draw_by_repetition(last_boards: &Vec<usize>) -> bool {
     let len = last_boards.len();
-    last_boards[len - 1] == last_boards[len - 3]
+    if len < 3 {
+        false
+    } else {
+        last_boards[len - 1] == last_boards[len - 3]
+    }
 }
 
 pub fn negamax_deepening<'a>(board: &mut Board, moving_team: i16, depth: i16, info: &mut SearchInfo, max_time: u128) -> EvaluationScore {

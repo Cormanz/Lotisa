@@ -103,7 +103,7 @@ fn test_mode() {
         transposition_table: true,
         pvs_search: true,
         internal_iterative_deepening: false,
-        draw_by_repetition: false, // FAILED SPRT TEST
+        draw_by_repetition: true, // FAILED SPRT TEST
         quiescence_lazy_eval: false,
         pv_sort: true,
         see: true,
@@ -152,10 +152,10 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
         } else if line.starts_with("go") {
             let mut info = create_search_info(&mut uci.board, 25, last_boards.clone(), SearchOptions {
                 null_move_pruning: true,
-                adaptive_r: a_mode,
-                null_move_reductions: false,
-                late_move_reductions_limit: 3,
-                late_move_reductions_upper_limit: 6,
+                adaptive_r: true,
+                null_move_reductions: true,
+                late_move_reductions_limit: 2,
+                late_move_reductions_upper_limit: 5,
                 late_move_margin: 0, // Failed SPRT TEST
                 delta_pruning: true,
                 futility_pruning: true,
@@ -165,20 +165,20 @@ fn uci_mode(stdin: Stdin, a_mode: bool) {
                 quiescience: true,
                 transposition_table: true,
                 pvs_search: true,
-                internal_iterative_deepening: true,
-                draw_by_repetition: false, // FAILED SPRT TEST
+                internal_iterative_deepening: false,
+                draw_by_repetition: true, // FAILED SPRT TEST
                 quiescence_lazy_eval: false,
                 pv_sort: true,
                 see: true,
                 killer_moves: true,
-                counter_moves: false, // FAILED SPRT TEST
+                counter_moves: true, // FAILED SPRT TEST
                 history_moves: true,
                 material: true,
-                center_control: true,
-                center_occupied: true,
-                mobility: true,
+                center_control: a_mode,
+                center_occupied: a_mode,
+                mobility: a_mode,
                 tempo_bonus: false,
-                king_safety: false
+                king_safety: true
             });
             let results = negamax_deepening(&mut uci.board, team, 25, &mut info, 50);
             println!("bestmove {}", uci.encode(&results.best_move.unwrap()));

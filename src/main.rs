@@ -12,8 +12,6 @@ use boards::{Board, PieceMapLookup, AmazonPiece, Piece};
 use crate::{engine::{create_search_info, negamax_deepening, SearchOptions}, boards::in_check, communication::Communicator};
 
 mod boards;
-mod engine;
-mod communication;
 
 fn get_epoch_ms() -> u128 {
     SystemTime::now()

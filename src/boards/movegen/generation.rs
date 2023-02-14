@@ -40,7 +40,7 @@ struct PieceMapInfo {
 }
 
 pub trait PieceLookup {
-    fn lookup(&self, piece_type: i16) -> &Box<dyn Piece>;
+    fn lookup(&mut self, piece_type: i16) -> &Box<dyn Piece>;
 }
 
 pub type PieceMap = FnvHashMap<i16, Box<dyn Piece>>;
@@ -79,8 +79,8 @@ impl PieceMapLookup {
 }
 
 impl PieceLookup for PieceMapLookup {
-    fn lookup(&self, piece_type: i16) -> &Box<dyn Piece> {
-        return &self.map[&piece_type];
+    fn lookup(&mut self, piece_type: i16) -> &Box<dyn Piece> {
+        self.map.get_mut(&piece_type).unwrap()
     }
 }
 
@@ -104,15 +104,15 @@ impl DefaultPieceLookup {
 }
 
 impl PieceLookup for DefaultPieceLookup {
-    fn lookup(&self, piece_type: i16) -> &Box<dyn Piece> {
+    fn lookup(&mut self, piece_type: i16) -> &Box<dyn Piece> {
         return match piece_type {
-            0 => &self.info.pawn,
-            1 => &self.info.knight,
-            2 => &self.info.bishop,
-            3 => &self.info.rook,
-            4 => &self.info.queen,
-            5 => &self.info.king,
-            _ => &self.info.pawn,
+            0 => &mut self.info.pawn,
+            1 => &mut self.info.knight,
+            2 => &mut self.info.bishop,
+            3 => &mut self.info.rook,
+            4 => &mut self.info.queen,
+            5 => &mut self.info.king,
+            _ => &mut self.info.pawn,
         };
     }
 }
@@ -121,19 +121,13 @@ pub fn create_default_piece_lookup<'a>(row_gap: i16) -> Box<dyn PieceLookup> {
     Box::new(DefaultPieceLookup::new(row_gap)) as Box<dyn PieceLookup>
 }
 
-pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
-    let Board {
-        state,
-        row_gap,
-        pieces,
-        ..
-    } = board;
+pub fn generate_moves(board: &mut Board, required_team: i16) -> Vec<Action> {
     let mut actions: Vec<Action> = Vec::with_capacity(64);
-    let row_gap = *row_gap;
+    let row_gap = board.row_gap;
 
-    for pos in pieces {
+    for pos in &board.pieces { 
         let pos = *pos;
-        let piece = state[pos as usize];
+        let piece = board.state[pos as usize];
         let team = board.get_team(piece);
         if team != required_team {
             continue;
@@ -146,11 +140,11 @@ pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
             team,
             piece_type,
         };
+        let piece_trait = board
+            .piece_lookup
+            .lookup(piece_type).duplicate();
         actions.extend(
-            board
-                .piece_lookup
-                .lookup(piece_type)
-                .get_actions(board, &piece_info),
+            piece_trait.get_actions(board, &piece_info)
         );
     }
 
@@ -159,22 +153,10 @@ pub fn generate_moves(board: &Board, required_team: i16) -> Vec<Action> {
 
 pub fn in_check(board: &mut Board, moving_team: i16, row_gap: i16) -> bool {
     let king = board.get_piece_value(5, moving_team);
-    let king_test = board
+    let king = *board
         .pieces
         .iter()
-        .find(|piece| board.state[**piece as usize] == king);
-    let king = if let Some(king) = king_test {
-        *king
-    } else {
-        println!("WHAT DA HELLLLLL OH MY GOD {moving_team} {king} {:?} OH {:?}", board.state, board
-            .pieces
-            .iter()
-            .map(|piece| board.state[*piece as usize]
-        )
-        .collect::<Vec<_>>());
-        board.print_board();
-        *king_test.unwrap()
-    };
+        .find(|piece| board.state[**piece as usize] == king).unwrap();
     let king_vec = vec![king];
     for pos in &board.pieces {
         let pos = *pos;
@@ -193,7 +175,7 @@ pub fn in_check(board: &mut Board, moving_team: i16, row_gap: i16) -> bool {
             piece_type,
         };
         
-        let piece_handler = board.piece_lookup.lookup(piece_type);
+        let piece_handler = board.piece_lookup.lookup(piece_type).duplicate();
         if piece_handler.can_control(board, &piece_info, &king_vec) {
             return true;
         }
@@ -218,9 +200,9 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
             }
         }
 
-        let undo = board.make_move(action);
+        board.make_move(action);
         let can_add = !in_check(board, required_team, row_gap);
-        board.undo_move(undo);
+        board.undo_move();
 
         if can_add {
             new_actions.push(action);

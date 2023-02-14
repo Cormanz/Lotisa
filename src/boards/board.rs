@@ -30,10 +30,10 @@ pub fn create_board_state(buffer_amount: i16, (rows, cols): (i16, i16)) -> Board
     return state;
 }
 
-pub struct MoveUndo {
-    action: Action,
-    from_previous: i16,
-    to_previous: i16,
+pub struct StoredMove {
+    pub action: Action,
+    pub from_previous: i16,
+    pub to_previous: i16,
     pub pieces: Vec<i16>,
 }
 
@@ -54,6 +54,7 @@ pub struct Action {
 
 pub type PieceList = FnvHashMap<i16, Vec<i16>>;
 
+#[derive(Copy, Clone)]
 pub struct PieceInfo {
     pub pos: i16,
     pub piece_value: i16,
@@ -72,6 +73,7 @@ pub struct Board {
     pub row_gap: i16,
     pub col_gap: i16,
     pub piece_lookup: Box<dyn PieceLookup>,
+    pub history: Vec<StoredMove>
 }
 
 // TODO: Add reverse piece list to speed up removing items
@@ -98,10 +100,11 @@ impl Board {
             row_gap: rows + buffer_amount,
             col_gap: cols + (buffer_amount * 2),
             piece_lookup,
+            history: Vec::with_capacity(500)
         };
     }
 
-    pub fn display_board(&self) -> Vec<ColoredString> {
+    pub fn display_board(&mut self) -> Vec<ColoredString> {
         let mut items: Vec<ColoredString> = vec![];
 
         let mut ind = 0;
@@ -143,55 +146,26 @@ impl Board {
         items
     }
 
-    pub fn print_board(&self) {
+    pub fn print_board(&mut self) {
         for el in self.display_board() {
             print!("{}", el);
         }
         println!("\n");
     }
 
-    pub fn make_move(&mut self, action: Action) -> MoveUndo {
-        let old_pieces = self.pieces.clone();
+    pub fn make_move(&mut self, action: Action) {
+        let PieceInfo { 
+            piece_type,
+            ..
+        } = self.get_piece_info(action.from);
 
-        let from_usize = action.from as usize;
-        let to_usize = action.to as usize;
-
-        let from_state = self.state[from_usize];
-        let to_state = self.state[to_usize];
-
-        self.state[to_usize] = from_state;
-        self.state[from_usize] = 1;
-
-        let to_pos_all = if action.capture {
-            self
-                .pieces
-                .iter()
-                .position(|pos| *pos == action.to)
-        } else {
-            None
-        };
-
-        let from_pos_all = self
-            .pieces
-            .iter()
-            .position(|pos| *pos == action.from)
-            .unwrap();
-        self.pieces[from_pos_all] = action.to;
-
-        if let Some(to_pos_all) = to_pos_all {
-            self.pieces.swap_remove(to_pos_all);
-        }
-
-        return MoveUndo {
-            action,
-            from_previous: from_state,
-            to_previous: to_state,
-            pieces: old_pieces,
-        };
+        let piece_trait = self.piece_lookup.lookup(piece_type).duplicate();
+        piece_trait.make_move(self, action);
     }
 
-    pub fn undo_move(&mut self, undo: MoveUndo) {
-        let MoveUndo {
+    pub fn undo_move(&mut self) {
+        let undo = self.history.pop().unwrap();
+        let StoredMove {
             action,
             to_previous,
             from_previous,
@@ -316,7 +290,7 @@ impl Board {
         board
     }
 
-    pub fn generate_moves(&self, team: i16) -> Vec<Action> {
+    pub fn generate_moves(&mut self, team: i16) -> Vec<Action> {
         generate_moves(self, team)
     }
 

@@ -1,4 +1,4 @@
-use crate::boards::{Action, ActionType, Board};
+use crate::boards::{Action, ActionType, Board, StoredMove};
 
 use super::generation::PieceGenInfo;
 
@@ -49,6 +49,61 @@ pub trait Piece {
 
     fn get_material_value(&self) -> i32;
     fn get_icon(&self) -> &str;
+
+    fn make_move(&self, board: &mut Board, action: Action) {
+        let old_pieces = board.pieces.clone();
+
+        let from_usize = action.from as usize;
+        let to_usize = action.to as usize;
+
+        let from_state = board.state[from_usize];
+        let to_state = board.state[to_usize];
+
+        board.state[to_usize] = from_state;
+        board.state[from_usize] = 1;
+
+        let to_pos_all = if action.capture {
+            board
+                .pieces
+                .iter()
+                .position(|pos| *pos == action.to)
+        } else {
+            None
+        };
+
+        let from_pos_all = board
+            .pieces
+            .iter()
+            .position(|pos| *pos == action.from)
+            .unwrap();
+        board.pieces[from_pos_all] = action.to;
+
+        if let Some(to_pos_all) = to_pos_all {
+            board.pieces.swap_remove(to_pos_all);
+        }
+
+        let past_move = StoredMove {
+            action,
+            from_previous: from_state,
+            to_previous: to_state,
+            pieces: old_pieces,
+        };
+        board.history.push(past_move);
+    }
+
+    fn undo_move(&mut self, board: &mut Board, undo: StoredMove) {
+        let StoredMove {
+            action,
+            to_previous,
+            from_previous,
+            pieces,
+        } = undo;
+        board.state[action.to as usize] = to_previous;
+        board.state[action.from as usize] = from_previous;
+        board.pieces = pieces;
+    }
+
+    fn duplicate(&self) -> Box<dyn Piece>;
 }
 
 pub fn get_actions_delta(
@@ -196,7 +251,7 @@ impl Piece for PawnPiece {
         let max_row = board.rows + board.buffer_amount;
 
         let pawn_min_row = min_row + 1;
-        let pawn_max_row = max_row - 1;
+        let pawn_max_row = max_row - 2;
 
         let row = board.get_row(pos);
 
@@ -263,6 +318,10 @@ impl Piece for PawnPiece {
     fn get_icon(&self) -> &str {
         "♟"
     }
+    
+    fn duplicate(&self) -> Box<dyn Piece> {
+        Box::new(PawnPiece)
+    }
 }
 
 pub struct KnightPiece {
@@ -301,6 +360,12 @@ impl Piece for KnightPiece {
     fn get_icon(&self) -> &str {
         "♞"
     }
+
+    fn duplicate(&self) -> Box<dyn Piece> {
+        Box::new(KnightPiece {
+            deltas: self.deltas.clone()
+        })
+    }
 }
 
 pub struct BishopPiece {
@@ -328,6 +393,12 @@ impl Piece for BishopPiece {
     }
     fn get_icon(&self) -> &str {
         "♝"
+    }
+
+    fn duplicate(&self) -> Box<dyn Piece> {
+        Box::new(BishopPiece {
+            sliders: self.sliders.clone()
+        })
     }
 }
 
@@ -357,6 +428,12 @@ impl Piece for RookPiece {
 
     fn get_icon(&self) -> &str {
         "♜"
+    }
+    
+    fn duplicate(&self) -> Box<dyn Piece> {
+        Box::new(RookPiece {
+            sliders: self.sliders.clone()
+        })
     }
 }
 
@@ -395,6 +472,12 @@ impl Piece for QueenPiece {
 
     fn get_icon(&self) -> &str {
         "♛"
+    }
+
+    fn duplicate(&self) -> Box<dyn Piece> {
+        Box::new(QueenPiece {
+            sliders: self.sliders.clone()
+        })
     }
 }
 
@@ -447,6 +530,13 @@ impl Piece for AmazonPiece {
     fn get_icon(&self) -> &str {
         "☀︎"
     }
+    
+    fn duplicate(&self) -> Box<dyn Piece> {
+        Box::new(AmazonPiece {
+            deltas: self.deltas.clone(),
+            sliders: self.sliders.clone()
+        })
+    }
 }
 
 pub struct KingPiece {
@@ -480,5 +570,11 @@ impl Piece for KingPiece {
 
     fn get_material_value(&self) -> i32 {
         1000
+    }
+
+    fn duplicate(&self) -> Box<dyn Piece> {
+        Box::new(KingPiece{ 
+            deltas: self.deltas.clone()
+        })
     }
 }

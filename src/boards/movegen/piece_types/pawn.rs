@@ -169,6 +169,14 @@ impl Piece for PawnPiece {
 
 
         if action.info == -3 {
+            /*
+                The action in Lotisa's "to" represents where the capturer needs to go, not the piece that needs to be captured.
+                Since we're doing en passant, we'll always know which way to modify the row of the "to" to find the captured piece.
+                Then, we move the captured piece to the "to" square, and simulate a normal capture.
+                We store the undo with the normal action to make sure squares get reset normally, though.
+                Perhaps this is a more efficient way to do this, but I thought this was easiest.
+            */
+
             let en_passant_target = if action.team == 0 {
                 action.to + board.row_gap
             } else {

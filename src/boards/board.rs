@@ -31,11 +31,25 @@ pub fn create_board_state(buffer_amount: i16, (rows, cols): (i16, i16)) -> Board
     return state;
 }
 
+#[derive(Debug)]
 pub struct StoredMove {
     pub action: Action,
     pub from_previous: i16,
     pub to_previous: i16,
     pub pieces: Vec<i16>,
+    pub state: Option<Vec<i16>>
+} 
+
+impl StoredMove {
+    pub fn duplicate(&self) -> Self {
+        StoredMove { 
+            action: self.action.clone(),
+            from_previous: self.from_previous,
+            to_previous: self.to_previous,
+            pieces: self.pieces.clone(),
+            state: None
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -49,6 +63,7 @@ pub enum ActionType {
 pub struct Action {
     pub from: i16,
     pub to: i16,
+    pub team: i16,
     pub piece_type: i16,
     pub capture: bool,
     pub info: i16,
@@ -162,17 +177,11 @@ impl Board {
         piece_trait.make_move(self, action);
     }
 
-    pub fn undo_move(&mut self) {
+    pub fn undo_move(&mut self) -> StoredMove {
         let undo = self.history.pop().unwrap();
-        let StoredMove {
-            action,
-            to_previous,
-            from_previous,
-            pieces,
-        } = undo;
-        self.state[action.to as usize] = to_previous;
-        self.state[action.from as usize] = from_previous;
-        self.pieces = pieces;
+        let piece_trait = self.piece_lookup.lookup(undo.action.piece_type).duplicate();
+        piece_trait.undo_move(self, &undo);
+        undo
     }
 
     /*
@@ -289,8 +298,8 @@ impl Board {
         board
     }
 
-    pub fn generate_moves(&mut self, team: i16) -> Vec<Action> {
-        generate_moves(self, team)
+    pub fn generate_moves(&mut self, team: i16, testing: bool) -> Vec<Action> {
+        generate_moves(self, team, testing)
     }
 
     pub fn generate_legal_moves(&mut self, team: i16) -> Vec<Action> {

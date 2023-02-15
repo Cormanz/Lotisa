@@ -50,6 +50,7 @@ pub fn get_actions_sliding(
     sliders: &Vec<i16>,
     board: &Board,
     piece_info: &PieceGenInfo,
+    testing: bool
 ) -> Vec<Action> {
     let mut actions = Vec::with_capacity(sliders.len() * 2);
     let PieceGenInfo { pos, team, .. } = *piece_info;
@@ -58,7 +59,8 @@ pub fn get_actions_sliding(
         let mut current_pos = pos;
         loop {
             current_pos += slider;
-            match board.can_move_capture(current_pos, team) {
+            let can_capture_results = board.can_move_capture(current_pos, team);
+            match can_capture_results {
                 ActionType::MOVE => {
                     actions.push(Action {
                         from: pos,
@@ -66,6 +68,7 @@ pub fn get_actions_sliding(
                         piece_type: piece_info.piece_type,
                         capture: false,
                         info: 0,
+                        team
                     });
                 }
                 ActionType::CAPTURE => {
@@ -75,6 +78,7 @@ pub fn get_actions_sliding(
                         piece_type: piece_info.piece_type,
                         capture: true,
                         info: 0,
+                        team
                     });
                     break;
                 }

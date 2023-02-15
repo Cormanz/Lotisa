@@ -20,7 +20,7 @@ fn get_info(info: i16) -> PawnMoveInfo {
 
 pub struct PawnPiece;
 impl Piece for PawnPiece {
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo, testing: bool) -> Vec<Action> {
         let mut actions = Vec::with_capacity(2);
 
         let PieceGenInfo {
@@ -41,6 +41,7 @@ impl Piece for PawnPiece {
                 piece_type: piece_info.piece_type,
                 capture: false,
                 info: -1,
+                team
             });
         }
 
@@ -72,6 +73,7 @@ impl Piece for PawnPiece {
                     capture: false,
                     piece_type: piece_info.piece_type,
                     info: -2,
+                    team
                 });
             }
         }
@@ -100,6 +102,7 @@ impl Piece for PawnPiece {
                 piece_type: piece_info.piece_type,
                 capture: true,
                 info: -1,
+                team
             });
         }
 
@@ -117,6 +120,7 @@ impl Piece for PawnPiece {
                 piece_type: piece_info.piece_type,
                 capture: true,
                 info: -1,
+                team
             });
         }
 
@@ -133,7 +137,8 @@ impl Piece for PawnPiece {
                 to: target_left,
                 piece_type: piece_info.piece_type,
                 capture: true,
-                info: -3
+                info: -3,
+                team
             });
         }
 
@@ -150,7 +155,8 @@ impl Piece for PawnPiece {
                 to: target_right,
                 piece_type: piece_info.piece_type,
                 capture: true,
-                info: -3
+                info: -3,
+                team
             });
         }
 
@@ -159,38 +165,34 @@ impl Piece for PawnPiece {
 
     fn make_move(&self, board: &mut Board, action: Action) {
         let old_pieces = board.pieces.clone();
+        let old_state = if action.info == -3 { Some(board.state.clone()) } else { None };
 
-        let new_action = if action.info == -3 {
-            let shifted_to = action.to - board.row_gap;
-            let shifted_to_usize = shifted_to as usize;
-            let to_usize = action.to as usize;
-            let to_state = board.state[to_usize];
-            board.state[to_usize] = 1;
-            board.state[shifted_to_usize] = to_state;
 
-            let shifted_action = Action {
-                from: action.from,
-                to: shifted_to,
-                capture: true,
-                piece_type: action.piece_type,
-                info: -3,
+        if action.info == -3 {
+            let en_passant_target = if action.team == 0 {
+                action.to + board.row_gap
+            } else {
+                action.to - board.row_gap
             };
 
-            shifted_action
-        } else {
-            action
-        };
+            let en_passant_target_usize = en_passant_target as usize;
+            let en_passant_target_state = board.state[en_passant_target_usize];
+            let to_usize = action.to as usize;
+            board.state[to_usize] = en_passant_target_state;
+            board.state[en_passant_target_usize] = 1;
+        }
 
         let MakeMoveResults {
             from_state,
             to_state,
-        } = base_make_move(board, new_action);
+        } = base_make_move(board, action);
 
         let past_move = StoredMove {
             action,
             from_previous: from_state,
             to_previous: to_state,
             pieces: old_pieces,
+            state: old_state
         };
 
         board.history.push(past_move);
@@ -201,7 +203,7 @@ impl Piece for PawnPiece {
     }
 
     fn get_icon(&self) -> &str {
-        "♟"
+        "♙"
     }
 
     fn duplicate(&self) -> Box<dyn Piece> {

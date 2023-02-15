@@ -42,12 +42,14 @@ impl Communicator for UCICommunicator {
         let buffer_amount = self.board.buffer_amount;
         let from = decode_uci_pos(&self.board, &action[0..2], buffer_amount);
         let to = decode_uci_pos(&self.board, &action[2..4], buffer_amount);
+        let piece_info = self.board.get_piece_info(from);
         Action {
             from,
             to,
-            piece_type: self.board.get_piece_info(from).piece_type,
+            piece_type: piece_info.piece_type,
+            team: piece_info.team,
             capture: self.board.state[to as usize] > 1,
-            info: 0,
+            info: 0
         }
     }
 }

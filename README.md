@@ -22,6 +22,14 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
 
 The Lotisa engine uses a **10x12** board representation, where there's an **8x8** board inside of it, but additional squares are added to speed up the out of bounds check. Each piece is represented as an `i16` with the following formula: `piece_type + (PIECE_TYPES * team) + 2`, which allows for up to 16,384 piece types if there are two teams.
 
+## Anylsis Mode
+
+Lotisa will have a special _analysis_ mode which reduces ELO for the sake of giving more friendly explanations of moves. This would focus on the following ideas:
+
+- Focus on addressing **threat moves**, moves that you have to address or else you'll be blundering. For instance addressing a knight fork.
+- Focus on explaining why **appealing moves** (moves that seem good at 2-4 depth) are bad.
+- Focus on explaining the exact part of the evaluation that goes wrong "Your position will be 2 pawns worse" vs "All of the squares your king can move to are being escaped, which is very bad"
+
 ## Search
 
 - [Iterative Deepening](https://www.chessprogramming.org/Iterative_Deepening)
@@ -125,7 +133,7 @@ Lotisa provides the following trait for implementing Piece behavior:
 ```rust
 pub trait Piece {
     fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool;
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo, testing: bool) -> Vec<Action>;
     fn get_icon(&self) -> &str;
 }
 ```

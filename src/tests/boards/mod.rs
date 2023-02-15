@@ -19,8 +19,7 @@ fn startpos_perft() {
 
 
 #[test]
-fn a4_b5_xb5_perft() {
-    
+fn en_passant_a4_b5_xb5_perft() {
     let mut uci = UCICommunicator {
         board: Board::load_fen("rnbqkbnr/p1pppppp/8/1P6/8/8/1PPPPPPP/RNBQKBNR")
     };

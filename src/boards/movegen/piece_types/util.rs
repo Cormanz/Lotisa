@@ -16,6 +16,7 @@ pub fn attempt_action(
                 piece_type: piece_info.piece_type,
                 capture: false,
                 info: 0,
+                team
             });
         }
         ActionType::CAPTURE => {
@@ -25,6 +26,7 @@ pub fn attempt_action(
                 piece_type: piece_info.piece_type,
                 capture: true,
                 info: 0,
+                team
             });
         }
         ActionType::FAIL => {}
@@ -75,7 +77,7 @@ pub trait Piece {
     */
     fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
         let mut can_control = false;
-        for action in self.get_actions(board, piece_info) {
+        for action in self.get_actions(board, piece_info, false) {
             if targets.contains(&action.to) {
                 can_control = true;
                 break;
@@ -83,7 +85,7 @@ pub trait Piece {
         }
         can_control
     }
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo, testing: bool) -> Vec<Action>;
 
     fn get_material_value(&self) -> i32;
     fn get_icon(&self) -> &str;
@@ -101,21 +103,27 @@ pub trait Piece {
             from_previous: from_state,
             to_previous: to_state,
             pieces: old_pieces,
+            state: None
         };
 
         board.history.push(past_move);
     }
 
-    fn undo_move(&mut self, board: &mut Board, undo: StoredMove) {
+    fn undo_move(&self, board: &mut Board, undo: &StoredMove) {
         let StoredMove {
             action,
             to_previous,
             from_previous,
             pieces,
+            state
         } = undo;
-        board.state[action.to as usize] = to_previous;
-        board.state[action.from as usize] = from_previous;
-        board.pieces = pieces;
+        if let Some(state) = state {
+            board.state = state.clone();
+        } else {
+            board.state[action.to as usize] = *to_previous;
+            board.state[action.from as usize] = *from_previous;
+        }
+        board.pieces = pieces.clone();
     }
 
     fn duplicate(&self) -> Box<dyn Piece>;

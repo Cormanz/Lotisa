@@ -1,22 +1,21 @@
-use core::time;
 use communication::UCICommunicator;
+use core::time;
 use rand::seq::{IteratorRandom, SliceRandom};
 use std::{
-    env, thread,
-    time::{Duration, SystemTime, UNIX_EPOCH}, io::{self, BufRead, Stdin},
+    env,
+    io::{self, BufRead, Stdin},
+    thread,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use boards::{Board};
+use boards::Board;
 
 mod boards;
 mod communication;
-mod utils;
 mod tests;
+mod utils;
 
-fn test_mode() {
-
-
-}
+fn test_mode() {}
 
 fn main() {
     let mut args = env::args().collect::<Vec<_>>();
@@ -26,7 +25,7 @@ fn main() {
         let first_line = stdin.lock().lines().next().unwrap().unwrap();
         if first_line == "uci" {
             println!("id name Lotisa 0.0.1");
-            println!("id author Corman"); 
+            println!("id author Corman");
             println!("uciok");
         } else if first_line == "test" {
             test_mode();

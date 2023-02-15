@@ -1,5 +1,5 @@
-use crate::boards::{Board, PieceGenInfo, Action};
-use super::{Piece, get_actions_sliding, can_control_sliding};
+use super::{can_control_sliding, get_actions_sliding, Piece};
+use crate::boards::{Action, Board, PieceGenInfo};
 
 pub struct QueenPiece {
     sliders: Vec<i16>,
@@ -40,7 +40,7 @@ impl Piece for QueenPiece {
 
     fn duplicate(&self) -> Box<dyn Piece> {
         Box::new(QueenPiece {
-            sliders: self.sliders.clone()
+            sliders: self.sliders.clone(),
         })
     }
 }

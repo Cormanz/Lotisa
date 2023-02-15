@@ -1,4 +1,4 @@
-use crate::boards::{PieceGenInfo, Board, ActionType, Action, StoredMove};
+use crate::boards::{Action, ActionType, Board, PieceGenInfo, StoredMove};
 
 pub fn attempt_action(
     moves: &mut Vec<Action>,
@@ -15,7 +15,7 @@ pub fn attempt_action(
                 to: target,
                 piece_type: piece_info.piece_type,
                 capture: false,
-                info: None,
+                info: 0,
             });
         }
         ActionType::CAPTURE => {
@@ -24,10 +24,48 @@ pub fn attempt_action(
                 to: target,
                 piece_type: piece_info.piece_type,
                 capture: true,
-                info: None,
+                info: 0,
             });
         }
         ActionType::FAIL => {}
+    }
+}
+
+pub struct MakeMoveResults {
+    pub from_state: i16,
+    pub to_state: i16,
+}
+
+pub fn base_make_move(board: &mut Board, action: Action) -> MakeMoveResults {
+    let from_usize = action.from as usize;
+    let to_usize = action.to as usize;
+
+    let from_state = board.state[from_usize];
+    let to_state = board.state[to_usize];
+
+    board.state[to_usize] = from_state;
+    board.state[from_usize] = 1;
+
+    let to_pos_all = if action.capture {
+        board.pieces.iter().position(|pos| *pos == action.to)
+    } else {
+        None
+    };
+
+    let from_pos_all = board
+        .pieces
+        .iter()
+        .position(|pos| *pos == action.from)
+        .unwrap();
+    board.pieces[from_pos_all] = action.to;
+
+    if let Some(to_pos_all) = to_pos_all {
+        board.pieces.swap_remove(to_pos_all);
+    }
+
+    MakeMoveResults {
+        from_state,
+        to_state,
     }
 }
 
@@ -53,34 +91,10 @@ pub trait Piece {
     fn make_move(&self, board: &mut Board, action: Action) {
         let old_pieces = board.pieces.clone();
 
-        let from_usize = action.from as usize;
-        let to_usize = action.to as usize;
-
-        let from_state = board.state[from_usize];
-        let to_state = board.state[to_usize];
-
-        board.state[to_usize] = from_state;
-        board.state[from_usize] = 1;
-
-        let to_pos_all = if action.capture {
-            board
-                .pieces
-                .iter()
-                .position(|pos| *pos == action.to)
-        } else {
-            None
-        };
-
-        let from_pos_all = board
-            .pieces
-            .iter()
-            .position(|pos| *pos == action.from)
-            .unwrap();
-        board.pieces[from_pos_all] = action.to;
-
-        if let Some(to_pos_all) = to_pos_all {
-            board.pieces.swap_remove(to_pos_all);
-        }
+        let MakeMoveResults {
+            from_state,
+            to_state,
+        } = base_make_move(board, action);
 
         let past_move = StoredMove {
             action,
@@ -88,6 +102,7 @@ pub trait Piece {
             to_previous: to_state,
             pieces: old_pieces,
         };
+
         board.history.push(past_move);
     }
 

@@ -1,5 +1,5 @@
-use crate::boards::{Board, PieceGenInfo, Action};
-use super::{Piece, get_actions_delta, can_control_delta};
+use super::{can_control_delta, get_actions_delta, Piece};
+use crate::boards::{Action, Board, PieceGenInfo};
 
 pub struct KnightPiece {
     deltas: Vec<i16>,
@@ -40,7 +40,7 @@ impl Piece for KnightPiece {
 
     fn duplicate(&self) -> Box<dyn Piece> {
         Box::new(KnightPiece {
-            deltas: self.deltas.clone()
+            deltas: self.deltas.clone(),
         })
     }
 }

@@ -2,7 +2,8 @@ use colored::{ColoredString, Colorize};
 use fnv::FnvHashMap;
 
 use super::{
-    create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup, PieceMap, PieceMapLookup,
+    create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup,
+    PieceMap, PieceMapLookup,
 };
 
 //use super::Action;
@@ -50,7 +51,7 @@ pub struct Action {
     pub to: i16,
     pub piece_type: i16,
     pub capture: bool,
-    pub info: Option<i16>,
+    pub info: i16,
 }
 
 pub type PieceList = FnvHashMap<i16, Vec<i16>>;
@@ -74,7 +75,7 @@ pub struct Board {
     pub row_gap: i16,
     pub col_gap: i16,
     pub piece_lookup: Box<dyn PieceLookup>,
-    pub history: Vec<StoredMove>
+    pub history: Vec<StoredMove>,
 }
 
 // TODO: Add reverse piece list to speed up removing items
@@ -101,11 +102,11 @@ impl Board {
             row_gap: rows + buffer_amount,
             col_gap: cols + (buffer_amount * 2),
             piece_lookup,
-            history: Vec::with_capacity(500)
+            history: Vec::with_capacity(500),
         };
     }
 
-    pub fn display_board(&mut self) -> Vec<ColoredString> {
+    pub fn display_board(&self) -> Vec<ColoredString> {
         let mut items: Vec<ColoredString> = vec![];
 
         let mut ind = 0;
@@ -131,7 +132,7 @@ impl Board {
 
                 let team = self.get_team(piece);
                 let piece_type = self.get_piece_type(piece, team);
-                let piece_trait = &self.piece_lookup.lookup(piece_type);
+                let piece_trait = self.piece_lookup.lookup(piece_type).duplicate();
                 let piece_icon = piece_trait.get_icon();
                 items.push(match team {
                     0 => piece_icon.white(),
@@ -147,7 +148,7 @@ impl Board {
         items
     }
 
-    pub fn print_board(&mut self) {
+    pub fn print_board(&self) {
         for el in self.display_board() {
             print!("{}", el);
         }
@@ -155,10 +156,7 @@ impl Board {
     }
 
     pub fn make_move(&mut self, action: Action) {
-        let PieceInfo { 
-            piece_type,
-            ..
-        } = self.get_piece_info(action.from);
+        let PieceInfo { piece_type, .. } = self.get_piece_info(action.from);
 
         let piece_trait = self.piece_lookup.lookup(piece_type).duplicate();
         piece_trait.make_move(self, action);
@@ -245,7 +243,7 @@ impl Board {
         match state {
             0 => ActionType::FAIL,
             1 => ActionType::MOVE,
-            _ => ActionType::CAPTURE
+            _ => ActionType::CAPTURE,
         }
     }
 

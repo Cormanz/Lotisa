@@ -1,4 +1,4 @@
-use crate::boards::{PieceGenInfo, Board, ActionType, Action};
+use crate::boards::{Action, ActionType, Board, PieceGenInfo};
 
 use super::attempt_action;
 
@@ -19,7 +19,7 @@ pub fn can_control_delta(
     deltas: &Vec<i16>,
     board: &Board,
     piece_info: &PieceGenInfo,
-    targets: &Vec<i16>
+    targets: &Vec<i16>,
 ) -> bool {
     let PieceGenInfo { pos, .. } = *piece_info;
     let positions = deltas.iter().map(|delta| pos + delta).collect::<Vec<_>>();

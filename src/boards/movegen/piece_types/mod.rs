@@ -1,23 +1,23 @@
 use crate::boards::{Action, ActionType, Board, StoredMove};
 
-mod util;
-mod sliders;
 mod deltas;
+mod sliders;
+mod util;
 
-mod pawn;
-mod knight;
 mod bishop;
-mod rook;
-mod queen;
 mod king;
+mod knight;
+mod pawn;
+mod queen;
+mod rook;
 
-pub use util::*;
-pub use sliders::*;
 pub use deltas::*;
+pub use sliders::*;
+pub use util::*;
 
-pub use pawn::*;
-pub use knight::*;
 pub use bishop::*;
-pub use rook::*;
-pub use queen::*;
 pub use king::*;
+pub use knight::*;
+pub use pawn::*;
+pub use queen::*;
+pub use rook::*;

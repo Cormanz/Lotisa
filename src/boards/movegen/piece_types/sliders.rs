@@ -1,4 +1,4 @@
-use crate::boards::{PieceGenInfo, Board, ActionType, Action};
+use crate::boards::{Action, ActionType, Board, PieceGenInfo};
 
 pub fn can_control_sliding(
     sliders: &Vec<i16>,
@@ -7,10 +7,16 @@ pub fn can_control_sliding(
     targets: &Vec<i16>,
 ) -> bool {
     let PieceGenInfo { pos, team, .. } = *piece_info;
-    let mut difs = targets.iter().map(|target| target - pos).collect::<Vec<_>>();
+    let mut difs = targets
+        .iter()
+        .map(|target| target - pos)
+        .collect::<Vec<_>>();
 
     for slider in sliders {
-        if difs.iter().all(|dif| (dif % slider) != 0 || dif.signum() != slider.signum()) {
+        if difs
+            .iter()
+            .all(|dif| (dif % slider) != 0 || dif.signum() != slider.signum())
+        {
             continue;
         }
 
@@ -59,7 +65,7 @@ pub fn get_actions_sliding(
                         to: current_pos,
                         piece_type: piece_info.piece_type,
                         capture: false,
-                        info: None,
+                        info: 0,
                     });
                 }
                 ActionType::CAPTURE => {
@@ -68,7 +74,7 @@ pub fn get_actions_sliding(
                         to: current_pos,
                         piece_type: piece_info.piece_type,
                         capture: true,
-                        info: None,
+                        info: 0,
                     });
                     break;
                 }

@@ -48,6 +48,7 @@ pub enum ActionType {
 pub struct Action {
     pub from: i16,
     pub to: i16,
+    pub piece_type: i16,
     pub capture: bool,
     pub info: Option<i16>,
 }

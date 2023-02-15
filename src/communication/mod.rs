@@ -45,7 +45,8 @@ impl Communicator for UCICommunicator {
         Action {
             from,
             to,
-            capture: self.board.state[from as usize] > 1,
+            piece_type: self.board.get_piece_info(from).piece_type,
+            capture: self.board.state[to as usize] > 1,
             info: None
         }
     }

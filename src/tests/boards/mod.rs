@@ -19,7 +19,7 @@ fn startpos_perft() {
 
 
 #[test]
-fn a4_b5_Nf3_perft() {
+fn a4_b5_xb5_perft() {
     
     let mut uci = UCICommunicator {
         board: Board::load_fen("rnbqkbnr/p1pppppp/8/1P6/8/8/1PPPPPPP/RNBQKBNR")
@@ -28,5 +28,5 @@ fn a4_b5_Nf3_perft() {
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
 
-    assert_eq!(perft(&mut uci, 2, 0, None), 502, "Perft Test (depth = 3)");
+    assert_eq!(perft(&mut uci, 3, 1, None), 11204, "Perft Test (depth = 3)");
 }

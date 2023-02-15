@@ -7,11 +7,11 @@ pub fn perft(uci: &mut UCICommunicator, depth: i16, team: i16, last_action: Opti
 
     let actions = uci.board.generate_legal_moves(team);
     if depth == 1 {
-        uci.board.undo_move();
-        println!("{}", uci.encode(&last_action.unwrap()));
-        uci.board.make_move(last_action.unwrap());
+        //uci.board.undo_move();
+        println!("{} - {}", uci.encode(&last_action.unwrap()), actions.len());
+        //uci.board.make_move(last_action.unwrap());
         for action in &actions {
-            //println!("AHAHAH {}", uci.encode(action));
+            //println!("{}", uci.encode(action));
         }
         return actions.len() as u64;
     }
@@ -23,12 +23,12 @@ pub fn perft(uci: &mut UCICommunicator, depth: i16, team: i16, last_action: Opti
     }
 
     if depth == 2 {
-        println!("HO HO {}", &actions.len());
+        //println!("AHAHAH {}", actions.len());
     }
 
     if depth == 112 {
         uci.board.undo_move();
-        println!("AHAHAH {} {}", nodes, uci.encode(&last_action.unwrap()));
+        println!("{} - {}", uci.encode(&last_action.unwrap()), nodes);
         uci.board.make_move(last_action.unwrap());
     }
 

@@ -122,9 +122,6 @@ impl Piece for PawnPiece {
 
         let en_passant_left = if let Some(last_move) = board.history.last() {
             let action = last_move.action;
-            if action.piece_type == piece_info.piece_type && action.info == -2 {
-                //board.print_board();
-            }
             action.piece_type == piece_info.piece_type && action.info == -2 && action.to == pos - 1
         } else {
             false
@@ -147,7 +144,7 @@ impl Piece for PawnPiece {
             false
         };
 
-        if false {
+        if en_passant_right {
             actions.push(Action {
                 from: pos,
                 to: target_right,

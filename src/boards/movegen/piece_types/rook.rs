@@ -1,5 +1,5 @@
-use super::{can_control_sliding, get_actions_sliding, Piece};
-use crate::boards::{Action, Board, PieceGenInfo};
+use super::{can_control_sliding, get_actions_sliding, Piece, MakeMoveResults, base_make_move};
+use crate::boards::{Action, Board, PieceGenInfo, StoredMove};
 
 pub struct RookPiece {
     sliders: Vec<i16>,

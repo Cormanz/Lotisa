@@ -60,10 +60,17 @@ fn get_actions_castling(
                         break;
                     }
 
+                    let mut can_castle = true;
                     for piece in &board.pieces {
-                        if piece.pos == current_pos && !piece.first_move {
-                            break;
+                        if piece.pos == current_pos {
+                            if !piece.first_move {
+                                can_castle = false;
+                            }
                         }
+                    }
+
+                    if !can_castle {
+                        break;
                     }
                     
                     actions.push(Action {

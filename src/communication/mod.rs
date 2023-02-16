@@ -3,6 +3,8 @@ use crate::boards::{Action, Board};
 pub trait Communicator {
     fn encode(&self, action: &Action) -> String;
     fn decode(&self, action: String) -> Action;
+    fn encode_pos(&self, pos: i16) -> String;
+    fn decode_pos(&self, pos: String) -> i16;
 }
 
 pub struct UCICommunicator {
@@ -51,5 +53,13 @@ impl Communicator for UCICommunicator {
             capture: self.board.state[to as usize] > 1,
             info: 0
         }
+    }
+
+    fn encode_pos(&self, pos: i16) -> String {
+        return encode_uci_pos(&self.board, pos, self.board.buffer_amount);
+    }
+
+    fn decode_pos(&self, pos: String) -> i16 {
+        return decode_uci_pos(&self.board, &pos, self.board.buffer_amount);
     }
 }

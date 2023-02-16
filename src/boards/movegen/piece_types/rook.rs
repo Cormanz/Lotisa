@@ -1,4 +1,4 @@
-use super::{can_control_sliding, get_actions_sliding, Piece, MakeMoveResults, base_make_move};
+use super::{base_make_move, can_control_sliding, get_actions_sliding, MakeMoveResults, Piece};
 use crate::boards::{Action, Board, PieceGenInfo, StoredMove};
 
 pub struct RookPiece {

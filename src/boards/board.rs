@@ -37,17 +37,17 @@ pub struct StoredMove {
     pub from_previous: i16,
     pub to_previous: i16,
     pub pieces: Vec<PersistentPieceInfo>,
-    pub state: Option<Vec<i16>>
-} 
+    pub state: Option<Vec<i16>>,
+}
 
 impl StoredMove {
     pub fn duplicate(&self) -> Self {
-        StoredMove { 
+        StoredMove {
             action: self.action.clone(),
             from_previous: self.from_previous,
             to_previous: self.to_previous,
             pieces: self.pieces.clone(),
-            state: None
+            state: None,
         }
     }
 }
@@ -108,14 +108,14 @@ pub struct PersistentPieceInfo {
         - Double Pawn Moves: Check if the pawn is at the starting row (because pawns can't move back)
         - Castling: Store two bools/bits for whether the king can castle kingside or queenside
 
-        Lotisa doesn't do these, for the sake of extendibility and simplicity. 
+        Lotisa doesn't do these, for the sake of extendibility and simplicity.
         For instance, Double Pawn Moves may be trickier to implement on specific board setups where pawns aren't all on one row.
         Or if a consumer wants to implement new rules based on first moves, this makes it way easier.
         If we didn't have this, consumers would have to find some sort of hacky-way to detect first moves with move generation, and it would not be fun.
 
         As for FEN parsing, "first_move" will be inferred base on information regarding castling rights or pawn placement, so compatibility will be affirmed there.
     */
-    pub first_move: bool
+    pub first_move: bool,
 }
 
 // TODO: Add reverse piece list to speed up removing items
@@ -317,7 +317,7 @@ impl Board {
 
                 let piece_pos_i16 = piece_pos as i16;
 
-                pieces.push(PersistentPieceInfo { 
+                pieces.push(PersistentPieceInfo {
                     pos: piece_pos_i16,
                     first_move: if piece_type == 0 {
                         let row = board.get_row(piece_pos_i16);
@@ -328,7 +328,7 @@ impl Board {
                         }
                     } else {
                         true
-                    }
+                    },
                 });
             }
         }

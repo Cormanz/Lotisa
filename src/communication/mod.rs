@@ -51,7 +51,7 @@ impl Communicator for UCICommunicator {
             piece_type: piece_info.piece_type,
             team: piece_info.team,
             capture: self.board.state[to as usize] > 1,
-            info: 0
+            info: 0,
         }
     }
 

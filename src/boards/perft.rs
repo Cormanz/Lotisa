@@ -1,6 +1,6 @@
-use crate::communication::{UCICommunicator, Communicator};
+use crate::communication::{Communicator, UCICommunicator};
 
-use super::{Board, Action};
+use super::{Action, Board};
 
 pub fn perft(uci: &mut UCICommunicator, depth: i16, team: i16, last_action: Option<Action>) -> u64 {
     let mut nodes: u64 = 0;

@@ -16,7 +16,7 @@ pub fn attempt_action(
                 piece_type: piece_info.piece_type,
                 capture: false,
                 info: 0,
-                team
+                team,
             });
         }
         ActionType::CAPTURE => {
@@ -26,7 +26,7 @@ pub fn attempt_action(
                 piece_type: piece_info.piece_type,
                 capture: true,
                 info: 0,
-                team
+                team,
             });
         }
         ActionType::FAIL => {}
@@ -104,7 +104,7 @@ pub trait Piece {
             from_previous: from_state,
             to_previous: to_state,
             pieces: old_pieces,
-            state: None
+            state: None,
         };
 
         board.history.push(past_move);
@@ -116,7 +116,7 @@ pub trait Piece {
             to_previous,
             from_previous,
             pieces,
-            state
+            state,
         } = undo;
         if let Some(state) = state {
             board.state = state.clone();

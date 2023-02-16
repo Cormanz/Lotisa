@@ -49,7 +49,7 @@ pub fn can_control_sliding(
 pub fn get_actions_sliding(
     sliders: &Vec<i16>,
     board: &Board,
-    piece_info: &PieceGenInfo
+    piece_info: &PieceGenInfo,
 ) -> Vec<Action> {
     let mut actions = Vec::with_capacity(sliders.len() * 2);
     let PieceGenInfo { pos, team, .. } = *piece_info;
@@ -66,7 +66,7 @@ pub fn get_actions_sliding(
                         piece_type: piece_info.piece_type,
                         capture: false,
                         info: 0,
-                        team
+                        team,
                     });
                 }
                 ActionType::CAPTURE => {
@@ -76,7 +76,7 @@ pub fn get_actions_sliding(
                         piece_type: piece_info.piece_type,
                         capture: true,
                         info: 0,
-                        team
+                        team,
                     });
                     break;
                 }

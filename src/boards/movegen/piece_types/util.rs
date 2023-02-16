@@ -49,7 +49,7 @@ pub fn base_make_move(board: &mut Board, action: Action) -> MakeMoveResults {
     board.state[from_usize] = 1;
 
     let to_pos_all = if action.capture {
-        board.pieces.iter().position(|pos| *pos == action.to)
+        board.pieces.iter().position(|piece| piece.pos == action.to)
     } else {
         None
     };
@@ -57,9 +57,10 @@ pub fn base_make_move(board: &mut Board, action: Action) -> MakeMoveResults {
     let from_pos_all = board
         .pieces
         .iter()
-        .position(|pos| *pos == action.from)
+        .position(|piece| piece.pos == action.from)
         .unwrap();
-    board.pieces[from_pos_all] = action.to;
+    board.pieces[from_pos_all].pos = action.to;
+    board.pieces[from_pos_all].first_move = false;
 
     if let Some(to_pos_all) = to_pos_all {
         board.pieces.swap_remove(to_pos_all);

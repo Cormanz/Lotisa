@@ -36,7 +36,7 @@ pub struct StoredMove {
     pub action: Action,
     pub from_previous: i16,
     pub to_previous: i16,
-    pub pieces: Vec<i16>,
+    pub pieces: Vec<PersistentPieceInfo>,
     pub state: Option<Vec<i16>>
 } 
 
@@ -80,7 +80,7 @@ pub struct PieceInfo {
 }
 pub struct Board {
     pub state: BoardState,
-    pub pieces: Vec<i16>,
+    pub pieces: Vec<PersistentPieceInfo>,
     pub reverse_pieces: FnvHashMap<i16, usize>,
     pub piece_types: i16,
     pub teams: i16,
@@ -91,6 +91,12 @@ pub struct Board {
     pub col_gap: i16,
     pub piece_lookup: Box<dyn PieceLookup>,
     pub history: Vec<StoredMove>,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct PersistentPieceInfo {
+    pub pos: i16,
+    pub first_move: bool
 }
 
 // TODO: Add reverse piece list to speed up removing items
@@ -258,9 +264,7 @@ impl Board {
 
     pub fn load_fen(fen: &str) -> Board {
         let fen_chunks = fen.split("/");
-        let mut pieces: Vec<i16> = Vec::with_capacity(32);
-        let mut reverse_pieces: FnvHashMap<i16, usize> =
-            FnvHashMap::with_capacity_and_hasher(32, Default::default());
+        let mut pieces: Vec<PersistentPieceInfo> = Vec::with_capacity(32);
         let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10));
 
         for (row_ind, chunk) in fen_chunks.enumerate() {
@@ -288,8 +292,10 @@ impl Board {
 
                 let piece_pos_i16 = piece_pos as i16;
 
-                reverse_pieces.entry(piece_pos_i16).or_insert(pieces.len());
-                pieces.push(piece_pos_i16);
+                pieces.push(PersistentPieceInfo { 
+                    pos: piece_pos_i16,
+                    first_move: false
+                });
             }
         }
 

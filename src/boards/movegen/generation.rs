@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use fnv::FnvHashMap;
 
-use crate::boards::{Action, ActionType, Board};
+use crate::boards::{Action, ActionType, Board, PersistentPieceInfo};
 
 use super::piece_types::{
     BishopPiece, KingPiece, KnightPiece, PawnPiece, Piece, QueenPiece, RookPiece,
@@ -19,7 +19,7 @@ pub fn generate_moves(board: &mut Board, required_team: i16, testing: bool) -> V
     let mut actions: Vec<Action> = Vec::with_capacity(64);
     let row_gap = board.row_gap;
 
-    for pos in &board.pieces {
+    for PersistentPieceInfo { pos, .. } in &board.pieces {
         let pos = *pos;
         let piece = board.state[pos as usize];
         let team = board.get_team(piece);
@@ -43,13 +43,14 @@ pub fn generate_moves(board: &mut Board, required_team: i16, testing: bool) -> V
 
 pub fn in_check(board: &mut Board, moving_team: i16, row_gap: i16) -> bool {
     let king = board.get_piece_value(5, moving_team);
-    let king = *board
+    let king = board
         .pieces
         .iter()
-        .find(|piece| board.state[**piece as usize] == king)
+        .find(|piece| board.state[piece.pos as usize] == king)
+        .map(|piece| piece.pos)
         .unwrap();
     let king_vec = vec![king];
-    for pos in &board.pieces {
+    for PersistentPieceInfo { pos, .. } in &board.pieces {
         let pos = *pos;
         let pos_usize = pos as usize;
         let piece = board.state[pos_usize];

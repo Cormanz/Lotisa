@@ -3,6 +3,7 @@ use crate::boards::{Action, Board, PieceGenInfo};
 
 pub struct KingPiece {
     deltas: Vec<i16>,
+    sliders: Vec<i16>
 }
 impl KingPiece {
     pub fn new(row_gap: i16) -> Self {
@@ -17,6 +18,10 @@ impl KingPiece {
                 -row_gap + 1,
                 -row_gap - 1,
             ],
+            sliders: vec![
+                1,
+                -1
+            ]
         }
     }
 }
@@ -37,6 +42,7 @@ impl Piece for KingPiece {
     fn duplicate(&self) -> Box<dyn Piece> {
         Box::new(KingPiece {
             deltas: self.deltas.clone(),
+            sliders: self.deltas.clone()
         })
     }
 }

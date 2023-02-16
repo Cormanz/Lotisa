@@ -22,7 +22,7 @@ impl KnightPiece {
 }
 
 impl Piece for KnightPiece {
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo, testing: bool) -> Vec<Action> {
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         get_actions_delta(&self.deltas, board, piece_info)
     }
 

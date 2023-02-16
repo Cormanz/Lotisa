@@ -133,7 +133,7 @@ Lotisa provides the following trait for implementing Piece behavior:
 ```rust
 pub trait Piece {
     fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, target: i16) -> bool;
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo, testing: bool) -> Vec<Action>;
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
     fn get_icon(&self) -> &str;
 }
 ```

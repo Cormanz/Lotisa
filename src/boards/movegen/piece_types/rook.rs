@@ -13,8 +13,8 @@ impl RookPiece {
 }
 
 impl Piece for RookPiece {
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo, testing: bool) -> Vec<Action> {
-        get_actions_sliding(&self.sliders, board, piece_info, false)
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+        get_actions_sliding(&self.sliders, board, piece_info)
     }
 
     fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {

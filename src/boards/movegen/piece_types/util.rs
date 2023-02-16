@@ -78,7 +78,7 @@ pub trait Piece {
     */
     fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
         let mut can_control = false;
-        for action in self.get_actions(board, piece_info, false) {
+        for action in self.get_actions(board, piece_info) {
             if targets.contains(&action.to) {
                 can_control = true;
                 break;
@@ -86,7 +86,7 @@ pub trait Piece {
         }
         can_control
     }
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo, testing: bool) -> Vec<Action>;
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
 
     fn get_material_value(&self) -> i32;
     fn get_icon(&self) -> &str;

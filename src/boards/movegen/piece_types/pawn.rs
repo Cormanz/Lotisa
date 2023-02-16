@@ -2,25 +2,13 @@ use crate::boards::{Action, Board, PieceGenInfo, StoredMove};
 
 use super::{base_make_move, MakeMoveResults, Piece};
 
-pub enum PawnMoveInfo {
-    NormalMove,
-    DoubleMove,
-    EnPassant,
-    Promotion(i16),
-}
-
-fn get_info(info: i16) -> PawnMoveInfo {
-    match info {
-        -1 => PawnMoveInfo::NormalMove,
-        -2 => PawnMoveInfo::DoubleMove,
-        -3 => PawnMoveInfo::EnPassant,
-        piece_type => PawnMoveInfo::Promotion(piece_type),
-    }
-}
+const NORMAL_MOVE: i16 = -1;
+const DOUBLE_MOVE: i16 = -2;
+const EN_PASSANT: i16 = -3;
 
 pub struct PawnPiece;
 impl Piece for PawnPiece {
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo, testing: bool) -> Vec<Action> {
+    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         let mut actions = Vec::with_capacity(2);
 
         let PieceGenInfo {
@@ -40,7 +28,7 @@ impl Piece for PawnPiece {
                 to: target,
                 piece_type: piece_info.piece_type,
                 capture: false,
-                info: -1,
+                info: NORMAL_MOVE,
                 team
             });
         }
@@ -72,7 +60,7 @@ impl Piece for PawnPiece {
                     to: target,
                     capture: false,
                     piece_type: piece_info.piece_type,
-                    info: -2,
+                    info: DOUBLE_MOVE,
                     team
                 });
             }
@@ -101,7 +89,7 @@ impl Piece for PawnPiece {
                 to: target_left,
                 piece_type: piece_info.piece_type,
                 capture: true,
-                info: -1,
+                info: NORMAL_MOVE,
                 team
             });
         }
@@ -119,7 +107,7 @@ impl Piece for PawnPiece {
                 to: target_right,
                 piece_type: piece_info.piece_type,
                 capture: true,
-                info: -1,
+                info: NORMAL_MOVE,
                 team
             });
         }
@@ -137,7 +125,7 @@ impl Piece for PawnPiece {
                 to: target_left,
                 piece_type: piece_info.piece_type,
                 capture: true,
-                info: -3,
+                info: EN_PASSANT,
                 team
             });
         }
@@ -155,7 +143,7 @@ impl Piece for PawnPiece {
                 to: target_right,
                 piece_type: piece_info.piece_type,
                 capture: true,
-                info: -3,
+                info: EN_PASSANT,
                 team
             });
         }
@@ -168,7 +156,7 @@ impl Piece for PawnPiece {
         let old_state = if action.info == -3 { Some(board.state.clone()) } else { None };
 
 
-        if action.info == -3 {
+        if action.info == EN_PASSANT {
             /*
                 The action in Lotisa's "to" represents where the capturer needs to go, not the piece that needs to be captured.
                 Since we're doing en passant, we'll always know which way to modify the row of the "to" to find the captured piece.

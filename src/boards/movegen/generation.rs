@@ -15,7 +15,7 @@ pub struct PieceGenInfo {
     pub piece_type: i16,
 }
 
-pub fn generate_moves(board: &mut Board, required_team: i16, testing: bool) -> Vec<Action> {
+pub fn generate_moves(board: &mut Board, required_team: i16) -> Vec<Action> {
     let mut actions: Vec<Action> = Vec::with_capacity(64);
     let row_gap = board.row_gap;
 
@@ -35,7 +35,7 @@ pub fn generate_moves(board: &mut Board, required_team: i16, testing: bool) -> V
             piece_type,
         };
         let piece_trait = board.piece_lookup.lookup(piece_type).duplicate();
-        actions.extend(piece_trait.get_actions(board, &piece_info, testing));
+        actions.extend(piece_trait.get_actions(board, &piece_info));
     }
 
     actions
@@ -80,7 +80,7 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
     let Board { row_gap, .. } = board;
     let row_gap = *row_gap;
 
-    let actions = generate_moves(board, required_team, false);
+    let actions = generate_moves(board, required_team);
     let mut new_actions: Vec<Action> = vec![];
 
     for action in actions {

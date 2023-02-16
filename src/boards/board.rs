@@ -294,7 +294,7 @@ impl Board {
 
                 pieces.push(PersistentPieceInfo { 
                     pos: piece_pos_i16,
-                    first_move: false
+                    first_move: true
                 });
             }
         }
@@ -304,8 +304,8 @@ impl Board {
         board
     }
 
-    pub fn generate_moves(&mut self, team: i16, testing: bool) -> Vec<Action> {
-        generate_moves(self, team, testing)
+    pub fn generate_moves(&mut self, team: i16) -> Vec<Action> {
+        generate_moves(self, team)
     }
 
     pub fn generate_legal_moves(&mut self, team: i16) -> Vec<Action> {

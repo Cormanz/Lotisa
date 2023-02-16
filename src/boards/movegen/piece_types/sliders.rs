@@ -49,8 +49,7 @@ pub fn can_control_sliding(
 pub fn get_actions_sliding(
     sliders: &Vec<i16>,
     board: &Board,
-    piece_info: &PieceGenInfo,
-    testing: bool
+    piece_info: &PieceGenInfo
 ) -> Vec<Action> {
     let mut actions = Vec::with_capacity(sliders.len() * 2);
     let PieceGenInfo { pos, team, .. } = *piece_info;
@@ -59,8 +58,7 @@ pub fn get_actions_sliding(
         let mut current_pos = pos;
         loop {
             current_pos += slider;
-            let can_capture_results = board.can_move_capture(current_pos, team);
-            match can_capture_results {
+            match board.can_move_capture(current_pos, team) {
                 ActionType::MOVE => {
                     actions.push(Action {
                         from: pos,

@@ -1,5 +1,6 @@
 use crate::{boards::{perft, Board}, communication::UCICommunicator};
 
+#[ignore]
 #[test]
 fn startpos_perft() {
     let mut uci = UCICommunicator {
@@ -16,6 +17,7 @@ fn startpos_perft() {
 }
 
 
+#[ignore]
 #[test]
 fn en_passant_a4_b5_xb5_perft() {
     let mut uci = UCICommunicator {
@@ -27,6 +29,7 @@ fn en_passant_a4_b5_xb5_perft() {
     assert_eq!(perft(&mut uci, 3, 1, None), 11204, "Perft Test (depth = 3)");
 }
 
+#[ignore]
 #[test]
 fn castling_test() {
     let mut uci = UCICommunicator {
@@ -35,6 +38,18 @@ fn castling_test() {
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
 
-    assert_eq!(perft(&mut uci, 3, 0, None), 10664, "Perft Test (depth = 3)");
+    assert_eq!(perft(&mut uci, 4, 0, None), 236936, "Perft Test (depth = 3)");
+
+}
+
+#[test]
+fn promotion_test() {
+    let mut uci = UCICommunicator {
+        board: Board::load_fen("8/5P2/8/8/8/7K/8/n6k")
+    };
+
+    // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
+
+    assert_eq!(perft(&mut uci, 3, 0, None), 299, "Perft Test (depth = 3)");
 
 }

@@ -6,13 +6,33 @@ const NORMAL_MOVE: i16 = -1;
 const DOUBLE_MOVE: i16 = -2;
 const EN_PASSANT: i16 = -3;
 
+fn add_promotion(board: &Board, actions: &mut Vec<Action>, action: Action, promotion_row: i16) {
+    if board.get_row(action.to) == promotion_row {
+        for promotion_piece_type in 0..board.piece_types {
+            if promotion_piece_type == 0 { continue; }
+            if promotion_piece_type == 5 { continue; }
+
+            actions.push(Action {
+                from: action.from,
+                to: action.to,
+                team: action.team,
+                piece_type: action.piece_type,
+                capture: action.capture,
+                info: promotion_piece_type
+            });
+        }
+    } else {
+        actions.push(action);
+    }
+}
+
 pub struct PawnPiece;
 impl Piece for PawnPiece {
     fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         let mut actions = Vec::with_capacity(2);
 
         let PieceGenInfo {
-            pos, row_gap, team, ..
+            pos, row_gap, team, piece_type, ..
         } = *piece_info;
 
         let target = match team {
@@ -21,16 +41,22 @@ impl Piece for PawnPiece {
             _ => pos,
         };
 
+        let promotion_row = match team {
+            0 => board.buffer_amount,
+            1 => board.rows + board.buffer_amount,
+            _ => board.row_gap
+        };
+
         let can_move_once = board.can_move(target);
         if can_move_once {
-            actions.push(Action {
+            add_promotion(&board, &mut actions, Action {
                 from: pos,
                 to: target,
-                piece_type: piece_info.piece_type,
+                piece_type,
                 capture: false,
                 info: NORMAL_MOVE,
                 team
-            });
+            }, promotion_row);
         }
 
         let can_move_twice = board.pieces.iter().find(|piece| piece.pos == pos).unwrap().first_move;
@@ -43,14 +69,14 @@ impl Piece for PawnPiece {
             };
 
             if board.can_move(target) {
-                actions.push(Action {
+                add_promotion(&board, &mut actions, Action {
                     from: pos,
                     to: target,
                     capture: false,
-                    piece_type: piece_info.piece_type,
+                    piece_type,
                     info: DOUBLE_MOVE,
                     team
-                });
+                }, promotion_row);
             }
         }
 
@@ -72,14 +98,14 @@ impl Piece for PawnPiece {
         let capture_left = board.can_capture(target_left, team) ;
 
         if capture_left {
-            actions.push(Action {
+            add_promotion(&board, &mut actions, Action {
                 from: pos,
                 to: target_left,
-                piece_type: piece_info.piece_type,
+                piece_type,
                 capture: true,
                 info: NORMAL_MOVE,
                 team
-            });
+            }, promotion_row);
         }
 
         let target_right = match team {
@@ -90,14 +116,14 @@ impl Piece for PawnPiece {
         let capture_right = board.can_capture(target_right, team);
 
         if capture_right {
-            actions.push(Action {
+            add_promotion(&board, &mut actions, Action {
                 from: pos,
                 to: target_right,
-                piece_type: piece_info.piece_type,
+                piece_type,
                 capture: true,
                 info: NORMAL_MOVE,
                 team
-            });
+            }, promotion_row);
         }
 
         let en_passant_left = if let Some(last_move) = board.history.last() {
@@ -107,15 +133,20 @@ impl Piece for PawnPiece {
             false
         };
 
+        /*
+            It should be noted that theoretically, there could be an en-passant promotion in some sort of variant.
+            Lotisa would not be able to support such a variant with the way it currently stores actions sadly.
+        */
+
         if en_passant_left {
-            actions.push(Action {
+            add_promotion(&board, &mut actions, Action {
                 from: pos,
                 to: target_left,
-                piece_type: piece_info.piece_type,
+                piece_type,
                 capture: true,
                 info: EN_PASSANT,
                 team
-            });
+            }, promotion_row);
         }
 
         let en_passant_right = if let Some(last_move) = board.history.last() {
@@ -126,14 +157,14 @@ impl Piece for PawnPiece {
         };
 
         if en_passant_right {
-            actions.push(Action {
+            add_promotion(&board, &mut actions, Action {
                 from: pos,
                 to: target_right,
-                piece_type: piece_info.piece_type,
+                piece_type,
                 capture: true,
                 info: EN_PASSANT,
                 team
-            });
+            }, promotion_row);
         }
 
         actions
@@ -170,6 +201,11 @@ impl Piece for PawnPiece {
             from_state,
             to_state,
         } = base_make_move(board, action);
+
+        if action.info >= 0 {
+            let to_usize = action.to as usize;
+            board.state[to_usize] = board.get_piece_value(action.info, action.team);
+        }
 
         let past_move = StoredMove {
             action,

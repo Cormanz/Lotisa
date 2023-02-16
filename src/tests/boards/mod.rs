@@ -30,12 +30,12 @@ fn en_passant_a4_b5_xb5_perft() {
 #[test]
 fn castling_test() {
     let mut uci = UCICommunicator {
-        board: Board::load_fen("rnbqkbnr/p1pppppp/8/1P6/8/8/1PPPPPPP/RNBQKBNR")
+        board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR")
     };
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
 
-    assert_eq!(perft(&mut uci, 3, 1, None), 11204, "Perft Test (depth = 3)");
-    assert_eq!(perft(&mut uci, 4, 1, None), 304591, "Perft Test (depth = 4)");
+    assert_eq!(perft(&mut uci, 3, 1, None), 10237, "Perft Test (depth = 3)");
+    assert_eq!(perft(&mut uci, 4, 1, None), 236407, "Perft Test (depth = 4)");
 
 }

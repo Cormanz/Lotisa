@@ -96,6 +96,25 @@ pub struct Board {
 #[derive(Clone, Copy, Debug)]
 pub struct PersistentPieceInfo {
     pub pos: i16,
+
+    /*
+        A lot of chess engines don't use this "first_move" property. There are two cases where Lotisa uses it:
+
+        - Double Pawn Moves (TBD)
+        - Castling
+
+        Instead, for these two, they do the following:
+
+        - Double Pawn Moves: Check if the pawn is at the starting row (because pawns can't move back)
+        - Castling: Store two bools/bits for whether the king can castle kingside or queenside
+
+        Lotisa doesn't do these, for the sake of extendibility and simplicity. 
+        For instance, Double Pawn Moves may be trickier to implement on specific board setups where pawns aren't all on one row.
+        Or if a consumer wants to implement new rules based on first moves, this makes it way easier.
+        If we didn't have this, consumers would have to find some sort of hacky-way to detect first moves with move generation, and it would not be fun.
+
+        As for FEN parsing, "first_move" will be inferred base on information regarding castling rights or pawn placement, so compatibility will be affirmed there.
+    */
     pub first_move: bool
 }
 
@@ -267,6 +286,12 @@ impl Board {
         let mut pieces: Vec<PersistentPieceInfo> = Vec::with_capacity(32);
         let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10));
 
+        let min_row = board.buffer_amount;
+        let max_row = board.rows + board.buffer_amount;
+
+        let pawn_min_row = min_row + 1;
+        let pawn_max_row = max_row - 2;
+
         for (row_ind, chunk) in fen_chunks.enumerate() {
             let mut col_ind: usize = 0;
             for col in chunk.chars() {
@@ -294,7 +319,16 @@ impl Board {
 
                 pieces.push(PersistentPieceInfo { 
                     pos: piece_pos_i16,
-                    first_move: true
+                    first_move: if piece_type == 0 {
+                        let row = board.get_row(piece_pos_i16);
+                        match team {
+                            0 => row == pawn_max_row,
+                            1 => row == pawn_min_row,
+                            _ => false,
+                        }
+                    } else {
+                        true
+                    }
                 });
             }
         }

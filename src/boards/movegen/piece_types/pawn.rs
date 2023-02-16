@@ -33,19 +33,7 @@ impl Piece for PawnPiece {
             });
         }
 
-        let min_row = board.buffer_amount;
-        let max_row = board.rows + board.buffer_amount;
-
-        let pawn_min_row = min_row + 1;
-        let pawn_max_row = max_row - 2;
-
-        let row = board.get_row(pos);
-
-        let can_move_twice = match team {
-            0 => row == pawn_max_row,
-            1 => row == pawn_min_row,
-            _ => false,
-        };
+        let can_move_twice = board.pieces.iter().find(|piece| piece.pos == pos).unwrap().first_move;
 
         if can_move_once && can_move_twice {
             let target = match team {

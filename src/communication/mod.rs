@@ -45,13 +45,46 @@ impl Communicator for UCICommunicator {
         let from = decode_uci_pos(&self.board, &action[0..2], buffer_amount);
         let to = decode_uci_pos(&self.board, &action[2..4], buffer_amount);
         let piece_info = self.board.get_piece_info(from);
+
+        let en_passant = piece_info.piece_type == 0 && if let Some(last_move) = self.board.history.last() {
+            let action = last_move.action;
+            action.piece_type == piece_info.piece_type && action.info == -2 && action.to == from - 1
+        } else {
+            false
+        };
+
         Action {
             from,
             to,
             piece_type: piece_info.piece_type,
             team: piece_info.team,
-            capture: self.board.state[to as usize] > 1,
-            info: 0,
+            capture: self.board.state[to as usize] > 1 && !en_passant,
+            info: if piece_info.piece_type == 0 {
+                if action.len() == 5 {
+                    match action.chars().nth(4).unwrap() {
+                        'n' => 1,
+                        'b' => 2,
+                        'r' => 3,
+                        'q' => 4,
+                        _ => 0
+                    }
+                } else if en_passant {
+                    -3 
+                } else if (from - to).abs() > self.board.row_gap {
+                    -2
+                } else {
+                    -1
+                }
+            } else if piece_info.piece_type == 5 {
+                let target_info = self.board.get_piece_info(to);
+                if target_info.team == piece_info.team {
+                    1
+                } else {
+                    0
+                }
+            } else {
+                0
+            },
         }
     }
 

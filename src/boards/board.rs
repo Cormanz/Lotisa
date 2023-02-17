@@ -1,6 +1,8 @@
 use colored::{ColoredString, Colorize};
 use fnv::FnvHashMap;
 
+use crate::communication::{UCICommunicator, Communicator};
+
 use super::{
     create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup,
     PieceMap, PieceMapLookup,
@@ -119,7 +121,7 @@ pub struct PersistentPieceInfo {
 }
 
 pub struct FenInfo {
-    pub board: Board,
+    pub uci: UCICommunicator,
     pub moving_team: i16
 }
 
@@ -289,19 +291,66 @@ impl Board {
     pub fn load_fen(fen: &str) -> FenInfo {
         let fen_parts = fen.split(" ").collect::<Vec<_>>();
 
-        let board = Board::load_fen_pieces(fen_parts[0]);
+        let mut uci = UCICommunicator {
+            board: Board::load_fen_pieces(fen_parts[0])
+        };
 
         let castling = fen_parts[2].chars().collect::<Vec<_>>();
 
         // TODO: For each type of castling, change "first_move"s
-        if !castling.contains(&'q') {
 
+        if castling[0] != '-' {
+            for (castling_type, pos) in [('k', 98), ('q', 91), ('K', 28), ('Q', 21)] {
+                if !castling.contains(&castling_type) {
+                    let pieces_position = uci.board.pieces.iter()
+                        .position(|piece| piece.pos == pos)
+                        .unwrap();
+                    uci.board.pieces[pieces_position].first_move = false;
+                }
+            }
+        }
+
+        if fen_parts[3] != "-" {
+            let pos = uci.decode_pos(fen_parts[3].to_string());
+            let row_gap = uci.board.row_gap;
+            let PieceInfo { team, .. } = uci.board.get_piece_info(pos);
+
+            let from = match team {
+                0 => pos + row_gap * 2,
+                1 => pos - row_gap * 2,
+                _ => pos
+            };
+
+            let action = Action {
+                from,
+                to: pos,
+                piece_type: 0,
+                team,
+                capture: false,
+                info: -2
+            };
+
+            let mut old_pieces = uci.board.pieces.clone();
+            let to_index = uci.board.pieces.iter()
+                .position(|piece| piece.pos == pos)
+                .unwrap();
+
+            old_pieces[to_index].pos = from;
+            old_pieces[to_index].first_move = false;
+
+            uci.board.history.push(StoredMove {
+                action,
+                from_previous: 2,
+                to_previous: 1,
+                pieces: old_pieces,
+                state: None
+            })
         }
 
         // TODO: Add last move to history for en passant
 
         FenInfo {
-            board,
+            uci, 
             moving_team: match fen_parts[1] {
                 "w" => 0,
                 "b" => 1,

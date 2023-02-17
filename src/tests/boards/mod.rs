@@ -1,6 +1,6 @@
 use crate::{
     boards::{perft, Board},
-    communication::UCICommunicator,
+    communication::{UCICommunicator, Communicator},
 };
 
 #[ignore]
@@ -64,4 +64,10 @@ fn promotion_test() {
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
 
     assert_eq!(perft(&mut uci, 3, 0, None), 299, "Perft Test (depth = 3)");
+}
+
+#[test]
+fn decoding_time() {    
+    let fen_info = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq -");
+    println!("e ee {}", fen_info.moving_team);
 }

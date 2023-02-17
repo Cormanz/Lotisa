@@ -7,7 +7,7 @@ use crate::{
 #[test]
 fn startpos_perft() {
     let mut uci = UCICommunicator {
-        board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"),
+        board: Board::load_fen_pieces("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"),
     };
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
@@ -31,7 +31,7 @@ fn startpos_perft() {
 #[test]
 fn en_passant_a4_b5_xb5_perft() {
     let mut uci = UCICommunicator {
-        board: Board::load_fen("rnbqkbnr/p1pppppp/8/1P6/8/8/1PPPPPPP/RNBQKBNR"),
+        board: Board::load_fen_pieces("rnbqkbnr/p1pppppp/8/1P6/8/8/1PPPPPPP/RNBQKBNR"),
     };
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
@@ -43,7 +43,7 @@ fn en_passant_a4_b5_xb5_perft() {
 #[test]
 fn castling_test() {
     let mut uci = UCICommunicator {
-        board: Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR"),
+        board: Board::load_fen_pieces("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR"),
     };
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
@@ -58,7 +58,7 @@ fn castling_test() {
 #[test]
 fn promotion_test() {
     let mut uci = UCICommunicator {
-        board: Board::load_fen("8/5P2/8/8/8/7K/8/n6k"),
+        board: Board::load_fen_pieces("8/5P2/8/8/8/7K/8/n6k"),
     };
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)

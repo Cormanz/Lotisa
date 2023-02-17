@@ -90,7 +90,7 @@ pub struct Board {
     pub row_gap: i16,
     pub col_gap: i16,
     pub piece_lookup: Box<dyn PieceLookup>,
-    pub history: Vec<StoredMove>,
+    pub history: Vec<StoredMove>
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -116,6 +116,11 @@ pub struct PersistentPieceInfo {
         As for FEN parsing, "first_move" will be inferred base on information regarding castling rights or pawn placement, so compatibility will be affirmed there.
     */
     pub first_move: bool,
+}
+
+pub struct FenInfo {
+    pub board: Board,
+    pub moving_team: i16
 }
 
 // TODO: Add reverse piece list to speed up removing items
@@ -281,7 +286,31 @@ impl Board {
         }
     }
 
-    pub fn load_fen(fen: &str) -> Board {
+    pub fn load_fen(fen: &str) -> FenInfo {
+        let fen_parts = fen.split(" ").collect::<Vec<_>>();
+
+        let board = Board::load_fen_pieces(fen_parts[0]);
+
+        let castling = fen_parts[2].chars().collect::<Vec<_>>();
+
+        // TODO: For each type of castling, change "first_move"s
+        if !castling.contains(&'q') {
+
+        }
+
+        // TODO: Add last move to history for en passant
+
+        FenInfo {
+            board,
+            moving_team: match fen_parts[1] {
+                "w" => 0,
+                "b" => 1,
+                _ => 0
+            }
+        }
+    }
+
+    pub fn load_fen_pieces(fen: &str) -> Board {
         let fen_chunks = fen.split("/");
         let mut pieces: Vec<PersistentPieceInfo> = Vec::with_capacity(32);
         let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10));

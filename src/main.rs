@@ -13,7 +13,8 @@ use boards::Board;
 mod boards;
 mod communication;
 mod tests;
-mod utils;
+mod util;
+mod engine;
 
 fn test_mode() {}
 

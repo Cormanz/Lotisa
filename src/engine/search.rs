@@ -1,11 +1,6 @@
 use crate::boards::{Board, Action};
 use super::{MIN_VALUE, evaluate, other};
 
-pub struct EvaluationScore {
-   score: i32,
-   best_move: Option<Action>
-}
-
 pub fn search(board: &mut Board, mut alpha: i32, beta: i32, depth: i16, ply: i16, moving_team: i16, starting_team: i16) -> EvaluationScore {
    if depth == 0 {
       return EvaluationScore {

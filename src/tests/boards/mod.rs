@@ -25,7 +25,7 @@ fn startpos_perft() {
 }
 
 #[test]
-fn en_passant_a4_b5_xb5_perft() {
+fn en_passant_perft() {
     let mut uci = Board::load_fen("rnbqkbnr/p1pppppp/8/1P6/8/8/1PPPPPPP/RNBQKBNR b - -");
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
@@ -49,7 +49,6 @@ fn castling_test() {
 #[test]
 fn promotion_test() {
     let mut uci = Board::load_fen("8/5P2/8/8/8/7K/8/n6k w - -");
-    uci.board.print_board();
 
     // Perft Results sourced on WebPerft (https://analog-hors.github.io/webperft/)
 

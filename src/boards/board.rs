@@ -5,7 +5,7 @@ use crate::communication::{UCICommunicator, Communicator};
 
 use super::{
     create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup,
-    PieceMap, PieceMapLookup,
+    PieceMap, PieceMapLookup, WinConditions, DefaultWinConditions,
 };
 
 //use super::Action;
@@ -80,6 +80,7 @@ pub struct PieceInfo {
     pub team: i16,
     pub piece_type: i16,
 }
+
 pub struct Board {
     pub state: BoardState,
     pub pieces: Vec<PersistentPieceInfo>,
@@ -93,6 +94,7 @@ pub struct Board {
     pub col_gap: i16,
     pub moving_team: i16,
     pub piece_lookup: Box<dyn PieceLookup>,
+    pub win_conditions: Box<dyn WinConditions>,
     pub history: Vec<StoredMove>
 }
 
@@ -130,6 +132,7 @@ impl Board {
         teams: i16,
         (rows, cols): (i16, i16),
         piece_lookup: Box<dyn PieceLookup>,
+        win_conditions: Box<dyn WinConditions>
     ) -> Board {
         let state = create_board_state(buffer_amount, (rows, cols));
 
@@ -138,6 +141,7 @@ impl Board {
             reverse_pieces: FnvHashMap::with_capacity_and_hasher(32, Default::default()),
             pieces: Vec::with_capacity(32),
             piece_types,
+            win_conditions,
             teams,
             rows,
             cols,
@@ -378,7 +382,7 @@ impl Board {
     pub fn load_fen_pieces(fen: &str) -> Board {
         let fen_chunks = fen.split("/");
         let mut pieces: Vec<PersistentPieceInfo> = Vec::with_capacity(32);
-        let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10));
+        let mut board = Board::new(6, 2, 2, (8, 8), create_default_piece_lookup(10), Box::new(DefaultWinConditions));
 
         let min_row = board.buffer_amount;
         let max_row = board.rows + board.buffer_amount;

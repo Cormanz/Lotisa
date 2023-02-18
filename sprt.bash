@@ -1,6 +1,6 @@
 /home/corman/cutechess-cli/cutechess-cli \
--engine cmd="target/release/lotisa" name=AB1 proto=uci \
--engine cmd="target/release/lotisa" name=AB2 proto=uci \
+-engine cmd="target/versions/lotisa" name="Lotisa QS" proto=uci \
+-engine cmd="target/versions/lotisa-before" name="Lotisa NoQS" proto=uci \
 -each \
     tc=inf \
     book="./resources/Titans.bin" \

@@ -30,13 +30,13 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     match board.win_conditions.duplicate().compute(board, &actions) {
         GameResult::Win => {
-            return MAX_VALUE + (depth as i32); // Higher Depth should mean a faster win
+            return MAX_VALUE - (ply as i32); // Lower Ply should mean a faster win
         }
         GameResult::Draw => {
             return 0;
         }
         GameResult::Lose => {
-            return MIN_VALUE - (depth as i32); // Lower Depth should mean a slower loss
+            return MIN_VALUE + (ply as i32); // Higher Ply should mean a slower loss
         }
         GameResult::Ongoing => {}
     }

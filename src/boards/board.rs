@@ -91,6 +91,7 @@ pub struct Board {
     pub buffer_amount: i16,
     pub row_gap: i16,
     pub col_gap: i16,
+    pub moving_team: i16,
     pub piece_lookup: Box<dyn PieceLookup>,
     pub history: Vec<StoredMove>
 }
@@ -120,11 +121,6 @@ pub struct PersistentPieceInfo {
     pub first_move: bool,
 }
 
-pub struct FenInfo {
-    pub uci: UCICommunicator,
-    pub moving_team: i16
-}
-
 // TODO: Add reverse piece list to speed up removing items
 
 impl Board {
@@ -146,11 +142,30 @@ impl Board {
             rows,
             cols,
             buffer_amount,
+            moving_team: 0,
             row_gap: rows + buffer_amount,
             col_gap: cols + (buffer_amount * 2),
             piece_lookup,
             history: Vec::with_capacity(500),
         };
+    }
+    
+    pub fn next_team(&self) -> i16 {
+        let team = self.moving_team + 1;
+        if team >= self.teams {
+            0
+        } else {
+            team
+        }
+    }
+    
+    pub fn previous_team(&self) -> i16 {
+        let team = self.moving_team - 1;
+        if team < 0 {
+            self.teams - 1
+        } else {
+            team
+        }
     }
 
     pub fn display_board(&self) -> Vec<ColoredString> {
@@ -207,12 +222,14 @@ impl Board {
 
         let piece_trait = self.piece_lookup.lookup(piece_type).duplicate();
         piece_trait.make_move(self, action);
+        self.moving_team = self.next_team();
     }
 
     pub fn undo_move(&mut self) -> StoredMove {
         let undo = self.history.pop().unwrap();
         let piece_trait = self.piece_lookup.lookup(undo.action.piece_type).duplicate();
         piece_trait.undo_move(self, &undo);
+        self.moving_team = self.previous_team();
         undo
     }
 
@@ -288,7 +305,7 @@ impl Board {
         }
     }
 
-    pub fn load_fen(fen: &str) -> FenInfo {
+    pub fn load_fen(fen: &str) -> UCICommunicator {
         let fen_parts = fen.split(" ").collect::<Vec<_>>();
 
         let mut uci = UCICommunicator {
@@ -349,14 +366,13 @@ impl Board {
 
         // TODO: Add last move to history for en passant
 
-        FenInfo {
-            uci, 
-            moving_team: match fen_parts[1] {
-                "w" => 0,
-                "b" => 1,
-                _ => 0
-            }
-        }
+        uci.board.moving_team = match fen_parts[1] {
+            "w" => 0,
+            "b" => 1,
+            _ => 0
+        };
+
+        uci
     }
 
     pub fn load_fen_pieces(fen: &str) -> Board {
@@ -416,11 +432,11 @@ impl Board {
         board
     }
 
-    pub fn generate_moves(&mut self, team: i16) -> Vec<Action> {
-        generate_moves(self, team)
+    pub fn generate_moves(&mut self) -> Vec<Action> {
+        generate_moves(self, self.moving_team)
     }
 
-    pub fn generate_legal_moves(&mut self, team: i16) -> Vec<Action> {
-        generate_legal_moves(self, team)
+    pub fn generate_legal_moves(&mut self) -> Vec<Action> {
+        generate_legal_moves(self, self.moving_team)
     }
 }

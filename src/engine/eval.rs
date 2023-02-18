@@ -1,4 +1,4 @@
-use crate::boards::{Board, PieceInfo, PieceGenInfo};
+use crate::boards::{Board, PieceInfo, PieceGenInfo, generate_legal_moves, generate_moves};
 
 pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
     let mut score: i32 = 0;
@@ -64,11 +64,21 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
 
             if empty_squares > 0 {                 
                 let blocked_squares: i32 = empty_squares - open_squares;
-                let ratio = (blocked_squares.pow(2) as f32) / (empty_squares.pow(2) as f32);
-                score -= 2_000 * team_multiplier * (2000f32 * ratio) as i32;
+                if blocked_squares == empty_squares {
+                    score -= 1_500;
+                }
             }
         }
     }
+
+    /*
+    Mobility decreases ELO in SPRT testing, so disabled until I can get it working
+
+    let moves = board.generate_moves().len();
+    let opposing_moves = generate_moves(board, board.next_team()).len();
+
+    score += (5 * (moves - opposing_moves)) as i32;
+    */
 
     score
 }

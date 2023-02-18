@@ -10,13 +10,14 @@ use std::{
 
 use boards::Board;
 
+use crate::cli::run_uci;
+
 mod boards;
 mod communication;
 mod tests;
 mod util;
 mod engine;
-
-fn test_mode() {}
+mod cli;
 
 fn main() {
     let mut args = env::args().collect::<Vec<_>>();
@@ -28,8 +29,9 @@ fn main() {
             println!("id name Lotisa 0.0.1");
             println!("id author Corman");
             println!("uciok");
+            run_uci(stdin);
         } else if first_line == "test" {
-            test_mode();
+            
         }
         return;
     }

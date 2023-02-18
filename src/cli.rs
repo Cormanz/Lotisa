@@ -1,4 +1,6 @@
 use std::io::{Stdin, BufRead};
+use rand::{SeedableRng, seq::SliceRandom};
+
 use crate::{boards::Board, engine::{SearchInfo, search, MIN_VALUE, MAX_VALUE, root_search}, communication::Communicator};
 
 pub fn run_uci(stdin: Stdin) {
@@ -12,7 +14,8 @@ pub fn run_uci(stdin: Stdin) {
             let moves = &line[24..].split(" ").collect::<Vec<_>>();
             uci = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w kqKQ -");
             for action in moves {
-                uci.board.make_move(uci.decode(action.to_string()));
+                let action = uci.decode(action.to_string());
+                uci.board.make_move(action);
             }
         } else if line.starts_with("go") {
             let mut info = SearchInfo {
@@ -21,9 +24,11 @@ pub fn run_uci(stdin: Stdin) {
                 time: 0
             };
             let moving_team = uci.board.moving_team;
-            root_search(&mut info, &mut uci.board, moving_team, 100);
-            println!("info depth {} time {}", info.root_depth, info.time);
-            println!("bestmove {}", uci.encode(&info.best_move.unwrap()));
+            let score = root_search(&mut info, &mut uci.board, moving_team, 50);
+            let best_move = &info.best_move.unwrap();
+            let mut rng = rand_hc::Hc128Rng::from_entropy();
+            println!("info depth {} time {} cp {}", info.root_depth, info.time, score / 10);
+            println!("bestmove {}", uci.encode(&best_move));
         } else if line == "isready" {
             println!("readyok");
         }

@@ -1,10 +1,10 @@
 use crate::boards::{Action, Board};
 
 pub trait Communicator {
-    fn encode(&self, action: &Action) -> String;
-    fn decode(&self, action: String) -> Action;
-    fn encode_pos(&self, pos: i16) -> String;
-    fn decode_pos(&self, pos: String) -> i16;
+    fn encode(&mut self, action: &Action) -> String;
+    fn decode(&mut self, action: String) -> Action;
+    fn encode_pos(&mut self, pos: i16) -> String;
+    fn decode_pos(&mut self, pos: String) -> i16;
 }
 
 pub struct UCICommunicator {
@@ -31,24 +31,46 @@ fn decode_uci_pos(board: &Board, pos: &str, buffer_amount: i16) -> i16 {
 }
 
 impl Communicator for UCICommunicator {
-    fn encode(&self, action: &Action) -> String {
+    fn encode(&mut self, action: &Action) -> String {
         let buffer_amount = self.board.buffer_amount;
+        let to = if action.piece_type == 5 && action.info == 1 {
+            action.from + ((action.to - action.from).signum() * 2)
+        } else {
+            action.to
+        };
+
         return format!(
-            "{}{}",
+            "{}{}{}",
             encode_uci_pos(&self.board, action.from, buffer_amount),
-            encode_uci_pos(&self.board, action.to, buffer_amount)
+            encode_uci_pos(&self.board, to, buffer_amount),
+            if action.piece_type == 0 && action.info >= 0 {
+                match action.info {
+                    1 => "n",
+                    2 => "b",
+                    3 => "r",
+                    4 => "q",
+                    _ => ""
+                }
+            } else {
+                ""
+            }
         );
     }
 
-    fn decode(&self, action: String) -> Action {
+    fn decode(&mut self, action: String) -> Action {
         let buffer_amount = self.board.buffer_amount;
         let from = decode_uci_pos(&self.board, &action[0..2], buffer_amount);
-        let to = decode_uci_pos(&self.board, &action[2..4], buffer_amount);
+        let mut to = decode_uci_pos(&self.board, &action[2..4], buffer_amount);
         let piece_info = self.board.get_piece_info(from);
 
-        let en_passant = piece_info.piece_type == 0 && if let Some(last_move) = self.board.history.last() {
-            let action = last_move.action;
-            action.piece_type == piece_info.piece_type && action.info == -2 && action.to == from - 1
+        let en_passant = piece_info.piece_type == 0 && (from - to).abs() != self.board.row_gap && self.board.state[to as usize] == 1;
+
+        let castling = if piece_info.piece_type == 5 && (from - to).abs() == 2 {
+            to = self.board.generate_moves().iter()
+                .find(|action| action.from == from && action.info == 1 && (from - to).signum() == (action.from - action.to).signum())
+                .unwrap().to; 
+
+            true
         } else {
             false
         };
@@ -70,14 +92,13 @@ impl Communicator for UCICommunicator {
                     }
                 } else if en_passant {
                     -3 
-                } else if (from - to).abs() > self.board.row_gap {
+                } else if (from - to).abs() == 2 * self.board.row_gap {
                     -2
                 } else {
                     -1
                 }
             } else if piece_info.piece_type == 5 {
-                let target_info = self.board.get_piece_info(to);
-                if target_info.team == piece_info.team {
+                if castling {
                     1
                 } else {
                     0
@@ -88,11 +109,11 @@ impl Communicator for UCICommunicator {
         }
     }
 
-    fn encode_pos(&self, pos: i16) -> String {
+    fn encode_pos(&mut self, pos: i16) -> String {
         return encode_uci_pos(&self.board, pos, self.board.buffer_amount);
     }
 
-    fn decode_pos(&self, pos: String) -> i16 {
+    fn decode_pos(&mut self, pos: String) -> i16 {
         return decode_uci_pos(&self.board, &pos, self.board.buffer_amount);
     }
 }

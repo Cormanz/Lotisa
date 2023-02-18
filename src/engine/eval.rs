@@ -62,12 +62,10 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
                 }
             }
 
-            if empty_squares == 0 {
-                score -= 3_000 * team_multiplier;
-            } else {                
+            if empty_squares > 0 {                 
                 let blocked_squares: i32 = empty_squares - open_squares;
                 let ratio = (blocked_squares.pow(2) as f32) / (empty_squares.pow(2) as f32);
-                score -= 3_000 * team_multiplier * (2000f32 * ratio) as i32;
+                score -= 2_000 * team_multiplier * (2000f32 * ratio) as i32;
             }
         }
     }

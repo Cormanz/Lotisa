@@ -312,6 +312,21 @@ impl Board {
         }
     }
 
+    pub fn load_uci_pgn(uci_pgn: &str) -> UCICommunicator {
+        let mut uci = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w kqKQ -");
+
+        for action in uci_pgn.split(" ") {
+            if action.chars().nth(0).unwrap().is_numeric() {
+                continue;
+            }
+
+            let action = uci.decode(action.to_string());
+            uci.board.make_move(action);
+        }
+
+        uci
+    }
+
     pub fn load_fen(fen: &str) -> UCICommunicator {
         let fen_parts = fen.split(" ").collect::<Vec<_>>();
 
@@ -327,9 +342,10 @@ impl Board {
             for (castling_type, pos) in [('k', 98), ('q', 91), ('K', 28), ('Q', 21)] {
                 if !castling.contains(&castling_type) {
                     let pieces_position = uci.board.pieces.iter()
-                        .position(|piece| piece.pos == pos)
-                        .unwrap();
-                    uci.board.pieces[pieces_position].first_move = false;
+                        .position(|piece| piece.pos == pos);
+                    if let Some(pieces_position) = pieces_position {
+                        uci.board.pieces[pieces_position].first_move = false;
+                    }
                 }
             }
         }

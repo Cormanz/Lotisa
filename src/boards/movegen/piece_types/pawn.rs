@@ -51,7 +51,7 @@ impl Piece for PawnPiece {
 
         let promotion_row = match team {
             0 => board.buffer_amount,
-            1 => board.rows + board.buffer_amount,
+            1 => board.rows + board.buffer_amount - 1,
             _ => board.row_gap,
         };
 

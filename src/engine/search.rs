@@ -8,7 +8,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     let actions = board.generate_legal_moves();
 
-    /*match board.win_conditions.duplicate().compute(board, &actions) {
+    match board.win_conditions.duplicate().compute(board, &actions) {
         GameResult::Win => {
             return MAX_VALUE - 100 + (depth as i32); // Higher Depth should mean a faster win
         }
@@ -19,7 +19,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
             return MIN_VALUE + 100 - (depth as i32); // Lower Depth should mean a slower loss
         }
         GameResult::Ongoing => {}
-    }*/
+    }
 
     let mut best_move: Option<Action> = None;
     for action in actions {

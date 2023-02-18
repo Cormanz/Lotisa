@@ -1,6 +1,6 @@
 use super::{base_make_move, can_control_delta, get_actions_delta, MakeMoveResults, Piece};
 use crate::boards::{
-    Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, StoredMove,
+    Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, StoredMove, in_check,
 };
 
 const NORMAL_MOVE: i16 = 0;
@@ -8,10 +8,15 @@ const CASTLING_MOVE: i16 = 1;
 
 fn get_actions_castling(
     sliders: &Vec<i16>,
-    board: &Board,
+    board: &mut Board,
     piece_info: &PieceGenInfo,
 ) -> Vec<Action> {
     let mut actions = Vec::with_capacity(sliders.len() * 2);
+
+    if in_check(board, board.moving_team, board.row_gap) {
+        return actions;
+    }
+
     let PieceGenInfo {
         pos,
         team,
@@ -19,8 +24,8 @@ fn get_actions_castling(
         ..
     } = *piece_info;
 
-    let mut opposing_pieces: Vec<&PersistentPieceInfo> = Vec::with_capacity(16);
-    for piece in &board.pieces {
+    let mut opposing_pieces: Vec<PersistentPieceInfo> = Vec::with_capacity(16);
+    for piece in board.pieces.clone() {
         if piece.pos == pos && !piece.first_move {
             return actions;
         }
@@ -29,7 +34,7 @@ fn get_actions_castling(
             team: piece_team, ..
         } = board.get_piece_info(piece.pos);
         if piece_team != team {
-            opposing_pieces.push(&piece);
+            opposing_pieces.push(piece);
         }
     }
 
@@ -51,14 +56,14 @@ fn get_actions_castling(
                             piece_type: attacker_piece_type,
                             ..
                         } = board.get_piece_info(piece.pos);
-                        let piece_trait = board.piece_lookup.lookup(piece_info.piece_type);
-                        let piece_gen_info = &PieceGenInfo {
+                        let piece_trait = board.piece_lookup.lookup(piece_info.piece_type).duplicate();
+                        let piece_gen_info = PieceGenInfo {
                             pos: piece.pos,
                             team: attacker_team,
                             row_gap,
                             piece_type: attacker_piece_type,
                         };
-                        piece_trait.can_control(board, piece_gen_info, &targets)
+                        piece_trait.can_control(board, &piece_gen_info, &targets)
                     });
                     if can_be_attacked {
                         break;
@@ -132,13 +137,13 @@ impl KingPiece {
 }
 
 impl Piece for KingPiece {
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         let mut actions = get_actions_delta(&self.deltas, board, piece_info);
         actions.extend(get_actions_castling(&self.sliders, board, piece_info));
         actions
     }
 
-    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+    fn can_control(&self, board: &mut Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
         let mut can_control = false;
         for action in get_actions_delta(&self.deltas, board, piece_info) {
             if targets.contains(&action.to) {

@@ -4,7 +4,7 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
     let mut score: i32 = 0;
     let row_gap = board.row_gap;
 
-    for piece in &board.pieces {
+    for piece in board.pieces.clone() {
         let PieceInfo { piece_type, team, .. } = board.get_piece_info(piece.pos);
         let team_multiplier = if team == pov_team { 1 } else { -1 };
 
@@ -51,7 +51,7 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
                         empty_squares += 1;
                         open_squares += 1;
                         for sub_piece in &opposing_pieces {
-                            let sub_piece_trait = board.piece_lookup.lookup(sub_piece.piece_type);
+                            let sub_piece_trait = board.piece_lookup.lookup(sub_piece.piece_type).duplicate();
                             if sub_piece_trait.can_control(board, &sub_piece, &vec![new_pos]) {
                                 open_squares -= 1;
                                 break;

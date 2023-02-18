@@ -32,7 +32,7 @@ fn add_promotion(board: &Board, actions: &mut Vec<Action>, action: Action, promo
 
 pub struct PawnPiece;
 impl Piece for PawnPiece {
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         let mut actions = Vec::with_capacity(2);
 
         let PieceGenInfo {

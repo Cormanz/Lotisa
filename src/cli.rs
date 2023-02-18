@@ -25,10 +25,14 @@ pub fn run_uci(stdin: Stdin) {
             };
             let moving_team = uci.board.moving_team;
             let score = root_search(&mut info, &mut uci.board, moving_team, 50);
-            let best_move = &info.best_move.unwrap();
-            let mut rng = rand_hc::Hc128Rng::from_entropy();
-            println!("info depth {} time {} cp {}", info.root_depth, info.time, score / 10);
-            println!("bestmove {}", uci.encode(&best_move));
+            let best_move = &info.best_move;
+            //let mut rng = rand_hc::Hc128Rng::from_entropy();
+            //println!("info depth {} time {} cp {}", info.root_depth, info.time, score / 10);
+            if let Some(best_move) = best_move {
+                println!("bestmove {}", uci.encode(&best_move));
+            } else {
+                println!("nooOOOO");
+            }
         } else if line == "isready" {
             println!("readyok");
         }

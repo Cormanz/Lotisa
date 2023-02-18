@@ -19,8 +19,7 @@ pub fn generate_moves(board: &mut Board, required_team: i16) -> Vec<Action> {
     let mut actions: Vec<Action> = Vec::with_capacity(64);
     let row_gap = board.row_gap;
 
-    for PersistentPieceInfo { pos, .. } in &board.pieces {
-        let pos = *pos;
+    for PersistentPieceInfo { pos, .. } in board.pieces.clone() {
         let piece = board.state[pos as usize];
         let team = board.get_team(piece);
         if team != required_team {
@@ -50,8 +49,7 @@ pub fn in_check(board: &mut Board, moving_team: i16, row_gap: i16) -> bool {
         .map(|piece| piece.pos)
         .unwrap();
     let king_vec = vec![king];
-    for PersistentPieceInfo { pos, .. } in &board.pieces {
-        let pos = *pos;
+    for PersistentPieceInfo { pos, .. } in board.pieces.clone() {
         let pos_usize = pos as usize;
         let piece = board.state[pos_usize];
         let team = board.get_team(piece);

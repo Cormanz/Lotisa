@@ -76,7 +76,7 @@ pub trait Piece {
     /*
         The default `can_control` method is not very performant. Subtraits of Piece should reimplement this for the sake of performance.
     */
-    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+    fn can_control(&self, board: &mut Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
         let mut can_control = false;
         for action in self.get_actions(board, piece_info) {
             if targets.contains(&action.to) {
@@ -86,7 +86,7 @@ pub trait Piece {
         }
         can_control
     }
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action>;
+    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action>;
 
     fn get_material_value(&self) -> i32;
     fn get_icon(&self) -> &str;

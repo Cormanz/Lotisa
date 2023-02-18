@@ -22,11 +22,11 @@ impl QueenPiece {
 }
 
 impl Piece for QueenPiece {
-    fn get_actions(&self, board: &Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
         get_actions_sliding(&self.sliders, board, piece_info)
     }
 
-    fn can_control(&self, board: &Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+    fn can_control(&self, board: &mut Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
         can_control_sliding(&self.sliders, board, piece_info, targets)
     }
 

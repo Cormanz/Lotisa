@@ -156,9 +156,18 @@ impl Board {
             history: Vec::with_capacity(500),
         };
     }
-    
-    pub fn next_team(&self) -> i16 {
-        let team = self.moving_team + 1;
+
+    pub fn get_next_team(&self, team: i16) -> i16 {
+        let team = team + 1;
+        if team >= self.teams {
+            0
+        } else {
+            team
+        }
+    }
+
+    pub fn get_previous_team(&self, team: i16) -> i16 {
+        let team = team - 1;
         if team >= self.teams {
             0
         } else {
@@ -166,13 +175,12 @@ impl Board {
         }
     }
     
+    pub fn next_team(&self) -> i16 {
+        self.get_next_team(self.moving_team)
+    }
+    
     pub fn previous_team(&self) -> i16 {
-        let team = self.moving_team - 1;
-        if team < 0 {
-            self.teams - 1
-        } else {
-            team
-        }
+        self.get_next_team(self.moving_team)
     }
 
     pub fn display_board(&self) -> Vec<ColoredString> {

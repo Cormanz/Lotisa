@@ -71,14 +71,11 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
         }
     }
 
-    /*
-    Mobility decreases ELO in SPRT testing, so disabled until I can get it working
+    let moves = generate_moves(board, pov_team).len();
+    let opposing_moves = generate_moves(board, board.get_next_team(pov_team)).len();
 
-    let moves = board.generate_moves().len();
-    let opposing_moves = generate_moves(board, board.next_team()).len();
-
-    score += (5 * (moves - opposing_moves)) as i32;
-    */
+    score += (1 * (moves - opposing_moves)) as i32;
+    
 
     score
 }

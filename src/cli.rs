@@ -21,7 +21,7 @@ pub fn run_uci(stdin: Stdin) {
                 time: 0
             };
             let moving_team = uci.board.moving_team;
-            root_search(&mut info, &mut uci.board, moving_team, 1000);
+            root_search(&mut info, &mut uci.board, moving_team, 100);
             println!("info depth {} time {}", info.root_depth, info.time);
             println!("bestmove {}", uci.encode(&info.best_move.unwrap()));
         } else if line == "isready" {

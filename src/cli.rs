@@ -32,7 +32,7 @@ pub fn run_uci(stdin: Stdin) {
             //let mut rng = rand_hc::Hc128Rng::from_entropy();
             println!(
                 "info depth {} time {} cp {} pv {} nodes {} nps {}", 
-                info.root_depth, info.time, score / 10, info.pv_table.display_pv(&mut uci), info.search_nodes, (info.search_nodes / info.time) * 100_000
+                info.root_depth, info.time, score / 10, info.pv_table.display_pv(&mut uci), info.search_nodes, (info.search_nodes / info.time) * 1000
             );
             if let Some(best_move) = best_move {
                 println!("bestmove {}", uci.encode(&best_move));

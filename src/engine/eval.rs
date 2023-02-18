@@ -79,8 +79,8 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
         }
     }
 
-    let moves: i32 = generate_moves(board, pov_team).iter().map(weigh_mobility_move).sum();
-    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().map(weigh_mobility_move).sum();
+    //let moves: i32 = generate_moves(board, pov_team).iter().map(weigh_mobility_move).sum();
+    //let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().map(weigh_mobility_move).sum();
 
     //score += 1 * (moves - opposing_moves);
 

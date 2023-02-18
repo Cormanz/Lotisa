@@ -28,7 +28,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         return evaluate(board, starting_team);
     }
 
-    let actions = board.generate_legal_moves();
+    let actions = board.generate_moves(); // Psuedolegal Move Generation
 
     match board.win_conditions.duplicate().compute(board, &actions) {
         GameResult::Win => {
@@ -45,6 +45,9 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     let mut best_move: Option<Action> = None;
     for action in actions {
+        search_info.search_nodes += 1;
+        if !board.is_legal(action, board.moving_team) { continue; }
+
         board.make_move(action);
         let score = -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team);
         board.undo_move();

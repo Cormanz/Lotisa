@@ -1,4 +1,12 @@
-use crate::boards::{Board, PieceInfo, PieceGenInfo, generate_legal_moves, generate_moves};
+use crate::boards::{Board, PieceInfo, PieceGenInfo, generate_legal_moves, generate_moves, Action};
+
+pub fn weigh_mobility_move(action: &Action) -> i32 {
+    if action.capture {
+        5
+    } else {
+        1
+    }
+}
 
 pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
     let mut score: i32 = 0;
@@ -71,11 +79,10 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
         }
     }
 
-    let moves = generate_moves(board, pov_team).len();
-    let opposing_moves = generate_moves(board, board.get_next_team(pov_team)).len();
+    let moves: i32 = generate_moves(board, pov_team).iter().map(weigh_mobility_move).sum();
+    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().map(weigh_mobility_move).sum();
 
-    score += (1 * (moves - opposing_moves)) as i32;
-    
+    //score += 1 * (moves - opposing_moves);
 
     score
 }

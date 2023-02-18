@@ -7,6 +7,7 @@ use super::PV;
 pub const MIN_VALUE: i32 = -2_000_000_000;
 pub const MAX_VALUE: i32 = 2_000_000_000;
 pub struct SearchInfo {
+    pub search_nodes: u128,
     pub root_depth: i16,
     pub time: u128,
     pub best_move: Option<Action>,

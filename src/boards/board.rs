@@ -232,6 +232,17 @@ impl Board {
         println!("\n");
     }
 
+    pub fn is_legal(&mut self, action: Action, required_team: i16) -> bool {
+        let restrictors = self.restrictors.iter().map(|restrictor| restrictor.duplicate()).collect::<Vec<_>>();
+        for restrictor in restrictors {
+            if !restrictor.can_add(self, &action, required_team) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     pub fn make_move(&mut self, action: Action) {
         let PieceInfo { piece_type, .. } = self.get_piece_info(action.from);
 

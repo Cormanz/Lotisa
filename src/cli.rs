@@ -21,15 +21,19 @@ pub fn run_uci(stdin: Stdin) {
             let pv_table = PV { table: [ [ None; 100 ]; 100 ], length: [ 0; 100 ] };
             let mut info = SearchInfo {
                 root_depth: 0,
+                search_nodes: 0,
                 best_move: None,
                 time: 0,
                 pv_table
             };
             let moving_team = uci.board.moving_team;
-            let score = root_search(&mut info, &mut uci.board, moving_team, 50);
+            let score = root_search(&mut info, &mut uci.board, moving_team, 1000);
             let best_move = &info.best_move;
             //let mut rng = rand_hc::Hc128Rng::from_entropy();
-            println!("info depth {} time {} cp {} pv {}", info.root_depth, info.time, score / 10, info.pv_table.display_pv(&mut uci));
+            println!(
+                "info depth {} time {} cp {} pv {} nodes {} nps {}", 
+                info.root_depth, info.time, score / 10, info.pv_table.display_pv(&mut uci), info.search_nodes, (info.search_nodes / info.time) * 100_000
+            );
             if let Some(best_move) = best_move {
                 println!("bestmove {}", uci.encode(&best_move));
             } else {}

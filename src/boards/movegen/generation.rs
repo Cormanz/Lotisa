@@ -76,26 +76,12 @@ pub fn in_check(board: &mut Board, moving_team: i16, row_gap: i16) -> bool {
 
 pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action> {
     let Board { row_gap, .. } = board;
-    let row_gap = *row_gap;
 
     let actions = generate_moves(board, required_team);
     let mut new_actions: Vec<Action> = vec![];
 
-    let mut restrictors: Vec<Box<dyn Restrictor>> = Vec::with_capacity(board.restrictors.len());
-    for restrictor in &board.restrictors {
-        restrictors.push(restrictor.duplicate());
-    }
-
     for action in actions {
-        let mut can_add = true;
-        for restrictor in &restrictors {
-            if !restrictor.can_add(board, &action, required_team) {
-                can_add = false;
-                break;
-            }
-        }
-        if !can_add { continue; }
-
+        if board.is_legal(action, required_team) { continue; }
         new_actions.push(action);
     }
 

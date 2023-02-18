@@ -4,9 +4,9 @@ use fnv::FnvHashMap;
 
 use crate::boards::{Action, ActionType, Board, PersistentPieceInfo};
 
-use super::piece_types::{
+use super::{piece_types::{
     BishopPiece, KingPiece, KnightPiece, PawnPiece, Piece, QueenPiece, RookPiece,
-};
+}, Restrictor};
 
 pub struct PieceGenInfo {
     pub pos: i16,
@@ -83,22 +83,22 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
     let actions = generate_moves(board, required_team);
     let mut new_actions: Vec<Action> = vec![];
 
+    let mut restrictors: Vec<Box<dyn Restrictor>> = Vec::with_capacity(board.restrictors.len());
+    for restrictor in &board.restrictors {
+        restrictors.push(restrictor.duplicate());
+    }
+
     for action in actions {
-        if action.capture {
-            let target_value = board.state[action.to as usize];
-            let target_team = board.get_team(target_value);
-            if board.get_piece_type(target_value, target_team) == 5 {
-                continue;
+        let mut can_add = true;
+        for restrictor in &restrictors {
+            if !restrictor.can_add(board, &action, required_team) {
+                can_add = false;
+                break;
             }
         }
+        if !can_add { continue; }
 
-        board.make_move(action);
-        let can_add = !in_check(board, required_team, row_gap);
-        board.undo_move();
-
-        if can_add {
-            new_actions.push(action);
-        }
+        new_actions.push(action);
     }
 
     new_actions

@@ -12,13 +12,13 @@ Lotisa is a chess movegen library and chess engine coded in Rust as part of the 
 
 Chesstastic is a project to allow for players to fight against other players or chess bots with custom chess variants of their own choosing or creation, and to be able to analyze those very games. Lotisa is meant to allow for players to play against it on any variant, or to have it analyze games (and ideally, even explain moves.) It's also meant to validate chess moves in general for Chesstastic.
 
-# Running Lotisa
+# Engine
 
 Lotisa will play the base chess variant by default using the `uci` interface. You can play with Lotisa by loading it into a Chess GUI such as [Tarrasch](http://www.triplehappy.com/), and then playing against it.
 
 In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/Lotisa) if I have it online.
 
-# Engine
+## Internals
 
 The Lotisa engine uses a **10x12** board representation, where there's an **8x8** board inside of it, but additional squares are added to speed up the out of bounds check. Each piece is represented as an `i16` with the following formula: `piece_type + (PIECE_TYPES * team) + 2`, which allows for up to 16,384 piece types if there are two teams.
 

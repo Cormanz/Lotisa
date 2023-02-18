@@ -4,7 +4,7 @@ use crate::boards::Action;
 pub const MIN_VALUE: i32 = -2147483647;
 pub const MAX_VALUE: i32 = 2147483647;
 
-pub struct EvaluationScore {
-    pub score: i32,
+pub struct SearchInfo {
+    pub root_depth: i16,
     pub best_move: Option<Action>
 }

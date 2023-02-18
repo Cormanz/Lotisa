@@ -22,6 +22,8 @@ pub fn root_search(search_info: &mut SearchInfo, board: &mut Board, starting_tea
 }
 
 pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, beta: i32, depth: i16, ply: i16, starting_team: i16) -> i32 {
+    search_info.pv_table.init_pv(ply);
+
     if depth == 0 {
         return evaluate(board, starting_team);
     }
@@ -50,6 +52,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         if score > alpha {
             best_move = Some(action);
             alpha = score;
+			search_info.pv_table.update_pv(ply, Some(action));
 
             if score >= beta {
                 break;

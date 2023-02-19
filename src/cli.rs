@@ -23,10 +23,12 @@ pub fn run_uci(stdin: Stdin) {
                 root_depth: 0,
                 search_nodes: 0,
                 time: 0,
-                pv_table
+                pv_table,
+                transposition_table: vec![None; 100_000],
+                max_tt_size: 100_000
             };
             let moving_team = uci.board.moving_team;
-            let score = root_search(&mut info, &mut uci.board, moving_team, 1000);
+            let score = root_search(&mut info, &mut uci.board, moving_team, 50);
             let best_move = info.pv_table.table[0][0];
             //let mut rng = rand_hc::Hc128Rng::from_entropy();
             println!(

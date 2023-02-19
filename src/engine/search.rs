@@ -1,5 +1,5 @@
-use crate::boards::{Board, Action, GameResult};
-use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms};
+use crate::boards::{Board, Action, GameResult, hash_board};
+use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry};
 
 pub fn root_search(search_info: &mut SearchInfo, board: &mut Board, starting_team: i16, max_time: u128) -> i32 {
     let mut total_time = 0;
@@ -28,6 +28,13 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         return evaluate(board, board.moving_team);
     }
 
+    let hash = hash_board(board, board.moving_team, &board.zobrist) % search_info.max_tt_size;
+    if let Some(entry) = &search_info.transposition_table[hash] {
+        if entry.depth >= depth {
+            return entry.eval;
+        }
+    }
+
     let actions = board.generate_moves(); // Psuedolegal Move Generation
 
     match board.win_conditions.duplicate().compute(board, &actions) {
@@ -43,7 +50,6 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         GameResult::Ongoing => {}
     }
 
-    let mut best_move: Option<Action> = None;
     for action in actions {
         search_info.search_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
@@ -53,7 +59,6 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         board.undo_move();
 
         if score > alpha {
-            best_move = Some(action);
             alpha = score;
 			search_info.pv_table.update_pv(ply, Some(action));
 
@@ -62,6 +67,11 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
             }
         }
     }
+
+    search_info.transposition_table[hash] = Some(TranspositionEntry {
+        eval: alpha,
+        depth
+    });
 
     return alpha;
 }

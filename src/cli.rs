@@ -10,8 +10,8 @@ pub fn create_info() -> SearchInfo {
         quiescence_nodes: 0,
         time: 0,
         pv_table: PV { table: [ [ None; MAX_DEPTH ]; MAX_DEPTH ], length: [ 0; MAX_DEPTH ] },
-        transposition_table: vec![None; 25_000_000],
-        max_tt_size: 25_000_000,
+        transposition_table: vec![None; 9_000_000],
+        max_tt_size: 9_000_000,
         killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES],
         history_moves: vec![vec![vec![0; 120]; 120]; 2]
     }
@@ -43,7 +43,7 @@ pub fn run_uci(stdin: Stdin) {
             uci.board.print_board();
         } else if line.starts_with("go") {
             let moving_team = uci.board.moving_team;
-            let score = root_search(&mut info, &mut uci, moving_team, 1000);
+            let score = root_search(&mut info, &mut uci, moving_team, 50);
             let best_move = info.pv_table.table[0][0];
             if let Some(best_move) = best_move {
                 println!("bestmove {}", uci.encode(&best_move));

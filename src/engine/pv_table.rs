@@ -23,6 +23,7 @@ impl PV {
     pub fn display_pv(&mut self, uci: &mut UCICommunicator) -> String {
         let mut pv_actions: Vec<String> = Vec::with_capacity(self.table[0].len());
         let mut pv_table = self.table[0].clone();
+        let mut undo_count = 0;
         for action in &pv_table {
             if action.is_none() { break; }
             if let Some(action) = action {
@@ -37,13 +38,12 @@ impl PV {
 
                 pv_actions.push(uci.encode(action));
                 uci.board.make_move(*action);
+                undo_count += 1;
             }
         }
     
-        for action in &self.table[0] {
-            if let Some(_) = action {
-                uci.board.undo_move();
-            }
+        for _ in 0..undo_count {
+            uci.board.undo_move();
         }
     
         pv_actions.join(" ")

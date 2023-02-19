@@ -25,7 +25,7 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
     - [Material](https://www.chessprogramming.org/Material)
     - [King Safety](https://www.chessprogramming.org/King_Safety)
     - [Mobility](https://www.chessprogramming.org/Mobility)
-- [Alpha Beta Search](https://www.chessprogramming.org/Alpha-Beta)
+- [Principal Variation Search](https://www.chessprogramming.org/Principal_Variation_Search)
     - [Quiescence Search](https://www.chessprogramming.org/Quiescence_Search)
     - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
         - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)

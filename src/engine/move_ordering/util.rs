@@ -19,7 +19,7 @@ pub fn weigh_qs_move(search_info: &mut SearchInfo, board: &mut Board, action: &A
 pub fn weigh_move(search_info: &mut SearchInfo, board: &mut Board, action: &Action, pv_move: &Option<Action>, ply: i16) -> i32 {
     if let Some(pv_move) = pv_move {
         if pv_move == action {
-            return 25_000_000;
+            return 9_000_000;
         }
     }
 

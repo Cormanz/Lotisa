@@ -7,7 +7,7 @@ pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, star
     loop {
         let start = get_epoch_ms();
         search_info.root_depth = depth;
-        let score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team);
+        let score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, false);
         let end = get_epoch_ms();
         let time = end - start;
         total_time += time;
@@ -20,7 +20,7 @@ pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, star
             search_info.root_depth, search_info.time, score / 10, search_info.pv_table.display_pv(uci), nodes, (nodes / (search_info.time + 1)) * 1000
         );
 
-        if total_time >= max_time {
+        if total_time >= max_time || depth >= 30 {
             return score;
         }
 
@@ -88,7 +88,7 @@ pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i3
     return alpha;
 }
 
-pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, beta: i32, depth: i16, ply: i16, starting_team: i16) -> i32 {
+pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, beta: i32, depth: i16, ply: i16, starting_team: i16, is_pv_node: bool) -> i32 {
     search_info.pv_table.init_pv(ply);
 
     if depth == 0 {
@@ -98,7 +98,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     let hash = hash_board(board, board.moving_team, &board.zobrist) % search_info.max_tt_size;
     let mut pv_move: Option<Action> = None;
     if let Some(entry) = &search_info.transposition_table[hash] {
-        if entry.depth >= depth && ply < 2 {
+        if entry.depth >= depth && ply < 2 && !is_pv_node {
 			search_info.pv_table.update_pv(ply, entry.action);
             return entry.eval;
         }
@@ -131,18 +131,32 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
 
     let mut best_move: Option<Action> = None;
+    let mut found_pv_node: bool = false;
     for ScoredAction { action, ..} in sorted_actions {
         search_info.root_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
 
         board.make_move(action);
-        let score = -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team);
+        let score = if found_pv_node {
+            // Zero Window Search
+            let eval = -search(search_info, board, -alpha - 1, -alpha, depth - 1, ply + 1, starting_team, false);
+
+            if eval > alpha && eval < beta {
+                // Full Window Research
+                -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team, true)
+            } else {
+                eval
+            }
+        } else {
+            -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team, true)
+        };
         board.undo_move();
 
         if score > alpha {
             alpha = score;
             best_move = Some(action);
 			search_info.pv_table.update_pv(ply, best_move);
+            found_pv_node = true;
 
             store_history_move(search_info, &action, depth);
             if score >= beta {

@@ -6,7 +6,8 @@ use super::{PV, KillerMoves};
 #[derive(Clone, Debug)]
 pub struct TranspositionEntry {
     pub eval: i32,
-    pub depth: i16
+    pub depth: i16,
+    pub action: Option<Action>
 }
 
 #[derive(Clone, Debug)]

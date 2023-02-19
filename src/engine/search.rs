@@ -29,10 +29,12 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     }
 
     let hash = hash_board(board, board.moving_team, &board.zobrist) % search_info.max_tt_size;
+    let mut pv_move: Option<Action> = None;
     if let Some(entry) = &search_info.transposition_table[hash] {
         if entry.depth >= depth {
             return entry.eval;
         }
+        pv_move = entry.action;
     }
 
     let actions = board.generate_moves(); // Psuedolegal Move Generation
@@ -54,12 +56,13 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     for action in actions {
         sorted_actions.push(ScoredAction {
             action,
-            score: weigh_move(search_info, board, &action, ply)
+            score: weigh_move(search_info, board, &action, &pv_move, ply)
         });
     }
 
     sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
 
+    let mut best_move: Option<Action> = None;
     for ScoredAction { action, ..} in sorted_actions {
         search_info.search_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
@@ -70,7 +73,8 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
         if score > alpha {
             alpha = score;
-			search_info.pv_table.update_pv(ply, Some(action));
+            best_move = Some(action);
+			search_info.pv_table.update_pv(ply, best_move);
 
             if score >= beta {
                 store_killer_move(action, ply, search_info);
@@ -81,7 +85,8 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     search_info.transposition_table[hash] = Some(TranspositionEntry {
         eval: alpha,
-        depth
+        depth,
+        action: best_move
     });
 
     return alpha;

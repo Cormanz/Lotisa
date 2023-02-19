@@ -29,7 +29,7 @@ pub fn run_uci(stdin: Stdin) {
                 killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES]
             };
             let moving_team = uci.board.moving_team;
-            let score = root_search(&mut info, &mut uci.board, moving_team, 1000);
+            let score = root_search(&mut info, &mut uci.board, moving_team, 50);
             let best_move = info.pv_table.table[0][0];
             println!(
                 "info depth {} time {} cp {} pv {} nodes {} nps {}", 

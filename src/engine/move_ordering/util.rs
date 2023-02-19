@@ -2,7 +2,13 @@ use crate::{boards::{Action, Board}, engine::SearchInfo};
 
 use super::MAX_KILLER_MOVES;
 
-pub fn weigh_move(search_info: &mut SearchInfo, board: &mut Board, action: &Action, ply: i16) -> i32 {
+pub fn weigh_move(search_info: &mut SearchInfo, board: &mut Board, action: &Action, pv_move: &Option<Action>, ply: i16) -> i32 {
+    if let Some(pv_move) = pv_move {
+        if pv_move == action {
+            return 1_000_000;
+        }
+    }
+
     if action.capture {
         // MVV-LVA
 

@@ -22,8 +22,19 @@ impl PV {
     
     pub fn display_pv(&mut self, uci: &mut UCICommunicator) -> String {
         let mut pv_actions: Vec<String> = Vec::with_capacity(self.table[0].len());
-        for action in &self.table[0] {
+        let mut pv_table = self.table[0].clone();
+        for action in &pv_table {
+            if action.is_none() { break; }
             if let Some(action) = action {
+                let from_pos_all = uci.board
+                    .pieces
+                    .iter()
+                    .position(|piece| piece.pos == action.from);
+
+                if from_pos_all.is_none() {
+                    break;
+                }
+
                 pv_actions.push(uci.encode(action));
                 uci.board.make_move(*action);
             }

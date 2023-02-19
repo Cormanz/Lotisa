@@ -21,7 +21,6 @@ fn encode_uci_pos(board: &Board, pos: i16, buffer_amount: i16) -> String {
 }
 
 fn decode_uci_pos(board: &Board, pos: &str, buffer_amount: i16) -> i16 {
-    println!("{}", pos);
     let mut abcs = "abcdefghijklmnopqrstuvwxyz".chars();
     let col_char = pos.chars().nth(0).unwrap();
     let mut col = abcs.position(|char| char == col_char).unwrap() as i16;

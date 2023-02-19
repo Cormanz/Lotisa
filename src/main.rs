@@ -20,6 +20,8 @@ mod engine;
 mod cli;
 
 fn main() {
+    env::set_var("RUST_BACKTRACE", "1");
+
     let mut args = env::args().collect::<Vec<_>>();
     let stdin = io::stdin();
 

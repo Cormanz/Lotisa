@@ -79,8 +79,6 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     search_info.pv_table.init_pv(ply);
 
     if depth == 0 {
-        //return evaluate(board, board.moving_team);
-
         return quiescence(search_info, board, alpha, beta, starting_team);
     }
 
@@ -88,6 +86,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     let mut pv_move: Option<Action> = None;
     if let Some(entry) = &search_info.transposition_table[hash] {
         if entry.depth >= depth {
+			search_info.pv_table.update_pv(ply, entry.action);
             return entry.eval;
         }
         pv_move = entry.action;
@@ -132,9 +131,9 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
             best_move = Some(action);
 			search_info.pv_table.update_pv(ply, best_move);
 
+            store_history_move(search_info, &action, depth);
             if score >= beta {
                 store_killer_move(search_info, &action, ply);
-                store_history_move(search_info, &action, depth);
                 break;
             }
         }

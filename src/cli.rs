@@ -1,7 +1,7 @@
 use std::io::{Stdin, BufRead};
 use rand::{SeedableRng, seq::SliceRandom};
 
-use crate::{boards::Board, engine::{SearchInfo, search, MIN_VALUE, MAX_VALUE, root_search, PV}, communication::Communicator};
+use crate::{boards::Board, engine::{SearchInfo, search, MIN_VALUE, MAX_VALUE, root_search, PV, MAX_DEPTH, MAX_KILLER_MOVES}, communication::Communicator};
 
 pub fn run_uci(stdin: Stdin) {
     let mut uci = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w kqKQ -");
@@ -18,19 +18,19 @@ pub fn run_uci(stdin: Stdin) {
                 uci.board.make_move(action);
             }
         } else if line.starts_with("go") {
-            let pv_table = PV { table: [ [ None; 100 ]; 100 ], length: [ 0; 100 ] };
+            let pv_table = PV { table: [ [ None; MAX_DEPTH ]; MAX_DEPTH ], length: [ 0; MAX_DEPTH ] };
             let mut info = SearchInfo {
                 root_depth: 0,
                 search_nodes: 0,
                 time: 0,
                 pv_table,
                 transposition_table: vec![None; 1_000_000],
-                max_tt_size: 1_000_000
+                max_tt_size: 1_000_000,
+                killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES]
             };
             let moving_team = uci.board.moving_team;
             let score = root_search(&mut info, &mut uci.board, moving_team, 50);
             let best_move = info.pv_table.table[0][0];
-            //let mut rng = rand_hc::Hc128Rng::from_entropy();
             println!(
                 "info depth {} time {} cp {} pv {} nodes {} nps {}", 
                 info.root_depth, info.time, score / 10, info.pv_table.display_pv(&mut uci), info.search_nodes, (info.search_nodes / info.time) * 1000

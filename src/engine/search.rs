@@ -1,5 +1,5 @@
 use crate::boards::{Board, Action, GameResult, hash_board};
-use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry};
+use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry, ScoredAction, move_ordering::{weigh_move}};
 
 pub fn root_search(search_info: &mut SearchInfo, board: &mut Board, starting_team: i16, max_time: u128) -> i32 {
     let mut total_time = 0;
@@ -50,7 +50,17 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         GameResult::Ongoing => {}
     }
 
+    let mut sorted_actions: Vec<ScoredAction> = Vec::with_capacity(actions.len());
     for action in actions {
+        sorted_actions.push(ScoredAction {
+            action,
+            score: weigh_move(search_info, board, &action, ply)
+        });
+    }
+
+    //sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
+
+    for ScoredAction { action, ..} in sorted_actions {
         search_info.search_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
 

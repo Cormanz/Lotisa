@@ -1,8 +1,10 @@
 use crate::{boards::{Action, Board}, communication::{UCICommunicator, Communicator}};
 
+use super::MAX_DEPTH;
+
 pub struct PV {
-	pub length: [ i16; 100 ],
-	pub table: [ [ Option<Action>; 100 ]; 100 ]
+	pub length: [ i16; MAX_DEPTH ],
+	pub table: [ [ Option<Action>; MAX_DEPTH ]; MAX_DEPTH ]
 }
 
 impl PV {

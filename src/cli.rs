@@ -9,8 +9,8 @@ pub fn create_info() -> SearchInfo {
         search_nodes: 0,
         time: 0,
         pv_table: PV { table: [ [ None; MAX_DEPTH ]; MAX_DEPTH ], length: [ 0; MAX_DEPTH ] },
-        transposition_table: vec![None; 1_000_000],
-        max_tt_size: 1_000_000,
+        transposition_table: vec![None; 25_000_000],
+        max_tt_size: 25_000_000,
         killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES],
         history_moves: vec![vec![vec![0; 120]; 120]; 2]
     }
@@ -32,13 +32,20 @@ pub fn run_uci(stdin: Stdin) {
                 let action = uci.decode(action.to_string());
                 uci.board.make_move(action);
             }
-            //info = create_info();
+        } else if line.starts_with("position startpos fen ") {
+            let fen = &line[22..];
+            uci = Board::load_fen(fen);
+            info = create_info();
+        } else if line.starts_with("print-board") {
+            // Not UCI but why not
+
+            uci.board.print_board();
         } else if line.starts_with("go") {
             let moving_team = uci.board.moving_team;
-            let score = root_search(&mut info, &mut uci.board, moving_team, 50);
+            let score = root_search(&mut info, &mut uci.board, moving_team, 1000);
             let best_move = info.pv_table.table[0][0];
             println!(
-                "info depth {} time {} cp {} pv {} nodes {} nps {}", 
+                "info depth {} time {} score cp {} pv {} nodes {} nps {}", 
                 info.root_depth, info.time, score / 10, info.pv_table.display_pv(&mut uci), info.search_nodes, (info.search_nodes / info.time) * 1000
             );
             if let Some(best_move) = best_move {

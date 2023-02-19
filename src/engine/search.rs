@@ -85,7 +85,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     let hash = hash_board(board, board.moving_team, &board.zobrist) % search_info.max_tt_size;
     let mut pv_move: Option<Action> = None;
     if let Some(entry) = &search_info.transposition_table[hash] {
-        if entry.depth >= depth {
+        if entry.depth >= depth && ply < 2 {
 			search_info.pv_table.update_pv(ply, entry.action);
             return entry.eval;
         }

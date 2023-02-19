@@ -31,6 +31,7 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
         - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)
         - [MVV-LVA](https://www.chessprogramming.org/MVV-LVA)
         - [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic)
+        - [History Heuristic](https://www.chessprogramming.org/History_Heuristic)
 
 Focusing on this list:
 ```

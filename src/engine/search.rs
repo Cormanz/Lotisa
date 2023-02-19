@@ -1,18 +1,24 @@
-use crate::{boards::{Board, Action, GameResult, hash_board}, engine::store_killer_move};
+use crate::{boards::{Board, Action, GameResult, hash_board, in_check}, engine::store_killer_move, communication::UCICommunicator};
 use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry, ScoredAction, move_ordering::{weigh_move}, weigh_qs_move, store_history_move};
 
-pub fn root_search(search_info: &mut SearchInfo, board: &mut Board, starting_team: i16, max_time: u128) -> i32 {
+pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, starting_team: i16, max_time: u128) -> i32 {
     let mut total_time = 0;
     let mut depth = 1;
     loop {
         let start = get_epoch_ms();
         search_info.root_depth = depth;
-        let score = search(search_info, board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team);
+        let score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team);
         let end = get_epoch_ms();
         let time = end - start;
         total_time += time;
 
         search_info.time = total_time;
+
+        println!(
+            "info depth {} time {} score cp {} pv {} nodes {} nps {}", 
+            search_info.root_depth, search_info.time, score / 10, search_info.pv_table.display_pv(uci), search_info.search_nodes, (search_info.search_nodes / search_info.time) * 1000
+        );
+
         if total_time >= max_time {
             return score;
         }
@@ -42,7 +48,13 @@ pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i3
     let mut sorted_actions: Vec<ScoredAction> = Vec::with_capacity(actions.len());
     for action in actions {
         if !action.capture && !(action.piece_type == 0 && action.info >= 0) {
-            continue;
+            board.make_move(action);
+            let in_check = in_check(board, board.moving_team, board.row_gap);
+            board.undo_move();
+
+            if !in_check {
+                continue;
+            }
         }
 
         sorted_actions.push(ScoredAction {

@@ -3,21 +3,14 @@ use crate::{boards::{Action, Board}, engine::SearchInfo};
 use super::{MAX_KILLER_MOVES, see, get_history_move};
 
 pub fn weigh_qs_move(search_info: &mut SearchInfo, board: &mut Board, action: &Action) -> i32 {
-    if action.capture {
-        // SEE
-
-        if see(board, action.to, board.moving_team, Some(action.from)) < 0 {
-            return -100_000;
+    if action.piece_type == 0 && action.info >= 0 {
+        if action.info != 4 {
+            return -50_000;
         }
+    }
 
-        // MVV-LVA
-
-        let to_piece_type = board.get_piece_info(action.to).piece_type;
-        
-        let from_material = board.piece_lookup.lookup(action.piece_type).get_material_value();
-        let to_material = board.piece_lookup.lookup(to_piece_type).get_material_value();
-
-        from_material - to_material
+    if action.capture {
+        see(board, action.to, board.moving_team, Some(action.from))
     } else {
         0
     }
@@ -27,6 +20,12 @@ pub fn weigh_move(search_info: &mut SearchInfo, board: &mut Board, action: &Acti
     if let Some(pv_move) = pv_move {
         if pv_move == action {
             return 25_000_000;
+        }
+    }
+
+    if action.piece_type == 0 && action.info >= 0 {
+        if action.info != 4 {
+            return -50_000;
         }
     }
 

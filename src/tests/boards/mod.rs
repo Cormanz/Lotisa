@@ -82,6 +82,7 @@ fn black_promotion_test() {
     assert!(uci.board.generate_legal_moves().iter().any(|action| action.piece_type != 0 || action.info >= 0), "There aren't any promotions in this position when there should be.");
 }
 
+// e2e4 e7e5 g2f3 b8c6 f1c4 f8c6 e1g1 g8f6
 
 #[ignore]
 #[test]

@@ -4,7 +4,7 @@ use crate::boards::Board;
 
 pub fn generate_zobrist(pieces: i16, teams: i16, positions: i16) -> Vec<usize> {
     let mut rng = rand_hc::Hc128Rng::from_entropy();
-    let len = ((pieces * teams) + 2) * positions;
+    let len = (((pieces * teams) + 2) * 2) * positions;
 
     let mut zobrist: Vec<usize> = Vec::with_capacity(len as usize);
     for i in 0..len {
@@ -23,7 +23,7 @@ pub fn hash_board(board: &Board, moving_team: i16, zobrist: &Vec<usize>) -> usiz
         let piece = *piece;
         let first_move = board.pieces.iter()
             .find(|piece| piece.pos == ind)
-            .unwrap().first_move;
+            .map_or(false, |piece| piece.first_move);
         hash ^= zobrist[(ind + positions * if first_move { 1 } else { 0 } + (positions * 2) * piece) as usize];
         ind += 1;
     }

@@ -10,7 +10,6 @@ pub struct SearchInfo {
     pub search_nodes: u128,
     pub root_depth: i16,
     pub time: u128,
-    pub best_move: Option<Action>,
     pub pv_table: PV
 }
 

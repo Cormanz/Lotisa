@@ -5,7 +5,7 @@ use crate::communication::{UCICommunicator, Communicator};
 
 use super::{
     create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup,
-    PieceMap, PieceMapLookup, WinConditions, DefaultWinConditions, Restrictor, DefaultRestrictor,
+    PieceMap, PieceMapLookup, WinConditions, DefaultWinConditions, Restrictor, DefaultRestrictor, generate_zobrist,
 };
 
 //use super::Action;
@@ -33,7 +33,7 @@ pub fn create_board_state(buffer_amount: i16, (rows, cols): (i16, i16)) -> Board
     return state;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StoredMove {
     pub action: Action,
     pub from_previous: i16,
@@ -96,7 +96,8 @@ pub struct Board {
     pub piece_lookup: Box<dyn PieceLookup>,
     pub win_conditions: Box<dyn WinConditions>,
     pub restrictors: Vec<Box<dyn Restrictor>>,
-    pub history: Vec<StoredMove>
+    pub history: Vec<StoredMove>,
+    pub zobrist: Vec<usize>
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -138,6 +139,9 @@ impl Board {
     ) -> Board {
         let state = create_board_state(buffer_amount, (rows, cols));
 
+        let row_gap = rows + buffer_amount;
+        let col_gap = cols + (2 * buffer_amount);
+
         return Board {
             state,
             reverse_pieces: FnvHashMap::with_capacity_and_hasher(32, Default::default()),
@@ -150,10 +154,11 @@ impl Board {
             cols,
             buffer_amount,
             moving_team: 0,
-            row_gap: rows + buffer_amount,
-            col_gap: cols + (buffer_amount * 2),
+            row_gap,
+            col_gap,
             piece_lookup,
             history: Vec::with_capacity(500),
+            zobrist: generate_zobrist(piece_types, teams, row_gap * col_gap)
         };
     }
 

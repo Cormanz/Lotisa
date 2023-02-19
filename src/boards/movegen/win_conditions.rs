@@ -1,6 +1,41 @@
-use crate::boards::{Action, Board};
+use std::collections::HashSet;
+
+use crate::boards::{Action, Board, hash_board};
 
 use super::in_check;
+
+pub fn is_draw_by_repetition(board: &mut Board) -> bool {
+    let mut min_undos = board.history.len() - 20;
+    if min_undos > 100_000_000 {
+        min_undos = 0;
+    }
+    let mut undos = board.history.as_slice()[min_undos..].to_vec();
+    let mut hashes: Vec<usize> = Vec::with_capacity(undos.len());
+
+    let mut ind = 0;
+    for _ in &undos {
+        if ind % 2 == 0 {
+            hashes.push(hash_board(board, board.moving_team, &board.zobrist));
+        }
+        board.undo_move();
+        ind += 1;
+    }
+    
+    for undo in &undos {
+        board.make_move(undo.action);
+    }
+
+    let mut hash_set: HashSet<usize> = HashSet::with_capacity(undos.len());
+    for hash in hashes {
+        if hash_set.contains(&hash) {
+            return true;
+        }
+
+        hash_set.insert(hash);
+    }
+
+    return false;
+}
 
 pub enum GameResult {
     Win,
@@ -23,6 +58,10 @@ impl WinConditions for DefaultWinConditions {
                 return GameResult::Lose;
             }
 
+            return GameResult::Draw;
+        }
+
+        if is_draw_by_repetition(board) {
             return GameResult::Draw;
         }
 

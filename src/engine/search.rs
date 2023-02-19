@@ -25,7 +25,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     search_info.pv_table.init_pv(ply);
 
     if depth == 0 {
-        return evaluate(board, starting_team);
+        return evaluate(board, board.moving_team);
     }
 
     let actions = board.generate_moves(); // Psuedolegal Move Generation
@@ -63,8 +63,5 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         }
     }
 
-    if ply == 0 {
-        search_info.best_move = best_move;
-    }
     return alpha;
 }

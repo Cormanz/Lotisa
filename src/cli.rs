@@ -24,8 +24,8 @@ pub fn run_uci(stdin: Stdin) {
                 search_nodes: 0,
                 time: 0,
                 pv_table,
-                transposition_table: vec![None; 100_000],
-                max_tt_size: 100_000
+                transposition_table: vec![None; 1_000_000],
+                max_tt_size: 1_000_000
             };
             let moving_team = uci.board.moving_team;
             let score = root_search(&mut info, &mut uci.board, moving_team, 50);

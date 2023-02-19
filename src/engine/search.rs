@@ -1,4 +1,4 @@
-use crate::boards::{Board, Action, GameResult, hash_board};
+use crate::{boards::{Board, Action, GameResult, hash_board}, engine::store_killer_move};
 use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry, ScoredAction, move_ordering::{weigh_move}};
 
 pub fn root_search(search_info: &mut SearchInfo, board: &mut Board, starting_team: i16, max_time: u128) -> i32 {
@@ -58,7 +58,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         });
     }
 
-    //sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
+    sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
 
     for ScoredAction { action, ..} in sorted_actions {
         search_info.search_nodes += 1;
@@ -73,6 +73,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 			search_info.pv_table.update_pv(ply, Some(action));
 
             if score >= beta {
+                store_killer_move(action, ply, search_info);
                 break;
             }
         }

@@ -3,13 +3,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::{PV, KillerMoves};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TranspositionEntry {
     pub eval: i32,
     pub depth: i16
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ScoredAction {
     pub action: Action,
     pub score: i32

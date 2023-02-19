@@ -64,13 +64,13 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
 
             if empty_squares > 0 {                 
                 let blocked_squares: i32 = empty_squares - open_squares;
-                score -= 1_500 * ((blocked_squares * blocked_squares) / (empty_squares * empty_squares)) * team_multiplier;
+                score -= 4_000 * ((blocked_squares * blocked_squares) / (empty_squares * empty_squares)) * team_multiplier;
             }
         }
     }
 
-    let moves: i32 = generate_legal_moves(board, pov_team).len() as i32;
-    let opposing_moves: i32 = generate_legal_moves(board, board.get_next_team(pov_team)).iter().len() as i32;
+    let moves: i32 = generate_moves(board, pov_team).len() as i32;
+    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().len() as i32;
 
     score += 20 * (moves - opposing_moves);
 

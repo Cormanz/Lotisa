@@ -32,6 +32,16 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
         - [MVV-LVA](https://www.chessprogramming.org/MVV-LVA)
         - [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic)
 
+Focusing on this list:
+```
+A reasonable search feature progression (starting with vanilla TT (sorting TT move first), PVS, QS and aspiration windows which are all pretty fundamental) imo is: NMP, LMR (log formula is most principled ~ there are a number of adjustments you can experiment with), static NMP (aka RFP), 
+butterfly history heuristic, LMP, futility pruning, CMH+FMH, QS SEE pruning, PVS SEE pruning (captures and quiets), QS delta pruning, history pruning, capture history heuristic, singular extensions, multicut (using singular search result).
+(with a healthy amount of parameter tweaking after each addition)
+Idk if I'm missing anything major. Those search heuristics constitute the vast majority of the Elo you'll find in any top engine, though the details of the implementation are very important.
+
+additional stuff not from Seer's author: IIR, probcut
+```
+
 ## Internals
 
 The Lotisa engine uses a **10x12** board representation, where there's an **8x8** board inside of it, but additional squares are added to speed up the out of bounds check. Each piece is represented as an `i16` with the following formula: `piece_type + (PIECE_TYPES * team) + 2`, which allows for up to 16,384 piece types if there are two teams.

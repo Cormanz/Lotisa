@@ -26,10 +26,11 @@ pub fn run_uci(stdin: Stdin) {
                 pv_table,
                 transposition_table: vec![None; 1_000_000],
                 max_tt_size: 1_000_000,
-                killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES]
+                killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES],
+                history_moves: vec![vec![vec![0; 120]; 120]; 2]
             };
             let moving_team = uci.board.moving_team;
-            let score = root_search(&mut info, &mut uci.board, moving_team, 50);
+            let score = root_search(&mut info, &mut uci.board, moving_team, 250);
             let best_move = info.pv_table.table[0][0];
             println!(
                 "info depth {} time {} cp {} pv {} nodes {} nps {}", 

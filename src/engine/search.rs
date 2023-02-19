@@ -1,5 +1,5 @@
 use crate::{boards::{Board, Action, GameResult, hash_board}, engine::store_killer_move};
-use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry, ScoredAction, move_ordering::{weigh_move}, weigh_qs_move};
+use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry, ScoredAction, move_ordering::{weigh_move}, weigh_qs_move, store_history_move};
 
 pub fn root_search(search_info: &mut SearchInfo, board: &mut Board, starting_team: i16, max_time: u128) -> i32 {
     let mut total_time = 0;
@@ -27,9 +27,15 @@ pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i3
         return standing_pat;
     }
 
+    // Delta Pruning
+    if standing_pat + 9000 < alpha {
+        return alpha;
+    }
+
     if standing_pat > alpha {
         alpha = standing_pat;
     }
+    
 
     let actions = board.generate_moves(); // Psuedolegal Move Generation
 
@@ -127,7 +133,8 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 			search_info.pv_table.update_pv(ply, best_move);
 
             if score >= beta {
-                store_killer_move(action, ply, search_info);
+                store_killer_move(search_info, &action, ply);
+                store_history_move(search_info, &action, depth);
                 break;
             }
         }

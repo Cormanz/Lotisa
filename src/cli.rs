@@ -6,7 +6,8 @@ use crate::{boards::Board, engine::{SearchInfo, search, MIN_VALUE, MAX_VALUE, ro
 pub fn create_info() -> SearchInfo {
     SearchInfo {
         root_depth: 0,
-        search_nodes: 0,
+        root_nodes: 0,
+        quiescence_nodes: 0,
         time: 0,
         pv_table: PV { table: [ [ None; MAX_DEPTH ]; MAX_DEPTH ], length: [ 0; MAX_DEPTH ] },
         transposition_table: vec![None; 25_000_000],

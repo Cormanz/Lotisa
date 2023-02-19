@@ -23,7 +23,8 @@ pub const MAX_VALUE: i32 = 2_000_000_000;
 pub const MAX_DEPTH: usize = 100;
 
 pub struct SearchInfo {
-    pub search_nodes: u128,
+    pub root_nodes: u128,
+    pub quiescence_nodes: u128,
     pub root_depth: i16,
     pub time: u128,
     pub pv_table: PV,

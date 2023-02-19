@@ -14,9 +14,10 @@ pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, star
 
         search_info.time = total_time;
 
+        let nodes = search_info.quiescence_nodes + search_info.root_nodes;
         println!(
             "info depth {} time {} score cp {} pv {} nodes {} nps {}", 
-            search_info.root_depth, search_info.time, score / 10, search_info.pv_table.display_pv(uci), search_info.search_nodes, (search_info.search_nodes / search_info.time) * 1000
+            search_info.root_depth, search_info.time, score / 10, search_info.pv_table.display_pv(uci), nodes, (nodes / (search_info.time + 1)) * 1000
         );
 
         if total_time >= max_time {
@@ -67,7 +68,7 @@ pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i3
 
     let mut best_move: Option<Action> = None;
     for ScoredAction { action, ..} in sorted_actions {
-        search_info.search_nodes += 1;
+        search_info.quiescence_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
 
         board.make_move(action);
@@ -131,7 +132,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     let mut best_move: Option<Action> = None;
     for ScoredAction { action, ..} in sorted_actions {
-        search_info.search_nodes += 1;
+        search_info.root_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
 
         board.make_move(action);

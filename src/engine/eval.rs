@@ -1,12 +1,8 @@
 use crate::boards::{Board, PieceInfo, PieceGenInfo, generate_legal_moves, generate_moves, Action};
 
-pub fn weigh_mobility_move(action: &Action) -> i32 {
-    if action.capture {
-        5
-    } else {
-        1
-    }
-}
+const center_squares: [ i16; 16 ] = [ 
+
+];
 
 pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
     let mut score: i32 = 0;
@@ -72,17 +68,15 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
 
             if empty_squares > 0 {                 
                 let blocked_squares: i32 = empty_squares - open_squares;
-                if blocked_squares == empty_squares {
-                    score -= 1_500;
-                }
+                score -= 1_500 * ((blocked_squares * blocked_squares) / (empty_squares * empty_squares)) * team_multiplier;
             }
         }
     }
 
-    //let moves: i32 = generate_moves(board, pov_team).iter().map(weigh_mobility_move).sum();
-    //let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().map(weigh_mobility_move).sum();
+    let moves: i32 = generate_legal_moves(board, pov_team).len() as i32;
+    let opposing_moves: i32 = generate_legal_moves(board, board.get_next_team(pov_team)).iter().len() as i32;
 
-    //score += 1 * (moves - opposing_moves);
+    score += 20 * (moves - opposing_moves);
 
     score
 }

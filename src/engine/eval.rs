@@ -1,9 +1,5 @@
 use crate::boards::{Board, PieceInfo, PieceGenInfo, generate_legal_moves, generate_moves, Action};
 
-const center_squares: [ i16; 16 ] = [ 
-
-];
-
 pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
     let mut score: i32 = 0;
     let row_gap = board.row_gap;

@@ -18,6 +18,20 @@ Lotisa will play the base chess variant by default using the `uci` interface. Yo
 
 In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/Lotisa) if I have it online.
 
+## Features
+
+- [Iterative Deepening](https://www.chessprogramming.org/Iterative_Deepening)
+- [Hand Crafted Evaluation](https://www.chessprogramming.org/Evaluation)
+    - [Material](https://www.chessprogramming.org/Material)
+    - [King Safety](https://www.chessprogramming.org/King_Safety)
+    - [Mobility](https://www.chessprogramming.org/Mobility)
+- [Alpha Beta Search](https://www.chessprogramming.org/Alpha-Beta)
+    - [Quiescence Search](https://www.chessprogramming.org/Quiescence_Search)
+    - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
+        - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)
+        - [MVV-LVA](https://www.chessprogramming.org/MVV-LVA)
+        - [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic)
+
 ## Internals
 
 The Lotisa engine uses a **10x12** board representation, where there's an **8x8** board inside of it, but additional squares are added to speed up the out of bounds check. Each piece is represented as an `i16` with the following formula: `piece_type + (PIECE_TYPES * team) + 2`, which allows for up to 16,384 piece types if there are two teams.

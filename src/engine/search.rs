@@ -149,7 +149,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     if !is_pv_node && !in_check(board, board.moving_team, board.row_gap) {
         let static_eval = evaluate(board, board.moving_team);
-        if depth <= 5 && static_eval - (100 * (depth as i32)) > beta {
+        if depth <= 5 && static_eval - (110 * (depth as i32)) > beta {
             // Reverse Futility Pruning (Static Null Move Pruning)
             return static_eval;
         }
@@ -157,8 +157,8 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         if depth >= 3 {
             // Null Move Pruning
 
-            let r = 2;
-            let mut working_depth = depth - r - 1;
+            let r = 2 + (depth / 3);
+            let mut working_depth = depth - r;
             if working_depth < 0 {
                 working_depth = 0;
             }
@@ -175,17 +175,21 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     let mut best_move: Option<Action> = None;
     let mut found_pv_node: bool = false;
+    let mut ind = 0;
     for ScoredAction { action, ..} in sorted_actions {
         search_info.root_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
 
         board.make_move(action);
         let score = if found_pv_node {
-            let working_depth = if action.capture || in_check(board, board.moving_team, board.row_gap) || depth == 1 || true {
+            let mut working_depth = if (action.capture || in_check(board, board.moving_team, board.row_gap) || depth <= 2) && ind <= 1 {
                 depth - 1
             } else {
                 depth - 2
             };
+            if working_depth <= 0 {
+                working_depth = 0;
+            }
             let eval = -search(search_info, board, -alpha - 1, -alpha, working_depth, ply + 1, starting_team, false);
 
             if eval > alpha && eval < beta {
@@ -211,6 +215,8 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
                 break;
             }
         }
+
+        ind += 1;
     }
 
     search_info.transposition_table[hash] = Some(TranspositionEntry {

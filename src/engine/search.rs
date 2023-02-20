@@ -166,6 +166,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     let mut best_move: Option<Action> = None;
     let mut found_pv_node: bool = false;
+    let mut ind = 0;
     for ScoredAction { action, ..} in sorted_actions {
         search_info.root_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
@@ -197,6 +198,8 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
                 break;
             }
         }
+
+        ind += 1;
     }
 
     search_info.transposition_table[hash] = Some(TranspositionEntry {

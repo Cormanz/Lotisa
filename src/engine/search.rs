@@ -149,7 +149,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     if !is_pv_node && !in_check(board, board.moving_team, board.row_gap) {
         let static_eval = evaluate(board, board.moving_team);
-        if depth <= 5 && static_eval - (110 * (depth as i32)) > beta {
+        if depth <= 5 && static_eval - (100 * (depth as i32)) > beta {
             // Reverse Futility Pruning (Static Null Move Pruning)
             return static_eval;
         }

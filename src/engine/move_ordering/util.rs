@@ -37,7 +37,7 @@ pub fn weigh_move(search_info: &mut SearchInfo, board: &mut Board, action: &Acti
         let from_material = board.piece_lookup.lookup(action.piece_type).get_material_value();
         let to_material = board.piece_lookup.lookup(to_piece_type).get_material_value();
 
-        let mvv_lva_score = to_material - from_material;
+        let mvv_lva_score = to_material - (from_material / 100);
 
         if mvv_lva_score > 0 {
             100_000 + mvv_lva_score

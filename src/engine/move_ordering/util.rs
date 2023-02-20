@@ -10,7 +10,12 @@ pub fn weigh_qs_move(search_info: &mut SearchInfo, board: &mut Board, action: &A
     }
 
     if action.capture {
-        see(board, action.to, board.moving_team, Some(action.from))
+        let exchange_eval = see(board, action.to, board.moving_team, Some(action.from));
+        if exchange_eval > 0 {
+            100_000 + exchange_eval
+        } else {
+            -100_000 + exchange_eval
+        }
     } else {
         0
     }
@@ -30,19 +35,13 @@ pub fn weigh_move(search_info: &mut SearchInfo, board: &mut Board, action: &Acti
     }
 
     if action.capture {
-        // MVV-LVA
+        // SEE
 
-        let to_piece_type = board.get_piece_info(action.to).piece_type;
-        
-        let from_material = board.piece_lookup.lookup(action.piece_type).get_material_value();
-        let to_material = board.piece_lookup.lookup(to_piece_type).get_material_value();
-
-        let mvv_lva_score = to_material - (from_material / 100);
-
-        if mvv_lva_score > 0 {
-            100_000 + mvv_lva_score
+        let exchange_eval = see(board, action.to, board.moving_team, Some(action.from));
+        if exchange_eval > 0 {
+            100_000 + exchange_eval
         } else {
-            -100_000 + mvv_lva_score
+            -100_000 + exchange_eval
         }
     } else {
         let ply = ply as usize;

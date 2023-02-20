@@ -1,5 +1,27 @@
 use crate::boards::{Board, PieceInfo, PieceGenInfo, generate_legal_moves, generate_moves, Action};
 
+const INNER_CENTER_SQUARES: [ i16; 4 ] = [
+    54, 55,
+    64, 65
+];
+
+const CENTER_SQUARES: [ i16; 16 ] = [
+    43, 44, 45, 46,
+    53, 54, 55, 56,
+    63, 64, 65, 66,
+    73, 74, 75, 76
+];
+
+pub fn weigh_mobility_move(action: &Action) -> i32 {
+    let mut score = 15;
+
+    if INNER_CENTER_SQUARES.contains(&action.to) {
+        score += 5;
+    }
+
+    score
+}
+
 pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
     let mut score: i32 = 0;
     let row_gap = board.row_gap;
@@ -69,10 +91,10 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
         }
     }
 
-    let moves: i32 = generate_moves(board, pov_team).len() as i32;
-    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().len() as i32;
+    let moves = generate_moves(board, pov_team).iter().map(weigh_mobility_move).sum::<i32>();
+    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().map(weigh_mobility_move).sum::<i32>();
 
-    score += 20 * (moves - opposing_moves);
+    score += moves - opposing_moves;
 
     score
 }

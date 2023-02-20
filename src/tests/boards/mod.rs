@@ -93,3 +93,10 @@ fn team_switch() {
     assert_eq!(uci.board.next_team(), 1);
     assert_eq!(uci.board.previous_team(), 1);
 }
+
+#[test]
+fn testy() {
+    let mut uci = Board::load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
+
+    println!("{}", uci.decode_pos("e5".to_string()));
+}

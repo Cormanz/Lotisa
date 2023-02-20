@@ -1,6 +1,6 @@
 rm ./outs/* && /home/corman/cutechess-cli/cutechess-cli \
--engine cmd="target/versions/lotisa" name="Lotisa PVS" proto=uci \
--engine cmd="target/versions/lotisa-negamax" name="Lotisa Negamax" proto=uci \
+-engine cmd="target/versions/lotisa" name="Lotisa with Center Control" proto=uci \
+-engine cmd="target/versions/lotisa-before" name="Lotisa" proto=uci \
 -each \
     tc=inf \
     book="./resources/Titans.bin" \

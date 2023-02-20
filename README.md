@@ -30,6 +30,7 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
     - [Quiescence Search](https://www.chessprogramming.org/Quiescence_Search)
     - [Pruning](https://www.chessprogramming.org/Pruning)
         - [Null Move Pruning](https://www.chessprogramming.org/Null_Move_Pruning)
+        - [Futility Pruning](https://www.chessprogramming.org/Futility_Pruning)
         - [Reverse Futility Pruning](https://www.chessprogramming.org/Reverse_Futility_Pruning)
     - [Reductions](https://www.chessprogramming.org/Reductions)
         - [Late Move Reductions](https://www.chessprogramming.org/Late_Move_Reductions)

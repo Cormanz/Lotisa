@@ -186,11 +186,21 @@ pub fn search(
 
         board.make_move(action);
         let score = if found_pv_node {
-            let mut working_depth = if (action.capture || in_check(board, board.moving_team, board.row_gap) || depth <= 2) && ind <= 1 {
+            let in_check = in_check(board, board.moving_team, board.row_gap);
+            let is_quiet = !action.capture && !in_check ;
+            let mut working_depth = if !is_quiet || depth <= 2 || ind <= 2 {
                 depth - 1
             } else {
                 depth - 2
             };
+            let static_eval = evaluate(board, board.moving_team);
+
+            // Futility Pruning
+            let fp_margin = ((working_depth as i32) * 1000) + 1500;
+            if is_quiet && working_depth < 4 && static_eval + fp_margin <= alpha {
+                working_depth = 0;
+            }
+
             if working_depth <= 0 {
                 working_depth = 0;
             }

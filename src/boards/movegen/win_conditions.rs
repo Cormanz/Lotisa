@@ -5,7 +5,11 @@ use crate::boards::{Action, Board, hash_board};
 use super::in_check;
 
 pub fn is_draw_by_repetition(board: &mut Board) -> bool {
-    let mut min_undos = board.history.len() - 20;
+    let mut len = board.history.len();
+    if len < 20 {
+        len = 20;
+    }
+    let mut min_undos = len - 20;
     if min_undos > 100_000_000 {
         min_undos = 0;
     }

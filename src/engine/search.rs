@@ -146,21 +146,29 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
 
-    if !is_pv_node && !in_check(board, board.moving_team, board.row_gap) && depth >= 3 {
-        // Null Move Pruning
-
-        let r = 2;
-        let mut working_depth = depth - r - 1;
-        if working_depth < 0 {
-            working_depth = 0;
+    if !is_pv_node && !in_check(board, board.moving_team, board.row_gap) {
+        let static_eval = evaluate(board, board.moving_team);
+        if depth <= 5 && static_eval - (100 * (depth as i32)) > beta {
+            // Reverse Futility Pruning (Static Null Move Pruning)
+            return static_eval;
         }
 
-        board.moving_team = board.next_team();
-        let eval = -search(search_info, board, -beta, -beta + 1, working_depth, ply + 1, starting_team, false);
-        board.moving_team = board.previous_team();
+        if depth >= 3 {
+            // Null Move Pruning
 
-        if eval >= beta {
-            return eval;
+            let r = 2;
+            let mut working_depth = depth - r - 1;
+            if working_depth < 0 {
+                working_depth = 0;
+            }
+
+            board.moving_team = board.next_team();
+            let eval = -search(search_info, board, -beta, -beta + 1, working_depth, ply + 1, starting_team, true);
+            board.moving_team = board.previous_team();
+
+            if eval >= beta {
+                return eval;
+            }
         }
     }
 

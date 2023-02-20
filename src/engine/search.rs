@@ -4,10 +4,25 @@ use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, Transposit
 pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, starting_team: i16, max_time: u128) -> i32 {
     let mut total_time = 0;
     let mut depth = 1;
+    let mut score: i32 = MIN_VALUE;
     loop {
         let start = get_epoch_ms();
         search_info.root_depth = depth;
-        let score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, false);
+
+        if score > MIN_VALUE {
+            // Aspiration Windows
+
+            let alpha = score - 250;
+            let beta = score + 250;
+            score = search(search_info, &mut uci.board, alpha, beta, depth, 0, starting_team, true);
+            if score <= alpha || score >= beta {
+                // Research
+                score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, true);
+            }
+        } else {
+            score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, true);
+        }
+
         let end = get_epoch_ms();
         let time = end - start;
         total_time += time;
@@ -97,7 +112,8 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     let hash = hash_board(board, board.moving_team, &board.zobrist) % search_info.max_tt_size;
     let mut pv_move: Option<Action> = None;
-    if let Some(entry) = &search_info.transposition_table[hash] {
+    let transposition_entry = search_info.transposition_table[hash].clone();
+    if let Some(entry) = &transposition_entry {
         if entry.depth >= depth && ply < 2 && !is_pv_node {
 			search_info.pv_table.update_pv(ply, entry.action);
             return entry.eval;
@@ -138,7 +154,6 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
         board.make_move(action);
         let score = if found_pv_node {
-            // Zero Window Search
             let eval = -search(search_info, board, -alpha - 1, -alpha, depth - 1, ply + 1, starting_team, false);
 
             if eval > alpha && eval < beta {

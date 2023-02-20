@@ -21,6 +21,7 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
 ## Features
 
 - [Iterative Deepening](https://www.chessprogramming.org/Iterative_Deepening)
+    - [Aspiration Windows](https://www.chessprogramming.org/Aspiration_Windows)
 - [Hand Crafted Evaluation](https://www.chessprogramming.org/Evaluation)
     - [Material](https://www.chessprogramming.org/Material)
     - [King Safety](https://www.chessprogramming.org/King_Safety)

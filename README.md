@@ -33,6 +33,7 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
         - [Reverse Futility Pruning](https://www.chessprogramming.org/Reverse_Futility_Pruning)
     - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
         - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)
+        - [Internal Iterative Deepening](https://www.chessprogramming.org/Internal_Iterative_Deepening)
         - [MVV-LVA](https://www.chessprogramming.org/MVV-LVA)
         - [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic)
         - [History Heuristic](https://www.chessprogramming.org/History_Heuristic)

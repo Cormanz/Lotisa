@@ -121,6 +121,11 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
         pv_move = entry.action;
     }
 
+    if is_pv_node && pv_move.is_none() && depth >= 4 {
+        search(search_info, board, alpha, beta, depth - 2, ply, starting_team, true);
+        pv_move = search_info.pv_table.table[ply as usize][0];
+    }
+
     let actions = board.generate_moves(); // Psuedolegal Move Generation
 
     match board.win_conditions.duplicate().compute(board, &actions) {

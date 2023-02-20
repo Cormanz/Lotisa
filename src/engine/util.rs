@@ -1,7 +1,7 @@
 use crate::boards::Action;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use super::{PV, KillerMoves, HistoryMoves};
+use super::{PV, KillerMoves, HistoryMoves, CounterMoves};
 
 #[derive(Clone, Debug)]
 pub struct TranspositionEntry {
@@ -31,7 +31,8 @@ pub struct SearchInfo {
     pub transposition_table: Vec<Option<TranspositionEntry>>,
     pub max_tt_size: usize,
     pub killer_moves: KillerMoves,
-    pub history_moves: HistoryMoves
+    pub history_moves: HistoryMoves,
+    pub counter_moves: CounterMoves
 }
 
 pub fn get_epoch_ms() -> u128 {

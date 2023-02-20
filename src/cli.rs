@@ -14,7 +14,8 @@ pub fn create_info() -> SearchInfo {
         transposition_table: vec![None; 9_000_000],
         max_tt_size: 9_000_000,
         killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES],
-        history_moves: vec![vec![vec![0; 120]; 120]; 2]
+        history_moves: vec![vec![vec![0; 120]; 120]; 2],
+        counter_moves: vec![vec![None; 120]; 120]
     }
 }
 
@@ -69,7 +70,7 @@ pub fn run_uci(stdin: Stdin) {
             }
 
             if !found_capture {
-                max_time = 10_000;
+                max_time = 1_000;
             }
 
             let moving_team = uci.board.moving_team;

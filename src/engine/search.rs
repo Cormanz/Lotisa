@@ -1,5 +1,5 @@
 use crate::{boards::{Board, Action, GameResult, hash_board, in_check}, engine::store_killer_move, communication::UCICommunicator};
-use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry, ScoredAction, move_ordering::{weigh_move}, weigh_qs_move, store_history_move};
+use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry, ScoredAction, move_ordering::{weigh_move}, weigh_qs_move, store_history_move, store_counter_move};
 
 pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, starting_team: i16, max_time: u128) -> i32 {
     let mut total_time = 0;
@@ -14,13 +14,13 @@ pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, star
 
             let alpha = score - 250;
             let beta = score + 250;
-            score = search(search_info, &mut uci.board, alpha, beta, depth, 0, starting_team, true);
+            score = search(search_info, &mut uci.board, alpha, beta, depth, 0, starting_team, None, true);
             if score <= alpha || score >= beta {
                 // Research
-                score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, true);
+                score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, None, true);
             }
         } else {
-            score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, true);
+            score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, None, true);
         }
 
         let end = get_epoch_ms();
@@ -103,7 +103,11 @@ pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i3
     return alpha;
 }
 
-pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, beta: i32, depth: i16, ply: i16, starting_team: i16, is_pv_node: bool) -> i32 {
+pub fn search(
+    search_info: &mut SearchInfo, board: &mut Board, 
+    mut alpha: i32, beta: i32, depth: i16, ply: i16, 
+    starting_team: i16, previous_move: Option<Action>, is_pv_node: bool
+) -> i32 {
     search_info.pv_table.init_pv(ply);
 
     if depth == 0 {
@@ -118,7 +122,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     }
 
     if is_pv_node && pv_move.is_none() && depth >= 4 {
-        search(search_info, board, alpha, beta, depth - 2, ply, starting_team, true);
+        search(search_info, board, alpha, beta, depth - 2, ply, starting_team, previous_move, true);
         pv_move = search_info.pv_table.table[ply as usize][0];
     }
 
@@ -141,7 +145,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     for action in actions {
         sorted_actions.push(ScoredAction {
             action,
-            score: weigh_move(search_info, board, &action, &pv_move, ply)
+            score: weigh_move(search_info, board, &action, &pv_move, &previous_move, ply)
         });
     }
 
@@ -164,7 +168,7 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
             }
 
             board.moving_team = board.next_team();
-            let eval = -search(search_info, board, -beta, -beta + 1, working_depth, ply + 1, starting_team, true);
+            let eval = -search(search_info, board, -beta, -beta + 1, working_depth, ply + 1, starting_team,  None, true);
             board.moving_team = board.previous_team();
 
             if eval >= beta {
@@ -190,16 +194,16 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
             if working_depth <= 0 {
                 working_depth = 0;
             }
-            let eval = -search(search_info, board, -alpha - 1, -alpha, working_depth, ply + 1, starting_team, false);
+            let eval = -search(search_info, board, -alpha - 1, -alpha, working_depth, ply + 1, starting_team, Some(action), false);
 
             if eval > alpha && eval < beta {
                 // Full Window Research
-                -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team, true)
+                -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team, Some(action), true)
             } else {
                 eval
             }
         } else {
-            -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team, true)
+            -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team, Some(action), true)
         };
         board.undo_move();
 
@@ -212,6 +216,9 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
             store_history_move(search_info, &action, depth);
             if score >= beta {
                 store_killer_move(search_info, &action, ply);
+                if let Some(prev_action) = previous_move {
+                    //store_counter_move(search_info, prev_action, action, depth);
+                }
                 break;
             }
         }

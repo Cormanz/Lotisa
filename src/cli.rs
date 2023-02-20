@@ -43,7 +43,7 @@ pub fn run_uci(stdin: Stdin) {
             uci.board.print_board();
         } else if line.starts_with("go") {
             let moving_team = uci.board.moving_team;
-            let score = root_search(&mut info, &mut uci, moving_team,1000);
+            let score = root_search(&mut info, &mut uci, moving_team, 1000);
             let best_move = info.pv_table.table[0][0];
             if let Some(best_move) = best_move {
                 println!("bestmove {}", uci.encode(&best_move));

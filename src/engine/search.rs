@@ -146,6 +146,24 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
 
+    if !is_pv_node && !in_check(board, board.moving_team, board.row_gap) && depth >= 3 {
+        // Null Move Pruning
+
+        let r = 2;
+        let mut working_depth = depth - r - 1;
+        if working_depth < 0 {
+            working_depth = 0;
+        }
+
+        board.moving_team = board.next_team();
+        let eval = -search(search_info, board, -beta, -beta + 1, working_depth, ply + 1, starting_team, false);
+        board.moving_team = board.previous_team();
+
+        if eval >= beta {
+            return eval;
+        }
+    }
+
     let mut best_move: Option<Action> = None;
     let mut found_pv_node: bool = false;
     for ScoredAction { action, ..} in sorted_actions {

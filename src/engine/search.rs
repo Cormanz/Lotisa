@@ -114,10 +114,6 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
     let mut pv_move: Option<Action> = None;
     let transposition_entry = search_info.transposition_table[hash].clone();
     if let Some(entry) = &transposition_entry {
-        if entry.depth >= depth && ply < 2 && !is_pv_node {
-			search_info.pv_table.update_pv(ply, entry.action);
-            return entry.eval;
-        }
         pv_move = entry.action;
     }
 
@@ -179,14 +175,18 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
 
     let mut best_move: Option<Action> = None;
     let mut found_pv_node: bool = false;
-    let mut ind = 0;
     for ScoredAction { action, ..} in sorted_actions {
         search_info.root_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
 
         board.make_move(action);
         let score = if found_pv_node {
-            let eval = -search(search_info, board, -alpha - 1, -alpha, depth - 1, ply + 1, starting_team, false);
+            let working_depth = if action.capture || in_check(board, board.moving_team, board.row_gap) || depth == 1 || true {
+                depth - 1
+            } else {
+                depth - 2
+            };
+            let eval = -search(search_info, board, -alpha - 1, -alpha, working_depth, ply + 1, starting_team, false);
 
             if eval > alpha && eval < beta {
                 // Full Window Research
@@ -211,8 +211,6 @@ pub fn search(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, b
                 break;
             }
         }
-
-        ind += 1;
     }
 
     search_info.transposition_table[hash] = Some(TranspositionEntry {

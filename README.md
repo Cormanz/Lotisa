@@ -31,6 +31,8 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
     - [Pruning](https://www.chessprogramming.org/Pruning)
         - [Null Move Pruning](https://www.chessprogramming.org/Null_Move_Pruning)
         - [Reverse Futility Pruning](https://www.chessprogramming.org/Reverse_Futility_Pruning)
+    - [Reductions](https://www.chessprogramming.org/Reductions)
+        - [Late Move Reductions](https://www.chessprogramming.org/Late_Move_Reductions)
     - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
         - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)
         - [Internal Iterative Deepening](https://www.chessprogramming.org/Internal_Iterative_Deepening)

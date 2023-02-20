@@ -1,5 +1,5 @@
 rm ./outs/* && /home/corman/cutechess-cli/cutechess-cli \
--engine cmd="target/versions/lotisa" name="Lotisa RFP" proto=uci \
+-engine cmd="target/versions/lotisa" name="Lotisa LMR" proto=uci \
 -engine cmd="target/versions/lotisa-before" name="Lotisa" proto=uci \
 -each \
     tc=inf \

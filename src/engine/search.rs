@@ -230,7 +230,7 @@ pub fn search(
     let in_check_before = in_check(board, board.moving_team, board.row_gap);
     if !is_pv_node && !in_check_before {
         let static_eval = evaluate(board, board.moving_team);
-        if depth <= 5 && static_eval - (150 * (depth as i32)) > beta {
+        if depth <= 6 && static_eval - (1500 * (depth as i32)) > beta {
             // Reverse Futility Pruning (Static Null Move Pruning)
             return static_eval;
         }
@@ -277,7 +277,7 @@ pub fn search(
         let score = if found_pv_node {
             let in_check = in_check(board, board.moving_team, board.row_gap);
             let is_quiet = !action.capture && !in_check && !in_check_before; // We consider all moves to be tactical if they are made during check.
-            let mut working_depth = if !is_quiet || depth <= 2 {
+            let mut working_depth = if !is_quiet || depth <= 2 && moves_tried <= 2 {
                 depth - 1
             } else {
                 depth - 2

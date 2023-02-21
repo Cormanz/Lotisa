@@ -7,7 +7,7 @@ pub fn store_history_move(search_info: &mut SearchInfo, action: &Action, depth: 
     let to = action.to as usize;
     let from = action.from as usize;
 
-    if search_info.history_moves[team][from][to] >= 200 {
+    if search_info.history_moves[team][from][to] >= 500 {
         search_info.history_moves[team][from][to] /= 2;
     }
 

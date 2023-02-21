@@ -355,9 +355,7 @@ pub fn search(
             if score >= beta {
                 if !action.capture {
                     store_killer_move(search_info, &action, ply);
-                }
-                if let Some(prev_action) = previous_move {
-                    if !action.capture {
+                    if let Some(prev_action) = previous_move {
                         store_counter_move(search_info, prev_action, action, depth);
                     }
                 }

@@ -58,16 +58,9 @@ pub fn weigh_move(
         let victim_value = board.piece_lookup.lookup(board.get_piece_info(action.to).piece_type).get_material_value();
         let attacker_value = board.piece_lookup.lookup(action.piece_type).get_material_value();
         if victim_value > attacker_value {
-            return 100_000 + (victim_value - (attacker_value / 100));
-        }
-
-        // SEE
-
-        let exchange_eval = see(board, action.to, board.moving_team, Some(action.from));
-        if exchange_eval > 0 {
-            100_000 + exchange_eval
+            100_000 + (victim_value - (attacker_value / 100))
         } else {
-            -100_000 + exchange_eval
+            -100_000 + (victim_value - (attacker_value / 100))
         }
     } else {
         let ply = ply as usize;

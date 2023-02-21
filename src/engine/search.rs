@@ -290,9 +290,9 @@ pub fn search(
             }
 
             // Late Move Pruning
-            /*if is_quiet && working_depth <= 2 && moves_tried > 2 {
+            if is_quiet && working_depth <= 2 && moves_tried > 2 {
                 working_depth = 0;
-            }*/
+            }
 
             if working_depth <= 0 {
                 working_depth = 0;
@@ -350,7 +350,7 @@ pub fn search(
             if score >= beta {
                 store_killer_move(search_info, &action, ply);
                 if let Some(prev_action) = previous_move {
-                    //store_counter_move(search_info, prev_action, action, depth);
+                    store_counter_move(search_info, prev_action, action, depth);
                 }
                 break;
             }

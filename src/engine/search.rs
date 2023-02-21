@@ -187,6 +187,10 @@ pub fn search(
     let transposition_entry = search_info.transposition_table[hash].clone();
     if let Some(entry) = &transposition_entry {
         pv_move = entry.action;
+        if entry.depth >= depth {
+            search_info.pv_table.update_pv(ply, entry.action);
+            return entry.eval;
+        }
     }
 
     if is_pv_node && pv_move.is_none() && depth >= 4 {

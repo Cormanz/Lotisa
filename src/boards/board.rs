@@ -332,7 +332,7 @@ impl Board {
         }
     }
 
-    pub fn can_control(&self, pos: i16, team: i16) -> ActionType {
+    pub fn can_control(&self, pos: i16) -> ActionType {
         let state = self.state[pos as usize];
         match state {
             0 => ActionType::FAIL,

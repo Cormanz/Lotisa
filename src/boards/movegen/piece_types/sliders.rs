@@ -6,17 +6,21 @@ pub fn can_control_sliding(
     piece_info: &PieceGenInfo,
     targets: &Vec<i16>,
 ) -> bool {
-    let PieceGenInfo { pos, team, .. } = *piece_info;
-    let mut difs = targets
-        .iter()
-        .map(|target| target - pos)
-        .collect::<Vec<_>>();
+    let PieceGenInfo { pos, .. } = *piece_info;
+    let mut difs: Vec<i16> = Vec::with_capacity(targets.len());
+    for target in targets {
+        difs.push(target - pos);
+    }
 
     for slider in sliders {
-        if difs
-            .iter()
-            .all(|dif| (dif % slider) != 0 || dif.signum() != slider.signum())
-        {
+        let mut can_skip = false;
+        for dif in &difs {
+            if !((dif % slider) != 0 || dif.signum() != slider.signum())  {
+                can_skip = true;
+                break;
+            }  
+        }
+        if can_skip { 
             continue;
         }
 
@@ -24,7 +28,7 @@ pub fn can_control_sliding(
         loop {
             current_pos += slider;
 
-            match board.can_control(current_pos, team) {
+            match board.can_control(current_pos) {
                 ActionType::MOVE => {
                     if targets.contains(&current_pos) {
                         return true;

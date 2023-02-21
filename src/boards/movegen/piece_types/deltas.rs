@@ -26,7 +26,7 @@ pub fn can_control_delta(
     for target in targets {
         let target_val = *target;
         if positions.contains(target) {
-            match board.can_control(target_val, piece_info.team) {
+            match board.can_control(target_val) {
                 ActionType::MOVE | ActionType::CAPTURE => {
                     return true;
                 }

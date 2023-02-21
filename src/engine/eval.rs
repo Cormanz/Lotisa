@@ -36,6 +36,8 @@ pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
 }
 
 pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
+    return 0;
+
     let mut score: i32 = 0;
     let row_gap = board.row_gap;
 

@@ -150,14 +150,25 @@ impl Piece for KingPiece {
         piece_info: &PieceGenInfo,
         targets: &Vec<i16>,
     ) -> bool {
-        let mut can_control = false;
-        for action in get_actions_delta(&self.deltas, board, piece_info) {
-            if targets.contains(&action.to) {
-                can_control = true;
-                break;
+        let PieceGenInfo { pos, .. } = piece_info;
+        let pos = *pos;
+        let piece_row = board.get_row(pos);
+        let piece_col = board.get_col(pos, piece_row);
+        
+        for target in targets {
+            let target = *target;
+            let row = board.get_row(target);
+            let col = board.get_col(target, row);
+
+            let row_dif = (piece_row - row).abs();
+            let col_dif = (piece_col - col).abs();
+            
+            if row_dif + col_dif <= 2 {
+                return true;
             }
         }
-        can_control
+
+        return false;
     }
 
     fn get_icon(&self) -> &str {

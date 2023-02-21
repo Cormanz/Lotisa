@@ -288,6 +288,11 @@ pub fn search(
             if is_quiet && working_depth < 4 && static_eval + fp_margin <= alpha {
                 working_depth = 0;
             }
+            
+            // Late Move Pruning
+            if is_quiet && working_depth < 3 && moves_tried >= (1 + (2 * working_depth)) {
+                working_depth = 0;
+            }
 
             if working_depth <= 0 {
                 working_depth = 0;

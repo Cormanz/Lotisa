@@ -102,7 +102,7 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
 
             if empty_squares > 0 {
                 let blocked_squares: i32 = empty_squares - open_squares;
-                score -= 4_000
+                score -= 2_000
                     * ((blocked_squares * blocked_squares) / (empty_squares * empty_squares))
                     * team_multiplier;
             }

@@ -185,6 +185,10 @@ pub fn search(
     let transposition_entry = search_info.transposition_table[hash].clone();
     if let Some(entry) = &transposition_entry {
         pv_move = entry.action;
+        if entry.depth >= depth {
+            search_info.pv_table.update_pv(ply, entry.action);
+            return entry.eval;
+        }
     }
 
     if is_pv_node && pv_move.is_none() && depth >= 4 {
@@ -347,11 +351,17 @@ pub fn search(
             search_info.pv_table.update_pv(ply, best_move);
             found_pv_node = true;
 
-            store_history_move(search_info, &action, depth);
+            if !action.capture {
+                store_history_move(search_info, &action, depth);
+            }
             if score >= beta {
-                store_killer_move(search_info, &action, ply);
+                if !action.capture {
+                    store_killer_move(search_info, &action, ply);
+                }
                 if let Some(prev_action) = previous_move {
-                    store_counter_move(search_info, prev_action, action, depth);
+                    if !action.capture {
+                        store_counter_move(search_info, prev_action, action, depth);
+                    }
                 }
                 break;
             }

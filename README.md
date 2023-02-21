@@ -41,6 +41,7 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
     - [Move Ordering](https://www.chessprogramming.org/Move_Ordering)
         - [Move from Transposition Table](https://www.chessprogramming.org/Transposition_Table)
         - [Internal Iterative Deepening](https://www.chessprogramming.org/Internal_Iterative_Deepening)
+        - [MVV-LVA](https://www.chessprogramming.org/MVV-LVA)
         - [Static Exchange Evaluation](https://www.chessprogramming.org/Static_Exchange_Evaluation)
         - [Killer Heuristic](https://www.chessprogramming.org/Killer_Heuristic)
         - [Counter Moves](https://www.chessprogramming.org/Countermove_Heuristic)

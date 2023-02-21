@@ -7,7 +7,8 @@ const CENTER_SQUARES: [i16; 16] = [
 ];
 
 pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
-    let mut score = 15;
+    let material_value = board.piece_lookup.lookup(action.piece_type).get_material_value();
+    let mut score = 5;
 
     if CENTER_SQUARES.contains(&action.to) {
         if INNER_CENTER_SQUARES.contains(&action.to) {
@@ -16,6 +17,8 @@ pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
             score += 3;
         }
     }
+
+    score *= 1 + ((9000 - material_value) / 8000);
 
     if action.capture {
         let attacker_material = board

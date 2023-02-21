@@ -153,7 +153,7 @@ pub fn search(
 
     if !is_pv_node && !in_check(board, board.moving_team, board.row_gap) {
         let static_eval = evaluate(board, board.moving_team);
-        if depth <= 5 && static_eval - (100 * (depth as i32)) > beta {
+        if depth <= 5 && static_eval - (150 * (depth as i32)) > beta {
             // Reverse Futility Pruning (Static Null Move Pruning)
             return static_eval;
         }
@@ -179,7 +179,7 @@ pub fn search(
 
     let mut best_move: Option<Action> = None;
     let mut found_pv_node: bool = false;
-    let mut ind = 0;
+    let mut moves_tried = 0;
     for ScoredAction { action, ..} in sorted_actions {
         search_info.root_nodes += 1;
         if !board.is_legal(action, board.moving_team) { continue; }
@@ -196,10 +196,15 @@ pub fn search(
             let static_eval = evaluate(board, board.moving_team);
 
             // Futility Pruning
-            let fp_margin = ((working_depth as i32) * 1000) + 1500;
+            let fp_margin = ((working_depth as i32) * 1000) + 1000;
             if is_quiet && working_depth < 4 && static_eval + fp_margin <= alpha {
                 working_depth = 0;
             }
+
+            // Late Move Pruning
+            /*if is_quiet && working_depth <= 2 && moves_tried > 2 {
+                working_depth = 0;
+            }*/
 
             if working_depth <= 0 {
                 working_depth = 0;
@@ -233,7 +238,7 @@ pub fn search(
             }
         }
 
-        ind += 1;
+        moves_tried += 1;
     }
 
     search_info.transposition_table[hash] = Some(TranspositionEntry {

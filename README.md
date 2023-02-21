@@ -26,6 +26,8 @@ In addition, you can sometimes [play the bot on Lichess](https://lichess.org/@/L
     - [Material](https://www.chessprogramming.org/Material)
     - [King Safety](https://www.chessprogramming.org/King_Safety)
     - [Mobility](https://www.chessprogramming.org/Mobility)
+        - [Center Control](https://www.chessprogramming.org/Center_Control)
+        - [Threats](https://www.chessprogramming.org/Threat_Move)
 - [Principal Variation Search](https://www.chessprogramming.org/Principal_Variation_Search)
     - [Quiescence Search](https://www.chessprogramming.org/Quiescence_Search)
     - [Pruning](https://www.chessprogramming.org/Pruning)

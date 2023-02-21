@@ -12,11 +12,24 @@ const CENTER_SQUARES: [ i16; 16 ] = [
     73, 74, 75, 76
 ];
 
-pub fn weigh_mobility_move(action: &Action) -> i32 {
+pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
     let mut score = 15;
 
-    if INNER_CENTER_SQUARES.contains(&action.to) {
-        score += 5;
+    if CENTER_SQUARES.contains(&action.to) {
+        if INNER_CENTER_SQUARES.contains(&action.to) {
+            score += 5;
+        } else {
+            score += 3;
+        }
+    }
+
+    if action.capture {
+        let attacker_material = board.piece_lookup.lookup(action.piece_type).get_material_value();
+        let victim_piece_type = board.get_piece_info(action.to).piece_type;
+        let victim_material = board.piece_lookup.lookup(victim_piece_type).get_material_value();
+        if victim_material > attacker_material {
+            score += 30;
+        }
     }
 
     score
@@ -91,8 +104,8 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
         }
     }
 
-    let moves = generate_moves(board, pov_team).iter().map(weigh_mobility_move).sum::<i32>();
-    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().map(weigh_mobility_move).sum::<i32>();
+    let moves = generate_moves(board, pov_team).iter().map(|action| weigh_mobility_move(board, action)).sum::<i32>();
+    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().map(|action| weigh_mobility_move(board, action)).sum::<i32>();
 
     score += moves - opposing_moves;
 

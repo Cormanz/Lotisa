@@ -1,11 +1,12 @@
 use colored::{ColoredString, Colorize};
 use fnv::FnvHashMap;
 
-use crate::communication::{UCICommunicator, Communicator};
+use crate::communication::{Communicator, UCICommunicator};
 
 use super::{
-    create_default_piece_lookup, generate_legal_moves, generate_moves, Piece, PieceLookup,
-    PieceMap, PieceMapLookup, WinConditions, DefaultWinConditions, Restrictor, DefaultRestrictor, generate_zobrist,
+    create_default_piece_lookup, generate_legal_moves, generate_moves, generate_zobrist,
+    DefaultRestrictor, DefaultWinConditions, Piece, PieceLookup, PieceMap, PieceMapLookup,
+    Restrictor, WinConditions,
 };
 
 //use super::Action;
@@ -97,7 +98,7 @@ pub struct Board {
     pub win_conditions: Box<dyn WinConditions>,
     pub restrictors: Vec<Box<dyn Restrictor>>,
     pub history: Vec<StoredMove>,
-    pub zobrist: Vec<usize>
+    pub zobrist: Vec<usize>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -135,7 +136,7 @@ impl Board {
         (rows, cols): (i16, i16),
         piece_lookup: Box<dyn PieceLookup>,
         win_conditions: Box<dyn WinConditions>,
-        restrictors: Vec<Box<dyn Restrictor>>
+        restrictors: Vec<Box<dyn Restrictor>>,
     ) -> Board {
         let state = create_board_state(buffer_amount, (rows, cols));
 
@@ -158,7 +159,7 @@ impl Board {
             col_gap,
             piece_lookup,
             history: Vec::with_capacity(500),
-            zobrist: generate_zobrist(piece_types, teams, row_gap * col_gap)
+            zobrist: generate_zobrist(piece_types, teams, row_gap * col_gap),
         };
     }
 
@@ -179,11 +180,11 @@ impl Board {
             team
         }
     }
-    
+
     pub fn next_team(&self) -> i16 {
         self.get_next_team(self.moving_team)
     }
-    
+
     pub fn previous_team(&self) -> i16 {
         self.get_next_team(self.moving_team)
     }
@@ -238,7 +239,11 @@ impl Board {
     }
 
     pub fn is_legal(&mut self, action: Action, required_team: i16) -> bool {
-        let restrictors = self.restrictors.iter().map(|restrictor| restrictor.duplicate()).collect::<Vec<_>>();
+        let restrictors = self
+            .restrictors
+            .iter()
+            .map(|restrictor| restrictor.duplicate())
+            .collect::<Vec<_>>();
         for restrictor in restrictors {
             if !restrictor.can_add(self, &action, required_team) {
                 return false;
@@ -355,7 +360,7 @@ impl Board {
         let fen_parts = fen.split(" ").collect::<Vec<_>>();
 
         let mut uci = UCICommunicator {
-            board: Board::load_fen_pieces(fen_parts[0])
+            board: Board::load_fen_pieces(fen_parts[0]),
         };
 
         let castling = fen_parts[2].chars().collect::<Vec<_>>();
@@ -365,8 +370,8 @@ impl Board {
         if castling[0] != '-' {
             for (castling_type, pos) in [('k', 98), ('q', 91), ('K', 28), ('Q', 21)] {
                 if !castling.contains(&castling_type) {
-                    let pieces_position = uci.board.pieces.iter()
-                        .position(|piece| piece.pos == pos);
+                    let pieces_position =
+                        uci.board.pieces.iter().position(|piece| piece.pos == pos);
                     if let Some(pieces_position) = pieces_position {
                         uci.board.pieces[pieces_position].first_move = false;
                     }
@@ -382,7 +387,7 @@ impl Board {
             let from = match team {
                 0 => pos + row_gap * 2,
                 1 => pos - row_gap * 2,
-                _ => pos
+                _ => pos,
             };
 
             let action = Action {
@@ -391,11 +396,14 @@ impl Board {
                 piece_type: 0,
                 team,
                 capture: false,
-                info: -2
+                info: -2,
             };
 
             let mut old_pieces = uci.board.pieces.clone();
-            let to_index = uci.board.pieces.iter()
+            let to_index = uci
+                .board
+                .pieces
+                .iter()
                 .position(|piece| piece.pos == pos)
                 .unwrap();
 
@@ -407,7 +415,7 @@ impl Board {
                 from_previous: 2,
                 to_previous: 1,
                 pieces: old_pieces,
-                state: None
+                state: None,
             })
         }
 
@@ -416,7 +424,7 @@ impl Board {
         uci.board.moving_team = match fen_parts[1] {
             "w" => 0,
             "b" => 1,
-            _ => 0
+            _ => 0,
         };
 
         uci
@@ -426,10 +434,13 @@ impl Board {
         let fen_chunks = fen.split("/");
         let mut pieces: Vec<PersistentPieceInfo> = Vec::with_capacity(32);
         let mut board = Board::new(
-            6, 2, 2, (8, 8), 
-            create_default_piece_lookup(10), 
+            6,
+            2,
+            2,
+            (8, 8),
+            create_default_piece_lookup(10),
             Box::new(DefaultWinConditions),
-            vec![ Box::new(DefaultRestrictor) ]
+            vec![Box::new(DefaultRestrictor)],
         );
 
         let min_row = board.buffer_amount;

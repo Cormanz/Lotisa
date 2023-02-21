@@ -1,8 +1,14 @@
-use std::io::{Stdin, BufRead};
-use rand::{SeedableRng, seq::SliceRandom};
+use rand::{seq::SliceRandom, SeedableRng};
 use regex::Regex;
+use std::io::{BufRead, Stdin};
 
-use crate::{boards::Board, engine::{SearchInfo, search, MIN_VALUE, MAX_VALUE, root_search, PV, MAX_DEPTH, MAX_KILLER_MOVES}, communication::Communicator};
+use crate::{
+    boards::Board,
+    communication::Communicator,
+    engine::{
+        root_search, search, SearchInfo, MAX_DEPTH, MAX_KILLER_MOVES, MAX_VALUE, MIN_VALUE, PV,
+    },
+};
 
 pub fn create_info() -> SearchInfo {
     SearchInfo {
@@ -10,12 +16,15 @@ pub fn create_info() -> SearchInfo {
         root_nodes: 0,
         quiescence_nodes: 0,
         time: 0,
-        pv_table: PV { table: [ [ None; MAX_DEPTH ]; MAX_DEPTH ], length: [ 0; MAX_DEPTH ] },
+        pv_table: PV {
+            table: [[None; MAX_DEPTH]; MAX_DEPTH],
+            length: [0; MAX_DEPTH],
+        },
         transposition_table: vec![None; 9_000_000],
         max_tt_size: 9_000_000,
         killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES],
         history_moves: vec![vec![vec![0; 120]; 120]; 2],
-        counter_moves: vec![vec![None; 120]; 120]
+        counter_moves: vec![vec![None; 120]; 120],
     }
 }
 
@@ -50,11 +59,11 @@ pub fn run_uci(stdin: Stdin) {
             let btime_re = Regex::new(r"btime (\d+)").unwrap();
             let wtime_inc = Regex::new(r"winc (\d+)").unwrap();
             let btime_inc = Regex::new(r"binc (\d+)").unwrap();
-            
+
             let (time_re, inc_re) = match uci.board.moving_team {
                 0 => (wtime_re, wtime_inc),
                 1 => (btime_re, btime_inc),
-                _ => (wtime_re, wtime_inc)
+                _ => (wtime_re, wtime_inc),
             };
 
             let mut found_capture = false;
@@ -78,7 +87,8 @@ pub fn run_uci(stdin: Stdin) {
             let best_move = info.pv_table.table[0][0];
             if let Some(best_move) = best_move {
                 println!("bestmove {}", uci.encode(&best_move));
-            } else {}
+            } else {
+            }
         } else if line == "isready" {
             println!("readyok");
         }

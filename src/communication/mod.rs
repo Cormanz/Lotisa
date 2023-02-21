@@ -49,7 +49,7 @@ impl Communicator for UCICommunicator {
                     2 => "b",
                     3 => "r",
                     4 => "q",
-                    _ => ""
+                    _ => "",
                 }
             } else {
                 ""
@@ -63,12 +63,22 @@ impl Communicator for UCICommunicator {
         let mut to = decode_uci_pos(&self.board, &action[2..4], buffer_amount);
         let piece_info = self.board.get_piece_info(from);
 
-        let en_passant = piece_info.piece_type == 0 && (from - to).abs() != self.board.row_gap && self.board.state[to as usize] == 1;
+        let en_passant = piece_info.piece_type == 0
+            && (from - to).abs() != self.board.row_gap
+            && self.board.state[to as usize] == 1;
 
         let castling = if piece_info.piece_type == 5 && (from - to).abs() == 2 {
-            to = self.board.generate_moves().iter()
-                .find(|action| action.from == from && action.info == 1 && (from - to).signum() == (action.from - action.to).signum())
-                .unwrap().to; 
+            to = self
+                .board
+                .generate_moves()
+                .iter()
+                .find(|action| {
+                    action.from == from
+                        && action.info == 1
+                        && (from - to).signum() == (action.from - action.to).signum()
+                })
+                .unwrap()
+                .to;
 
             true
         } else {
@@ -88,10 +98,10 @@ impl Communicator for UCICommunicator {
                         'b' => 2,
                         'r' => 3,
                         'q' => 4,
-                        _ => 0
+                        _ => 0,
                     }
                 } else if en_passant {
-                    -3 
+                    -3
                 } else if (from - to).abs() == 2 * self.board.row_gap {
                     -2
                 } else {

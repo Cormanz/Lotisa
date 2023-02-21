@@ -1,7 +1,19 @@
-use crate::{boards::{Board, Action, GameResult, hash_board, in_check}, engine::store_killer_move, communication::UCICommunicator};
-use super::{MIN_VALUE, evaluate, SearchInfo, MAX_VALUE, get_epoch_ms, TranspositionEntry, ScoredAction, move_ordering::{weigh_move}, weigh_qs_move, store_history_move, store_counter_move};
+use super::{
+    evaluate, get_epoch_ms, move_ordering::weigh_move, store_counter_move, store_history_move,
+    weigh_qs_move, ScoredAction, SearchInfo, TranspositionEntry, MAX_VALUE, MIN_VALUE,
+};
+use crate::{
+    boards::{hash_board, in_check, Action, Board, GameResult},
+    communication::UCICommunicator,
+    engine::store_killer_move,
+};
 
-pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, starting_team: i16, max_time: u128) -> i32 {
+pub fn root_search(
+    search_info: &mut SearchInfo,
+    uci: &mut UCICommunicator,
+    starting_team: i16,
+    max_time: u128,
+) -> i32 {
     let mut total_time = 0;
     let mut depth = 1;
     let mut score: i32 = MIN_VALUE;
@@ -14,13 +26,43 @@ pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, star
 
             let alpha = score - 250;
             let beta = score + 250;
-            score = search(search_info, &mut uci.board, alpha, beta, depth, 0, starting_team, None, true);
+            score = search(
+                search_info,
+                &mut uci.board,
+                alpha,
+                beta,
+                depth,
+                0,
+                starting_team,
+                None,
+                true,
+            );
             if score <= alpha || score >= beta {
                 // Research
-                score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, None, true);
+                score = search(
+                    search_info,
+                    &mut uci.board,
+                    MIN_VALUE,
+                    MAX_VALUE,
+                    depth,
+                    0,
+                    starting_team,
+                    None,
+                    true,
+                );
             }
         } else {
-            score = search(search_info, &mut uci.board, MIN_VALUE, MAX_VALUE, depth, 0, starting_team, None, true);
+            score = search(
+                search_info,
+                &mut uci.board,
+                MIN_VALUE,
+                MAX_VALUE,
+                depth,
+                0,
+                starting_team,
+                None,
+                true,
+            );
         }
 
         let end = get_epoch_ms();
@@ -31,8 +73,13 @@ pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, star
 
         let nodes = search_info.quiescence_nodes + search_info.root_nodes;
         println!(
-            "info depth {} time {} score cp {} pv {} nodes {} nps {}", 
-            search_info.root_depth, search_info.time, score / 10, search_info.pv_table.display_pv(uci), nodes, (nodes / (search_info.time + 1)) * 1000
+            "info depth {} time {} score cp {} pv {} nodes {} nps {}",
+            search_info.root_depth,
+            search_info.time,
+            score / 10,
+            search_info.pv_table.display_pv(uci),
+            nodes,
+            (nodes / (search_info.time + 1)) * 1000
         );
 
         if total_time >= max_time || depth >= 30 {
@@ -43,7 +90,13 @@ pub fn root_search(search_info: &mut SearchInfo, uci: &mut UCICommunicator, star
     }
 }
 
-pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i32, beta: i32, starting_team: i16) -> i32 {
+pub fn quiescence(
+    search_info: &mut SearchInfo,
+    board: &mut Board,
+    mut alpha: i32,
+    beta: i32,
+    starting_team: i16,
+) -> i32 {
     let standing_pat = evaluate(board, board.moving_team);
     if standing_pat >= beta {
         return standing_pat;
@@ -57,7 +110,6 @@ pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i3
     if standing_pat > alpha {
         alpha = standing_pat;
     }
-    
 
     let actions = board.generate_moves(); // Psuedolegal Move Generation
 
@@ -75,16 +127,18 @@ pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i3
 
         sorted_actions.push(ScoredAction {
             action,
-            score: weigh_qs_move(search_info, board, &action)
+            score: weigh_qs_move(search_info, board, &action),
         });
     }
 
     sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
 
     let mut best_move: Option<Action> = None;
-    for ScoredAction { action, ..} in sorted_actions {
+    for ScoredAction { action, .. } in sorted_actions {
         search_info.quiescence_nodes += 1;
-        if !board.is_legal(action, board.moving_team) { continue; }
+        if !board.is_legal(action, board.moving_team) {
+            continue;
+        }
 
         board.make_move(action);
         let score = -quiescence(search_info, board, -beta, -alpha, starting_team);
@@ -104,9 +158,15 @@ pub fn quiescence(search_info: &mut SearchInfo, board: &mut Board, mut alpha: i3
 }
 
 pub fn search(
-    search_info: &mut SearchInfo, board: &mut Board, 
-    mut alpha: i32, beta: i32, depth: i16, ply: i16, 
-    starting_team: i16, previous_move: Option<Action>, is_pv_node: bool
+    search_info: &mut SearchInfo,
+    board: &mut Board,
+    mut alpha: i32,
+    beta: i32,
+    depth: i16,
+    ply: i16,
+    starting_team: i16,
+    previous_move: Option<Action>,
+    is_pv_node: bool,
 ) -> i32 {
     search_info.pv_table.init_pv(ply);
 
@@ -122,7 +182,17 @@ pub fn search(
     }
 
     if is_pv_node && pv_move.is_none() && depth >= 4 {
-        search(search_info, board, alpha, beta, depth - 2, ply, starting_team, previous_move, true);
+        search(
+            search_info,
+            board,
+            alpha,
+            beta,
+            depth - 2,
+            ply,
+            starting_team,
+            previous_move,
+            true,
+        );
         pv_move = search_info.pv_table.table[ply as usize][0];
     }
 
@@ -145,7 +215,7 @@ pub fn search(
     for action in actions {
         sorted_actions.push(ScoredAction {
             action,
-            score: weigh_move(search_info, board, &action, &pv_move, &previous_move, ply)
+            score: weigh_move(search_info, board, &action, &pv_move, &previous_move, ply),
         });
     }
 
@@ -168,7 +238,17 @@ pub fn search(
             }
 
             board.moving_team = board.next_team();
-            let eval = -search(search_info, board, -beta, -beta + 1, working_depth, ply + 1, starting_team,  None, true);
+            let eval = -search(
+                search_info,
+                board,
+                -beta,
+                -beta + 1,
+                working_depth,
+                ply + 1,
+                starting_team,
+                None,
+                true,
+            );
             board.moving_team = board.previous_team();
 
             if eval >= beta {
@@ -180,14 +260,16 @@ pub fn search(
     let mut best_move: Option<Action> = None;
     let mut found_pv_node: bool = false;
     let mut moves_tried = 0;
-    for ScoredAction { action, ..} in sorted_actions {
+    for ScoredAction { action, .. } in sorted_actions {
         search_info.root_nodes += 1;
-        if !board.is_legal(action, board.moving_team) { continue; }
+        if !board.is_legal(action, board.moving_team) {
+            continue;
+        }
 
         board.make_move(action);
         let score = if found_pv_node {
             let in_check = in_check(board, board.moving_team, board.row_gap);
-            let is_quiet = !action.capture && !in_check ;
+            let is_quiet = !action.capture && !in_check;
             let mut working_depth = if !is_quiet || depth <= 2 {
                 depth - 1
             } else {
@@ -209,23 +291,53 @@ pub fn search(
             if working_depth <= 0 {
                 working_depth = 0;
             }
-            let eval = -search(search_info, board, -alpha - 1, -alpha, working_depth, ply + 1, starting_team, Some(action), false);
+            let eval = -search(
+                search_info,
+                board,
+                -alpha - 1,
+                -alpha,
+                working_depth,
+                ply + 1,
+                starting_team,
+                Some(action),
+                false,
+            );
 
             if eval > alpha && eval < beta {
                 // Full Window Research
-                -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team, Some(action), true)
+                -search(
+                    search_info,
+                    board,
+                    -beta,
+                    -alpha,
+                    depth - 1,
+                    ply + 1,
+                    starting_team,
+                    Some(action),
+                    true,
+                )
             } else {
                 eval
             }
         } else {
-            -search(search_info, board, -beta, -alpha, depth - 1, ply + 1, starting_team, Some(action), true)
+            -search(
+                search_info,
+                board,
+                -beta,
+                -alpha,
+                depth - 1,
+                ply + 1,
+                starting_team,
+                Some(action),
+                true,
+            )
         };
         board.undo_move();
 
         if score > alpha {
             alpha = score;
             best_move = Some(action);
-			search_info.pv_table.update_pv(ply, best_move);
+            search_info.pv_table.update_pv(ply, best_move);
             found_pv_node = true;
 
             store_history_move(search_info, &action, depth);
@@ -244,7 +356,7 @@ pub fn search(
     search_info.transposition_table[hash] = Some(TranspositionEntry {
         eval: alpha,
         depth,
-        action: best_move
+        action: best_move,
     });
 
     return alpha;

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::boards::{Action, Board, hash_board};
+use crate::boards::{hash_board, Action, Board};
 
 use super::in_check;
 
@@ -24,7 +24,7 @@ pub fn is_draw_by_repetition(board: &mut Board) -> bool {
         board.undo_move();
         ind += 1;
     }
-    
+
     for undo in &undos {
         board.make_move(undo.action);
     }
@@ -45,7 +45,7 @@ pub enum GameResult {
     Win,
     Lose,
     Draw,
-    Ongoing
+    Ongoing,
 }
 
 pub trait WinConditions {

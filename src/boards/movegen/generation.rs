@@ -4,9 +4,10 @@ use fnv::FnvHashMap;
 
 use crate::boards::{Action, ActionType, Board, PersistentPieceInfo};
 
-use super::{piece_types::{
-    BishopPiece, KingPiece, KnightPiece, PawnPiece, Piece, QueenPiece, RookPiece,
-}, Restrictor};
+use super::{
+    piece_types::{BishopPiece, KingPiece, KnightPiece, PawnPiece, Piece, QueenPiece, RookPiece},
+    Restrictor,
+};
 
 pub struct PieceGenInfo {
     pub pos: i16,
@@ -81,7 +82,9 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
     let mut new_actions: Vec<Action> = vec![];
 
     for action in actions {
-        if board.is_legal(action, required_team) { continue; }
+        if board.is_legal(action, required_team) {
+            continue;
+        }
         new_actions.push(action);
     }
 

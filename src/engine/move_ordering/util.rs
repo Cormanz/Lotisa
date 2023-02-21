@@ -1,6 +1,9 @@
-use crate::{boards::{Action, Board}, engine::SearchInfo};
+use crate::{
+    boards::{Action, Board},
+    engine::SearchInfo,
+};
 
-use super::{MAX_KILLER_MOVES, see, get_history_move, is_counter_move};
+use super::{get_history_move, is_counter_move, see, MAX_KILLER_MOVES};
 
 pub fn weigh_qs_move(search_info: &mut SearchInfo, board: &mut Board, action: &Action) -> i32 {
     if action.piece_type == 0 && action.info >= 0 {
@@ -21,7 +24,14 @@ pub fn weigh_qs_move(search_info: &mut SearchInfo, board: &mut Board, action: &A
     }
 }
 
-pub fn weigh_move(search_info: &mut SearchInfo, board: &mut Board, action: &Action, pv_move: &Option<Action>, previous_move: &Option<Action>, ply: i16) -> i32 {
+pub fn weigh_move(
+    search_info: &mut SearchInfo,
+    board: &mut Board,
+    action: &Action,
+    pv_move: &Option<Action>,
+    previous_move: &Option<Action>,
+    ply: i16,
+) -> i32 {
     if let Some(pv_move) = pv_move {
         if pv_move == action {
             return 9_000_000;

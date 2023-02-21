@@ -76,7 +76,12 @@ pub trait Piece {
     /*
         The default `can_control` method is not very performant. Subtraits of Piece should reimplement this for the sake of performance.
     */
-    fn can_control(&self, board: &mut Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+    fn can_control(
+        &self,
+        board: &mut Board,
+        piece_info: &PieceGenInfo,
+        targets: &Vec<i16>,
+    ) -> bool {
         let mut can_control = false;
         for action in self.get_actions(board, piece_info) {
             if targets.contains(&action.to) {

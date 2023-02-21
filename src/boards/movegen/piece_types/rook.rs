@@ -17,7 +17,12 @@ impl Piece for RookPiece {
         get_actions_sliding(&self.sliders, board, piece_info)
     }
 
-    fn can_control(&self, board: &mut Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+    fn can_control(
+        &self,
+        board: &mut Board,
+        piece_info: &PieceGenInfo,
+        targets: &Vec<i16>,
+    ) -> bool {
         can_control_sliding(&self.sliders, board, piece_info, targets)
     }
 

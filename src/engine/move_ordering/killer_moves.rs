@@ -1,4 +1,7 @@
-use crate::{engine::{MAX_DEPTH, SearchInfo}, boards::Action};
+use crate::{
+    boards::Action,
+    engine::{SearchInfo, MAX_DEPTH},
+};
 
 pub const MAX_KILLER_MOVES: usize = 2;
 pub type KillerMoves = [[Option<Action>; MAX_DEPTH as usize]; MAX_KILLER_MOVES];

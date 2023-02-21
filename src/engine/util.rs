@@ -1,19 +1,19 @@
 use crate::boards::Action;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use super::{PV, KillerMoves, HistoryMoves, CounterMoves};
+use super::{CounterMoves, HistoryMoves, KillerMoves, PV};
 
 #[derive(Clone, Debug)]
 pub struct TranspositionEntry {
     pub eval: i32,
     pub depth: i16,
-    pub action: Option<Action>
+    pub action: Option<Action>,
 }
 
 #[derive(Clone, Debug)]
 pub struct ScoredAction {
     pub action: Action,
-    pub score: i32
+    pub score: i32,
 }
 
 // I like to live dangerously on the edge.
@@ -32,7 +32,7 @@ pub struct SearchInfo {
     pub max_tt_size: usize,
     pub killer_moves: KillerMoves,
     pub history_moves: HistoryMoves,
-    pub counter_moves: CounterMoves
+    pub counter_moves: CounterMoves,
 }
 
 pub fn get_epoch_ms() -> u128 {

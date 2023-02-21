@@ -1,8 +1,11 @@
 use std::fmt::Debug;
 
-use crate::{boards::{Board, perft_psuedolegal, perft}, engine::get_epoch_ms};
+use crate::{
+    boards::{perft, perft_psuedolegal, Board},
+    engine::get_epoch_ms,
+};
 
-pub fn bench<T : Debug>(benchmark: &str, run: &dyn Fn() -> T) {
+pub fn bench<T: Debug>(benchmark: &str, run: &dyn Fn() -> T) {
     let start = get_epoch_ms();
     let result = run();
     let end = get_epoch_ms();

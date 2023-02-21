@@ -1,15 +1,9 @@
-use crate::boards::{Board, PieceInfo, PieceGenInfo, generate_legal_moves, generate_moves, Action};
+use crate::boards::{generate_legal_moves, generate_moves, Action, Board, PieceGenInfo, PieceInfo};
 
-const INNER_CENTER_SQUARES: [ i16; 4 ] = [
-    54, 55,
-    64, 65
-];
+const INNER_CENTER_SQUARES: [i16; 4] = [54, 55, 64, 65];
 
-const CENTER_SQUARES: [ i16; 16 ] = [
-    43, 44, 45, 46,
-    53, 54, 55, 56,
-    63, 64, 65, 66,
-    73, 74, 75, 76
+const CENTER_SQUARES: [i16; 16] = [
+    43, 44, 45, 46, 53, 54, 55, 56, 63, 64, 65, 66, 73, 74, 75, 76,
 ];
 
 pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
@@ -24,9 +18,15 @@ pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
     }
 
     if action.capture {
-        let attacker_material = board.piece_lookup.lookup(action.piece_type).get_material_value();
+        let attacker_material = board
+            .piece_lookup
+            .lookup(action.piece_type)
+            .get_material_value();
         let victim_piece_type = board.get_piece_info(action.to).piece_type;
-        let victim_material = board.piece_lookup.lookup(victim_piece_type).get_material_value();
+        let victim_material = board
+            .piece_lookup
+            .lookup(victim_piece_type)
+            .get_material_value();
         if victim_material > attacker_material {
             score += 30;
         }
@@ -40,7 +40,9 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
     let row_gap = board.row_gap;
 
     for piece in board.pieces.clone() {
-        let PieceInfo { piece_type, team, .. } = board.get_piece_info(piece.pos);
+        let PieceInfo {
+            piece_type, team, ..
+        } = board.get_piece_info(piece.pos);
         let team_multiplier = if team == pov_team { 1 } else { -1 };
 
         let piece_trait = board.piece_lookup.lookup(piece_type);
@@ -67,11 +69,11 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
                     continue;
                 }
                 let sub_piece_type = board.get_piece_type(sub_piece, sub_team);
-                opposing_pieces.push(PieceGenInfo { 
+                opposing_pieces.push(PieceGenInfo {
                     pos: sub_piece_info.pos,
                     team: sub_team,
                     row_gap,
-                    piece_type: sub_piece_type
+                    piece_type: sub_piece_type,
                 });
             }
 
@@ -86,7 +88,8 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
                         empty_squares += 1;
                         open_squares += 1;
                         for sub_piece in &opposing_pieces {
-                            let sub_piece_trait = board.piece_lookup.lookup(sub_piece.piece_type).duplicate();
+                            let sub_piece_trait =
+                                board.piece_lookup.lookup(sub_piece.piece_type).duplicate();
                             if sub_piece_trait.can_control(board, &sub_piece, &vec![new_pos]) {
                                 open_squares -= 1;
                                 break;
@@ -97,15 +100,23 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
                 }
             }
 
-            if empty_squares > 0 {                 
+            if empty_squares > 0 {
                 let blocked_squares: i32 = empty_squares - open_squares;
-                score -= 4_000 * ((blocked_squares * blocked_squares) / (empty_squares * empty_squares)) * team_multiplier;
+                score -= 4_000
+                    * ((blocked_squares * blocked_squares) / (empty_squares * empty_squares))
+                    * team_multiplier;
             }
         }
     }
 
-    let moves = generate_moves(board, pov_team).iter().map(|action| weigh_mobility_move(board, action)).sum::<i32>();
-    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team)).iter().map(|action| weigh_mobility_move(board, action)).sum::<i32>();
+    let moves = generate_moves(board, pov_team)
+        .iter()
+        .map(|action| weigh_mobility_move(board, action))
+        .sum::<i32>();
+    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team))
+        .iter()
+        .map(|action| weigh_mobility_move(board, action))
+        .sum::<i32>();
 
     score += moves - opposing_moves;
 

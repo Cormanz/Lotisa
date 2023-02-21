@@ -21,13 +21,18 @@ pub fn hash_board(board: &Board, moving_team: i16, zobrist: &Vec<usize>) -> usiz
     hash ^= zobrist[moving_team as usize];
     for piece in &board.state {
         let piece = *piece;
-        if piece == 0 { continue; }
+        if piece == 0 {
+            continue;
+        }
 
-        let first_move = board.pieces.iter()
+        let first_move = board
+            .pieces
+            .iter()
             .find(|piece| piece.pos == ind)
             .map_or(false, |piece| piece.first_move);
-        
-        hash ^= zobrist[(ind + positions * if first_move { 1 } else { 0 } + (positions * 2) * piece) as usize];
+
+        hash ^= zobrist
+            [(ind + positions * if first_move { 1 } else { 0 } + (positions * 2) * piece) as usize];
         ind += 1;
     }
 

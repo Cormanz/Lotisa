@@ -13,11 +13,11 @@ use boards::Board;
 use crate::cli::run_uci;
 
 mod boards;
+mod cli;
 mod communication;
+mod engine;
 mod tests;
 mod util;
-mod engine;
-mod cli;
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "1");
@@ -33,7 +33,6 @@ fn main() {
             println!("uciok");
             run_uci(stdin);
         } else if first_line == "test" {
-            
         }
         return;
     }

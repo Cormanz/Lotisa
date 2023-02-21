@@ -2,7 +2,11 @@ use crate::communication::{Communicator, UCICommunicator};
 
 use super::{Action, Board};
 
-pub fn perft_psuedolegal(uci: &mut UCICommunicator, depth: i16, last_action: Option<Action>) -> u64 {
+pub fn perft_psuedolegal(
+    uci: &mut UCICommunicator,
+    depth: i16,
+    last_action: Option<Action>,
+) -> u64 {
     let mut nodes: u64 = 0;
 
     let actions = uci.board.generate_legal_moves();

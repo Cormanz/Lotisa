@@ -1,6 +1,6 @@
 use super::{base_make_move, can_control_delta, get_actions_delta, MakeMoveResults, Piece};
 use crate::boards::{
-    Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, StoredMove, in_check,
+    in_check, Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, StoredMove,
 };
 
 const NORMAL_MOVE: i16 = 0;
@@ -56,7 +56,8 @@ fn get_actions_castling(
                             piece_type: attacker_piece_type,
                             ..
                         } = board.get_piece_info(piece.pos);
-                        let piece_trait = board.piece_lookup.lookup(piece_info.piece_type).duplicate();
+                        let piece_trait =
+                            board.piece_lookup.lookup(piece_info.piece_type).duplicate();
                         let piece_gen_info = PieceGenInfo {
                             pos: piece.pos,
                             team: attacker_team,
@@ -143,7 +144,12 @@ impl Piece for KingPiece {
         actions
     }
 
-    fn can_control(&self, board: &mut Board, piece_info: &PieceGenInfo, targets: &Vec<i16>) -> bool {
+    fn can_control(
+        &self,
+        board: &mut Board,
+        piece_info: &PieceGenInfo,
+        targets: &Vec<i16>,
+    ) -> bool {
         let mut can_control = false;
         for action in get_actions_delta(&self.deltas, board, piece_info) {
             if targets.contains(&action.to) {

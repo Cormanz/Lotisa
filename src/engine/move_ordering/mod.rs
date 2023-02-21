@@ -1,11 +1,11 @@
-mod util;
+mod counter_moves;
+mod history_moves;
 mod killer_moves;
 mod see;
-mod history_moves;
-mod counter_moves;
+mod util;
 
-pub use util::*;
+pub use counter_moves::*;
+pub use history_moves::*;
 pub use killer_moves::*;
 pub use see::*;
-pub use history_moves::*;
-pub use counter_moves::*;
+pub use util::*;

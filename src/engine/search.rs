@@ -20,6 +20,8 @@ pub fn root_search(
     loop {
         let start = get_epoch_ms();
         search_info.root_depth = depth;
+        search_info.root_nodes = 0;
+        search_info.quiescence_nodes = 0;
 
         if score > MIN_VALUE {
             // Aspiration Windows

@@ -1,4 +1,5 @@
 use communication::UCICommunicator;
+use tests::boards_bench;
 use core::time;
 use rand::seq::{IteratorRandom, SliceRandom};
 use std::{
@@ -20,6 +21,9 @@ mod tests;
 mod util;
 
 fn main() {
+    //boards_bench();
+    //return;
+
     env::set_var("RUST_BACKTRACE", "1");
 
     let mut args = env::args().collect::<Vec<_>>();

@@ -34,25 +34,44 @@ pub fn create_board_state(buffer_amount: i16, (rows, cols): (i16, i16)) -> Board
     return state;
 }
 
+
 #[derive(Debug, Clone)]
-pub struct StoredMove {
-    pub action: Action,
-    pub from_previous: i16,
-    pub to_previous: i16,
-    pub pieces: Vec<PersistentPieceInfo>,
-    pub state: Option<Vec<i16>>,
+pub enum StoredMovePieceChange {
+    PieceMove { from: i16, to: i16 },
+    PieceRemove { info: PersistentPieceInfo },
+    PieceCreate { info: PersistentPieceInfo }
 }
 
-impl StoredMove {
-    pub fn duplicate(&self) -> Self {
-        StoredMove {
-            action: self.action.clone(),
-            from_previous: self.from_previous,
-            to_previous: self.to_previous,
-            pieces: self.pieces.clone(),
-            state: None,
-        }
-    }
+
+#[derive(Debug, Clone)]
+pub struct ResetSquare {
+    pub pos: i16,
+    pub state: i16
+}
+
+#[derive(Debug, Clone)]
+
+pub enum StoredMoveType {
+    /*
+        Standard is best for almost all use-cases.
+        - Movements: Moving a piece from one square to another.
+        - Captures: Moving a piece to another square, taking another piece along the way.
+        - Custom Movements: Movements like castling can be represented via this format.
+
+        This is so common that Lotisa will automatically handle these types of moves for you in the undoing.
+    */
+    Standard { states: Vec<ResetSquare>, pieces: Vec<StoredMovePieceChange> },
+    /*
+        If for some reason you have a use-case that involves revamping the entire board somehow, Lotisa will also support that.
+        I do not recommend though, for performance sake above all.
+    */
+    Custom { state: Vec<i16>, pieces: Vec<PersistentPieceInfo> }
+}
+
+#[derive(Debug, Clone)]
+pub struct StoredMove {
+    pub move_type: StoredMoveType,
+    pub action: Action
 }
 
 #[derive(Debug)]
@@ -399,24 +418,25 @@ impl Board {
                 info: -2,
             };
 
-            let mut old_pieces = uci.board.pieces.clone();
-            let to_index = uci
-                .board
-                .pieces
-                .iter()
-                .position(|piece| piece.pos == pos)
-                .unwrap();
-
-            old_pieces[to_index].pos = from;
-            old_pieces[to_index].first_move = false;
-
             uci.board.history.push(StoredMove {
-                action,
-                from_previous: 2,
-                to_previous: 1,
-                pieces: old_pieces,
-                state: None,
-            })
+                move_type: StoredMoveType::Standard {
+                    states: vec![
+                        ResetSquare {
+                            pos: from,
+                            state: uci.board.get_piece_value(0, team)
+                        },
+                        ResetSquare {
+                            pos,
+                            state: uci.board.get_piece_type(0, uci.board.get_next_team(team))
+                        }
+                    ],
+                    pieces: vec![
+                        StoredMovePieceChange::PieceRemove { info: PersistentPieceInfo { pos, first_move: false } },
+                        StoredMovePieceChange::PieceMove { from, to: pos }
+                    ]
+                },
+                action
+            });
         }
 
         // TODO: Add last move to history for en passant

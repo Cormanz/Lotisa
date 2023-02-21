@@ -1,4 +1,4 @@
-use crate::boards::{Action, ActionType, Board, PieceGenInfo, StoredMove};
+use crate::boards::{Action, ActionType, Board, PieceGenInfo, StoredMove, StoredMoveType, StoredMovePieceChange, ResetSquare};
 
 pub fn attempt_action(
     moves: &mut Vec<Action>,
@@ -38,12 +38,11 @@ pub struct MakeMoveResults {
     pub to_state: i16,
 }
 
-pub fn base_make_move(board: &mut Board, action: Action) -> MakeMoveResults {
+pub fn base_make_move(board: &mut Board, action: Action) {
     let from_usize = action.from as usize;
     let to_usize = action.to as usize;
 
     let from_state = board.state[from_usize];
-    let to_state = board.state[to_usize];
 
     board.state[to_usize] = from_state;
     board.state[from_usize] = 1;
@@ -64,11 +63,6 @@ pub fn base_make_move(board: &mut Board, action: Action) -> MakeMoveResults {
 
     if let Some(to_pos_all) = to_pos_all {
         board.pieces.swap_remove(to_pos_all);
-    }
-
-    MakeMoveResults {
-        from_state,
-        to_state,
     }
 }
 
@@ -97,19 +91,34 @@ pub trait Piece {
     fn get_icon(&self) -> &str;
 
     fn make_move(&self, board: &mut Board, action: Action) {
-        let old_pieces = board.pieces.clone();
+        let states = vec![
+            ResetSquare {
+                pos: action.from,
+                state: board.state[action.from as usize]
+            },
+            ResetSquare {
+                pos: action.to,
+                state: board.state[action.to as usize]
+            }
+        ];
 
-        let MakeMoveResults {
-            from_state,
-            to_state,
-        } = base_make_move(board, action);
+        let mut pieces = vec![
+            StoredMovePieceChange::PieceMove { from: action.from, to: action.to }
+        ];
+
+        if action.capture {
+            let info = *board.pieces.iter().find(|piece| piece.pos == action.to).unwrap();
+            pieces.push(StoredMovePieceChange::PieceRemove { info })
+        }
+
+        base_make_move(board, action);
 
         let past_move = StoredMove {
             action,
-            from_previous: from_state,
-            to_previous: to_state,
-            pieces: old_pieces,
-            state: None,
+            move_type: StoredMoveType::Standard {
+                states,
+                pieces
+            }
         };
 
         board.history.push(past_move);
@@ -118,18 +127,37 @@ pub trait Piece {
     fn undo_move(&self, board: &mut Board, undo: &StoredMove) {
         let StoredMove {
             action,
-            to_previous,
-            from_previous,
-            pieces,
-            state,
+            move_type
         } = undo;
-        if let Some(state) = state {
-            board.state = state.clone();
-        } else {
-            board.state[action.to as usize] = *to_previous;
-            board.state[action.from as usize] = *from_previous;
+
+        match move_type {
+            StoredMoveType::Standard { states, pieces } => {
+                for state in states {
+                    board.state[state.pos as usize] = state.state;
+                }
+
+                for piece_change in pieces {
+                    match piece_change {
+                        StoredMovePieceChange::PieceCreate { info } => {
+                            let created_piece_index = board.pieces.iter().position(|piece| piece.pos == info.pos).unwrap();
+                            board.pieces.swap_remove(created_piece_index);
+                        }
+                        StoredMovePieceChange::PieceRemove { info } => {
+                            board.pieces.push(*info);
+                        }
+                        StoredMovePieceChange::PieceMove { from, to } => {
+                            let to = *to;
+                            let moved_piece_index = board.pieces.iter().position(|piece| piece.pos == to).unwrap();
+                            board.pieces[moved_piece_index].pos = *from;
+                        }
+                    }
+                }
+            },
+            StoredMoveType::Custom { state, pieces } => {
+                board.state = state.clone();
+                board.pieces = pieces.clone();
+            }
         }
-        board.pieces = pieces.clone();
     }
 
     fn duplicate(&self) -> Box<dyn Piece>;

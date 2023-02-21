@@ -12,7 +12,7 @@ pub fn weigh_qs_move(search_info: &mut SearchInfo, board: &mut Board, action: &A
         }
     }
 
-    if action.capture {
+    if action.capture && !(action.piece_type == 0 && action.info == -3) {
         let exchange_eval = see(board, action.to, board.moving_team, Some(action.from));
         if exchange_eval > 0 {
             100_000 + exchange_eval

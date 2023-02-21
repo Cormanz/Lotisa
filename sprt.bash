@@ -1,6 +1,6 @@
 rm ./outs/* && /home/corman/cutechess-cli/cutechess-cli \
--engine cmd="target/versions/lotisa" name="Lotisa Aggro Center Control" proto=uci \
--engine cmd="target/versions/lotisa-before" name="Lotisa" proto=uci \
+-engine cmd="target/release/lotisa" name="Lotisa" proto=uci \
+-engine cmd="target/release/lotisa" name="Lotisa" proto=uci \
 -each \
     tc=inf \
     book="./resources/Titans.bin" \
@@ -10,5 +10,4 @@ rm ./outs/* && /home/corman/cutechess-cli/cutechess-cli \
 -ratinginterval 10 \
 -pgnout ./outs/games.pgn \
 -debug \
--concurrency 10 \
 > outs/log.txt

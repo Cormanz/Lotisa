@@ -82,7 +82,7 @@ pub fn generate_legal_moves(board: &mut Board, required_team: i16) -> Vec<Action
     let mut new_actions: Vec<Action> = vec![];
 
     for action in actions {
-        if board.is_legal(action, required_team) {
+        if !board.is_legal(action, required_team) {
             continue;
         }
         new_actions.push(action);

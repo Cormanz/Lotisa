@@ -1,4 +1,4 @@
-use crate::boards::{Action, Board, PieceGenInfo, StoredMove};
+use crate::boards::{Action, Board, PieceGenInfo, StoredMove, StoredMoveType, StoredMovePieceChange, ResetSquare};
 
 use super::{base_make_move, MakeMoveResults, Piece};
 
@@ -214,12 +214,20 @@ impl Piece for PawnPiece {
     }
 
     fn make_move(&self, board: &mut Board, action: Action) {
-        let old_pieces = board.pieces.clone();
-        let old_state = if action.info == -3 {
-            Some(board.state.clone())
-        } else {
-            None
-        };
+        let states = vec![
+            ResetSquare {
+                pos: action.from,
+                state: board.state[action.from as usize]
+            },
+            ResetSquare {
+                pos: action.to,
+                state: board.state[action.to as usize]
+            }
+        ];
+
+        let mut pieces = vec![
+            StoredMovePieceChange::PieceMove { from: action.from, to: action.to }
+        ];
 
         if action.info == EN_PASSANT {
             /*
@@ -241,24 +249,22 @@ impl Piece for PawnPiece {
             let to_usize = action.to as usize;
             board.state[to_usize] = en_passant_target_state;
             board.state[en_passant_target_usize] = 1;
+
+            let info = *board.pieces.iter().find(|piece| piece.pos == en_passant_target).unwrap();
+            pieces.push(StoredMovePieceChange::PieceRemove { info })
+        } else if action.capture {
+            let info = *board.pieces.iter().find(|piece| piece.pos == action.to).unwrap();
+            pieces.push(StoredMovePieceChange::PieceRemove { info });
         }
 
-        let MakeMoveResults {
-            from_state,
-            to_state,
-        } = base_make_move(board, action);
-
-        if action.info >= 0 {
-            let to_usize = action.to as usize;
-            board.state[to_usize] = board.get_piece_value(action.info, action.team);
-        }
+        base_make_move(board, action);
 
         let past_move = StoredMove {
             action,
-            from_previous: from_state,
-            to_previous: to_state,
-            pieces: old_pieces,
-            state: old_state,
+            move_type: StoredMoveType::Standard {
+                states,
+                pieces
+            }
         };
 
         board.history.push(past_move);

@@ -1,6 +1,6 @@
 use super::{base_make_move, can_control_delta, get_actions_delta, MakeMoveResults, Piece};
 use crate::boards::{
-    in_check, Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, StoredMove,
+    in_check, Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, StoredMove, StoredMoveType, StoredMovePieceChange, ResetSquare,
 };
 
 const NORMAL_MOVE: i16 = 0;
@@ -188,25 +188,40 @@ impl Piece for KingPiece {
 
     fn make_move(&self, board: &mut Board, action: Action) {
         if action.info == NORMAL_MOVE {
-            let old_pieces = board.pieces.clone();
-
-            let MakeMoveResults {
-                from_state,
-                to_state,
-            } = base_make_move(board, action);
-
+            let states = vec![
+                ResetSquare {
+                    pos: action.from,
+                    state: board.state[action.from as usize]
+                },
+                ResetSquare {
+                    pos: action.to,
+                    state: board.state[action.to as usize]
+                }
+            ];
+    
+            let mut pieces = vec![
+                StoredMovePieceChange::PieceMove { from: action.from, to: action.to }
+            ];
+    
+            if action.capture {
+                let info = *board.pieces.iter().find(|piece| piece.pos == action.to).unwrap();
+                pieces.push(StoredMovePieceChange::PieceRemove { info })
+            }
+    
+            base_make_move(board, action);
+    
             let past_move = StoredMove {
                 action,
-                from_previous: from_state,
-                to_previous: to_state,
-                pieces: old_pieces,
-                state: None,
+                move_type: StoredMoveType::Standard {
+                    states,
+                    pieces
+                }
             };
-
+    
             board.history.push(past_move);
         } else if action.info == CASTLING_MOVE {
             let old_pieces = board.pieces.clone();
-            let old_state = Some(board.state.clone());
+            let old_state = board.state.clone();
 
             let castle_dir = (action.to - action.from).signum();
             let new_king_pos = action.from + (2 * castle_dir);
@@ -243,10 +258,10 @@ impl Piece for KingPiece {
 
             let past_move = StoredMove {
                 action,
-                from_previous: from_state,
-                to_previous: to_state,
-                pieces: old_pieces,
-                state: old_state,
+                move_type: StoredMoveType::Custom { 
+                    pieces: old_pieces,
+                    state: old_state
+                }
             };
 
             board.history.push(past_move);

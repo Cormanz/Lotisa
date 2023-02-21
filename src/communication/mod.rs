@@ -64,7 +64,7 @@ impl Communicator for UCICommunicator {
         let piece_info = self.board.get_piece_info(from);
 
         let en_passant = piece_info.piece_type == 0
-            && (from - to).abs() != self.board.row_gap
+            && ((from - to).abs() % self.board.row_gap) != 0
             && self.board.state[to as usize] == 1;
 
         let castling = if piece_info.piece_type == 5 && (from - to).abs() == 2 {

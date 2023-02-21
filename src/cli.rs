@@ -25,6 +25,7 @@ pub fn create_info() -> SearchInfo {
         killer_moves: [[None; MAX_DEPTH]; MAX_KILLER_MOVES],
         history_moves: vec![vec![vec![0; 120]; 120]; 2],
         counter_moves: vec![vec![None; 120]; 120],
+        sel_depth: 0
     }
 }
 
@@ -79,7 +80,7 @@ pub fn run_uci(stdin: Stdin) {
             }
 
             if !found_capture {
-                max_time = 50;
+                max_time = 10_000;
             }
 
             let moving_team = uci.board.moving_team;

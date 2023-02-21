@@ -73,13 +73,14 @@ pub fn root_search(
 
         let nodes = search_info.quiescence_nodes + search_info.root_nodes;
         println!(
-            "info depth {} time {} score cp {} pv {} nodes {} nps {}",
+            "info depth {} time {} score cp {} nodes {} nps {} seldepth {} pv {} ",
             search_info.root_depth,
             search_info.time,
             score / 10,
-            search_info.pv_table.display_pv(uci),
             nodes,
-            (nodes / (search_info.time + 1)) * 1000
+            (nodes / (search_info.time + 1)) * 1000,
+            search_info.sel_depth,
+            search_info.pv_table.display_pv(uci)
         );
 
         if total_time >= max_time || depth >= 30 {
@@ -96,6 +97,7 @@ pub fn quiescence(
     mut alpha: i32,
     beta: i32,
     starting_team: i16,
+    ply: i16
 ) -> i32 {
     let standing_pat = evaluate(board, board.moving_team);
     if standing_pat >= beta {
@@ -109,6 +111,10 @@ pub fn quiescence(
 
     if standing_pat > alpha {
         alpha = standing_pat;
+    }
+
+    if search_info.sel_depth < ply {
+        search_info.sel_depth = ply;
     }
 
     let actions = board.generate_moves(); // Psuedolegal Move Generation
@@ -141,7 +147,7 @@ pub fn quiescence(
         }
 
         board.make_move(action);
-        let score = -quiescence(search_info, board, -beta, -alpha, starting_team);
+        let score = -quiescence(search_info, board, -beta, -alpha, starting_team, ply + 1);
         board.undo_move();
 
         if score > alpha {
@@ -171,7 +177,7 @@ pub fn search(
     search_info.pv_table.init_pv(ply);
 
     if depth == 0 {
-        return quiescence(search_info, board, alpha, beta, starting_team);
+        return quiescence(search_info, board, alpha, beta, starting_team, ply);
     }
 
     let hash = hash_board(board, board.moving_team, &board.zobrist) % search_info.max_tt_size;

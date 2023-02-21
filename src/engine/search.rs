@@ -188,7 +188,7 @@ pub fn search(
         let score = if found_pv_node {
             let in_check = in_check(board, board.moving_team, board.row_gap);
             let is_quiet = !action.capture && !in_check ;
-            let mut working_depth = if !is_quiet || depth <= 2 || ind <= 2 {
+            let mut working_depth = if !is_quiet || depth <= 2 {
                 depth - 1
             } else {
                 depth - 2

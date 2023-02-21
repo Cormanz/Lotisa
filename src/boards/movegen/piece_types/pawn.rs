@@ -1,4 +1,6 @@
-use crate::boards::{Action, Board, PieceGenInfo, StoredMove, StoredMoveType, StoredMovePieceChange, ResetSquare};
+use crate::boards::{
+    Action, Board, PieceGenInfo, ResetSquare, StoredMove, StoredMovePieceChange, StoredMoveType,
+};
 
 use super::{base_make_move, MakeMoveResults, Piece};
 
@@ -217,17 +219,18 @@ impl Piece for PawnPiece {
         let states = vec![
             ResetSquare {
                 pos: action.from,
-                state: board.state[action.from as usize]
+                state: board.state[action.from as usize],
             },
             ResetSquare {
                 pos: action.to,
-                state: board.state[action.to as usize]
-            }
+                state: board.state[action.to as usize],
+            },
         ];
 
-        let mut pieces = vec![
-            StoredMovePieceChange::PieceMove { from: action.from, to: action.to }
-        ];
+        let mut pieces = vec![StoredMovePieceChange::PieceMove {
+            from: action.from,
+            to: action.to,
+        }];
 
         if action.info == EN_PASSANT {
             /*
@@ -250,10 +253,18 @@ impl Piece for PawnPiece {
             board.state[to_usize] = en_passant_target_state;
             board.state[en_passant_target_usize] = 1;
 
-            let info = *board.pieces.iter().find(|piece| piece.pos == en_passant_target).unwrap();
+            let info = *board
+                .pieces
+                .iter()
+                .find(|piece| piece.pos == en_passant_target)
+                .unwrap();
             pieces.push(StoredMovePieceChange::PieceRemove { info })
         } else if action.capture {
-            let info = *board.pieces.iter().find(|piece| piece.pos == action.to).unwrap();
+            let info = *board
+                .pieces
+                .iter()
+                .find(|piece| piece.pos == action.to)
+                .unwrap();
             pieces.push(StoredMovePieceChange::PieceRemove { info });
         }
 
@@ -261,10 +272,7 @@ impl Piece for PawnPiece {
 
         let past_move = StoredMove {
             action,
-            move_type: StoredMoveType::Standard {
-                states,
-                pieces
-            }
+            move_type: StoredMoveType::Standard { states, pieces },
         };
 
         board.history.push(past_move);

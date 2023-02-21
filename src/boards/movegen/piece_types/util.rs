@@ -1,4 +1,7 @@
-use crate::boards::{Action, ActionType, Board, PieceGenInfo, StoredMove, StoredMoveType, StoredMovePieceChange, ResetSquare};
+use crate::boards::{
+    Action, ActionType, Board, PieceGenInfo, ResetSquare, StoredMove, StoredMovePieceChange,
+    StoredMoveType,
+};
 
 pub fn attempt_action(
     moves: &mut Vec<Action>,
@@ -94,20 +97,25 @@ pub trait Piece {
         let states = vec![
             ResetSquare {
                 pos: action.from,
-                state: board.state[action.from as usize]
+                state: board.state[action.from as usize],
             },
             ResetSquare {
                 pos: action.to,
-                state: board.state[action.to as usize]
-            }
+                state: board.state[action.to as usize],
+            },
         ];
 
-        let mut pieces = vec![
-            StoredMovePieceChange::PieceMove { from: action.from, to: action.to }
-        ];
+        let mut pieces = vec![StoredMovePieceChange::PieceMove {
+            from: action.from,
+            to: action.to,
+        }];
 
         if action.capture {
-            let info = *board.pieces.iter().find(|piece| piece.pos == action.to).unwrap();
+            let info = *board
+                .pieces
+                .iter()
+                .find(|piece| piece.pos == action.to)
+                .unwrap();
             pieces.push(StoredMovePieceChange::PieceRemove { info })
         }
 
@@ -115,20 +123,14 @@ pub trait Piece {
 
         let past_move = StoredMove {
             action,
-            move_type: StoredMoveType::Standard {
-                states,
-                pieces
-            }
+            move_type: StoredMoveType::Standard { states, pieces },
         };
 
         board.history.push(past_move);
     }
 
     fn undo_move(&self, board: &mut Board, undo: &StoredMove) {
-        let StoredMove {
-            action,
-            move_type
-        } = undo;
+        let StoredMove { action, move_type } = undo;
 
         match move_type {
             StoredMoveType::Standard { states, pieces } => {
@@ -139,7 +141,11 @@ pub trait Piece {
                 for piece_change in pieces {
                     match piece_change {
                         StoredMovePieceChange::PieceCreate { info } => {
-                            let created_piece_index = board.pieces.iter().position(|piece| piece.pos == info.pos).unwrap();
+                            let created_piece_index = board
+                                .pieces
+                                .iter()
+                                .position(|piece| piece.pos == info.pos)
+                                .unwrap();
                             board.pieces.swap_remove(created_piece_index);
                         }
                         StoredMovePieceChange::PieceRemove { info } => {
@@ -147,12 +153,16 @@ pub trait Piece {
                         }
                         StoredMovePieceChange::PieceMove { from, to } => {
                             let to = *to;
-                            let moved_piece_index = board.pieces.iter().position(|piece| piece.pos == to).unwrap();
+                            let moved_piece_index = board
+                                .pieces
+                                .iter()
+                                .position(|piece| piece.pos == to)
+                                .unwrap();
                             board.pieces[moved_piece_index].pos = *from;
                         }
                     }
                 }
-            },
+            }
             StoredMoveType::Custom { state, pieces } => {
                 board.state = state.clone();
                 board.pieces = pieces.clone();

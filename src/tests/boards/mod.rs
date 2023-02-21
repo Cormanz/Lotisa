@@ -1,7 +1,7 @@
 mod bench;
-mod perft;
 mod moves;
+mod perft;
 
 pub use bench::*;
-pub use perft::*;
 pub use moves::*;
+pub use perft::*;

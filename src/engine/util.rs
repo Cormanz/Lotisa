@@ -33,7 +33,7 @@ pub struct SearchInfo {
     pub killer_moves: KillerMoves,
     pub history_moves: HistoryMoves,
     pub counter_moves: CounterMoves,
-    pub sel_depth: i16
+    pub sel_depth: i16,
 }
 
 pub fn get_epoch_ms() -> u128 {

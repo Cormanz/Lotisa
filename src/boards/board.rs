@@ -34,19 +34,17 @@ pub fn create_board_state(buffer_amount: i16, (rows, cols): (i16, i16)) -> Board
     return state;
 }
 
-
 #[derive(Debug, Clone)]
 pub enum StoredMovePieceChange {
     PieceMove { from: i16, to: i16 },
     PieceRemove { info: PersistentPieceInfo },
-    PieceCreate { info: PersistentPieceInfo }
+    PieceCreate { info: PersistentPieceInfo },
 }
-
 
 #[derive(Debug, Clone)]
 pub struct ResetSquare {
     pub pos: i16,
-    pub state: i16
+    pub state: i16,
 }
 
 #[derive(Debug, Clone)]
@@ -60,18 +58,24 @@ pub enum StoredMoveType {
 
         This is so common that Lotisa will automatically handle these types of moves for you in the undoing.
     */
-    Standard { states: Vec<ResetSquare>, pieces: Vec<StoredMovePieceChange> },
+    Standard {
+        states: Vec<ResetSquare>,
+        pieces: Vec<StoredMovePieceChange>,
+    },
     /*
         If for some reason you have a use-case that involves revamping the entire board somehow, Lotisa will also support that.
         I do not recommend though, for performance sake above all.
     */
-    Custom { state: Vec<i16>, pieces: Vec<PersistentPieceInfo> }
+    Custom {
+        state: Vec<i16>,
+        pieces: Vec<PersistentPieceInfo>,
+    },
 }
 
 #[derive(Debug, Clone)]
 pub struct StoredMove {
     pub move_type: StoredMoveType,
-    pub action: Action
+    pub action: Action,
 }
 
 #[derive(Debug)]
@@ -423,19 +427,24 @@ impl Board {
                     states: vec![
                         ResetSquare {
                             pos: from,
-                            state: uci.board.get_piece_value(0, team)
+                            state: uci.board.get_piece_value(0, team),
                         },
                         ResetSquare {
                             pos,
-                            state: uci.board.get_piece_type(0, uci.board.get_next_team(team))
-                        }
+                            state: uci.board.get_piece_type(0, uci.board.get_next_team(team)),
+                        },
                     ],
                     pieces: vec![
-                        StoredMovePieceChange::PieceRemove { info: PersistentPieceInfo { pos, first_move: false } },
-                        StoredMovePieceChange::PieceMove { from, to: pos }
-                    ]
+                        StoredMovePieceChange::PieceRemove {
+                            info: PersistentPieceInfo {
+                                pos,
+                                first_move: false,
+                            },
+                        },
+                        StoredMovePieceChange::PieceMove { from, to: pos },
+                    ],
                 },
-                action
+                action,
             });
         }
 

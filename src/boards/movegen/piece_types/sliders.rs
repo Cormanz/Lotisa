@@ -15,12 +15,12 @@ pub fn can_control_sliding(
     for slider in sliders {
         let mut can_skip = false;
         for dif in &difs {
-            if !((dif % slider) != 0 || dif.signum() != slider.signum())  {
+            if !((dif % slider) != 0 || dif.signum() != slider.signum()) {
                 can_skip = true;
                 break;
-            }  
+            }
         }
-        if can_skip { 
+        if can_skip {
             continue;
         }
 

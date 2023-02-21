@@ -97,7 +97,7 @@ pub fn quiescence(
     mut alpha: i32,
     beta: i32,
     starting_team: i16,
-    ply: i16
+    ply: i16,
 ) -> i32 {
     let standing_pat = evaluate(board, board.moving_team);
     if standing_pat >= beta {

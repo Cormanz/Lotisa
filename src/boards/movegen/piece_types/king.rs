@@ -1,6 +1,7 @@
 use super::{base_make_move, can_control_delta, get_actions_delta, MakeMoveResults, Piece};
 use crate::boards::{
-    in_check, Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, StoredMove, StoredMoveType, StoredMovePieceChange, ResetSquare,
+    in_check, Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, ResetSquare,
+    StoredMove, StoredMovePieceChange, StoredMoveType,
 };
 
 const NORMAL_MOVE: i16 = 0;
@@ -154,7 +155,7 @@ impl Piece for KingPiece {
         let pos = *pos;
         let piece_row = board.get_row(pos);
         let piece_col = board.get_col(pos, piece_row);
-        
+
         for target in targets {
             let target = *target;
             let row = board.get_row(target);
@@ -162,7 +163,7 @@ impl Piece for KingPiece {
 
             let row_dif = (piece_row - row).abs();
             let col_dif = (piece_col - col).abs();
-            
+
             if row_dif + col_dif <= 2 {
                 return true;
             }
@@ -191,33 +192,35 @@ impl Piece for KingPiece {
             let states = vec![
                 ResetSquare {
                     pos: action.from,
-                    state: board.state[action.from as usize]
+                    state: board.state[action.from as usize],
                 },
                 ResetSquare {
                     pos: action.to,
-                    state: board.state[action.to as usize]
-                }
+                    state: board.state[action.to as usize],
+                },
             ];
-    
-            let mut pieces = vec![
-                StoredMovePieceChange::PieceMove { from: action.from, to: action.to }
-            ];
-    
+
+            let mut pieces = vec![StoredMovePieceChange::PieceMove {
+                from: action.from,
+                to: action.to,
+            }];
+
             if action.capture {
-                let info = *board.pieces.iter().find(|piece| piece.pos == action.to).unwrap();
+                let info = *board
+                    .pieces
+                    .iter()
+                    .find(|piece| piece.pos == action.to)
+                    .unwrap();
                 pieces.push(StoredMovePieceChange::PieceRemove { info })
             }
-    
+
             base_make_move(board, action);
-    
+
             let past_move = StoredMove {
                 action,
-                move_type: StoredMoveType::Standard {
-                    states,
-                    pieces
-                }
+                move_type: StoredMoveType::Standard { states, pieces },
             };
-    
+
             board.history.push(past_move);
         } else if action.info == CASTLING_MOVE {
             let old_pieces = board.pieces.clone();
@@ -258,10 +261,10 @@ impl Piece for KingPiece {
 
             let past_move = StoredMove {
                 action,
-                move_type: StoredMoveType::Custom { 
+                move_type: StoredMoveType::Custom {
                     pieces: old_pieces,
-                    state: old_state
-                }
+                    state: old_state,
+                },
             };
 
             board.history.push(past_move);

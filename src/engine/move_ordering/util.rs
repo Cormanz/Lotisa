@@ -15,8 +15,14 @@ pub fn weigh_qs_move(search_info: &mut SearchInfo, board: &mut Board, action: &A
     if action.capture && !(action.piece_type == 0 && action.info == -3) {
         // MVV-LVA
 
-        let victim_value = board.piece_lookup.lookup(board.get_piece_info(action.to).piece_type).get_material_value();
-        let attacker_value = board.piece_lookup.lookup(action.piece_type).get_material_value();
+        let victim_value = board
+            .piece_lookup
+            .lookup(board.get_piece_info(action.to).piece_type)
+            .get_material_value();
+        let attacker_value = board
+            .piece_lookup
+            .lookup(action.piece_type)
+            .get_material_value();
         if victim_value > attacker_value {
             return 100_000 + (victim_value - (attacker_value / 100));
         }
@@ -55,8 +61,14 @@ pub fn weigh_move(
     if action.capture {
         // MVV-LVA
 
-        let victim_value = board.piece_lookup.lookup(board.get_piece_info(action.to).piece_type).get_material_value();
-        let attacker_value = board.piece_lookup.lookup(action.piece_type).get_material_value();
+        let victim_value = board
+            .piece_lookup
+            .lookup(board.get_piece_info(action.to).piece_type)
+            .get_material_value();
+        let attacker_value = board
+            .piece_lookup
+            .lookup(action.piece_type)
+            .get_material_value();
         if victim_value > attacker_value {
             100_000 + (victim_value - (attacker_value / 100))
         } else {

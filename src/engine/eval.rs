@@ -7,7 +7,10 @@ const CENTER_SQUARES: [i16; 16] = [
 ];
 
 pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
-    let material_value = board.piece_lookup.lookup(action.piece_type).get_material_value();
+    let material_value = board
+        .piece_lookup
+        .lookup(action.piece_type)
+        .get_material_value();
     let mut score = 5;
 
     if CENTER_SQUARES.contains(&action.to) {

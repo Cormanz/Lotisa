@@ -7,15 +7,14 @@ use crate::boards::{
 const NORMAL_MOVE: i16 = 0;
 const CASTLING_MOVE: i16 = 1;
 
-fn get_actions_castling(
+fn add_actions_castling(
+    actions: &mut Vec<Action>,
     sliders: &Vec<i16>,
     board: &mut Board,
     piece_info: &PieceGenInfo,
-) -> Vec<Action> {
-    let mut actions = Vec::with_capacity(sliders.len() * 2);
-
+) {
     if in_check(board, board.moving_team, board.row_gap) {
-        return actions;
+        return;
     }
 
     let PieceGenInfo {
@@ -28,7 +27,7 @@ fn get_actions_castling(
     let mut opposing_pieces: Vec<PersistentPieceInfo> = Vec::with_capacity(16);
     for piece in board.pieces.clone() {
         if piece.pos == pos && !piece.first_move {
-            return actions;
+            return;
         }
 
         let PieceInfo {
@@ -112,8 +111,6 @@ fn get_actions_castling(
             }
         }
     }
-
-    actions
 }
 
 pub struct KingPiece {
@@ -141,6 +138,7 @@ impl KingPiece {
 impl Piece for KingPiece {
     fn add_actions(&self, actions: &mut Vec<Action>, board: &mut Board, piece_info: &PieceGenInfo) {
         add_actions_delta(actions, &self.deltas, board, piece_info);
+        add_actions_castling(actions, &self.sliders, board, piece_info);
     }
 
     fn can_control(

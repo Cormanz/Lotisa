@@ -3,7 +3,7 @@ use crate::{
     engine::{SearchInfo, MAX_DEPTH},
 };
 
-pub const MAX_KILLER_MOVES: usize = 2;
+pub const MAX_KILLER_MOVES: usize = 3;
 pub type KillerMoves = [[Option<Action>; MAX_DEPTH as usize]; MAX_KILLER_MOVES];
 
 pub fn store_killer_move(search_info: &mut SearchInfo, action: &Action, ply: i16) {

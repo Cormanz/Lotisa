@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use crate::boards::{generate_legal_moves, generate_moves, Action, Board, PieceGenInfo, PieceInfo};
 
 const INNER_CENTER_SQUARES: [i16; 4] = [54, 55, 64, 65];
@@ -14,11 +16,7 @@ pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
     let mut score = 5;
 
     if CENTER_SQUARES.contains(&action.to) {
-        if INNER_CENTER_SQUARES.contains(&action.to) {
-            score += 5;
-        } else {
-            score += 3;
-        }
+        score += 2;
     }
 
     score *= 1 + ((9000 - material_value) / 8000);

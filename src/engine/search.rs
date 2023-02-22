@@ -297,7 +297,7 @@ pub fn search(
             }
 
             // Late Move Pruning
-            if is_quiet && working_depth < 3 && moves_tried >= (1 + (2 * working_depth)) {
+            if is_quiet && working_depth < 3 && moves_tried >= (7 + (4 * working_depth)) {
                 working_depth = 0;
             }
 

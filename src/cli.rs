@@ -45,6 +45,7 @@ pub fn run_uci(stdin: Stdin) {
                 let action = uci.decode(action.to_string());
                 uci.board.make_move(action);
             }
+            info = create_info();
         } else if line.starts_with("position startpos fen ") {
             let fen = &line[22..];
             uci = Board::load_fen(fen);
@@ -80,7 +81,7 @@ pub fn run_uci(stdin: Stdin) {
             }
 
             if !found_capture {
-                max_time = 3_000;
+                max_time = 10_000;
             }
 
             let moving_team = uci.board.moving_team;

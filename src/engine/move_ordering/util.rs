@@ -10,6 +10,8 @@ pub fn weigh_qs_move(search_info: &mut SearchInfo, board: &mut Board, action: &A
         if action.info != 4 {
             return -50_000;
         }
+        
+        return 200_000;
     }
 
     if action.capture && !(action.piece_type == 0 && action.info == -3) {
@@ -56,6 +58,8 @@ pub fn weigh_move(
         if action.info != 4 {
             return -50_000;
         }
+
+        return 200_000;
     }
 
     if action.capture {

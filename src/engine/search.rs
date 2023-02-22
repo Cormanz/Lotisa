@@ -1,6 +1,6 @@
 use super::{
     evaluate, get_epoch_ms, move_ordering::weigh_move, store_counter_move, store_history_move,
-    weigh_qs_move, ScoredAction, SearchInfo, TranspositionEntry, MAX_VALUE, MIN_VALUE,
+    weigh_qs_move, ScoredAction, SearchInfo, TranspositionEntry, MAX_VALUE, MIN_VALUE, see,
 };
 use crate::{
     boards::{hash_board, in_check, Action, Board, GameResult},
@@ -141,7 +141,6 @@ pub fn quiescence(
 
     sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
 
-    let mut best_move: Option<Action> = None;
     for ScoredAction { action, .. } in sorted_actions {
         search_info.quiescence_nodes += 1;
         if !board.is_legal(action, board.moving_team) {
@@ -154,7 +153,6 @@ pub fn quiescence(
 
         if score > alpha {
             alpha = score;
-            best_move = Some(action);
 
             if score >= beta {
                 break;
@@ -170,7 +168,7 @@ pub fn search(
     board: &mut Board,
     mut alpha: i32,
     beta: i32,
-    depth: i16,
+    mut depth: i16,
     ply: i16,
     starting_team: i16,
     previous_move: Option<Action>,
@@ -193,7 +191,7 @@ pub fn search(
         }
     }
 
-    if is_pv_node && pv_move.is_none() && depth >= 4 {
+    if is_pv_node && pv_move.is_none() && depth >= 3 {
         search(
             search_info,
             board,
@@ -203,7 +201,7 @@ pub fn search(
             ply,
             starting_team,
             previous_move,
-            true,
+            true
         );
         pv_move = search_info.pv_table.table[ply as usize][0];
     }
@@ -234,13 +232,7 @@ pub fn search(
     sorted_actions.sort_by(|a, b| b.score.cmp(&a.score));
 
     let in_check_before = in_check(board, board.moving_team, board.row_gap);
-    if !is_pv_node && !in_check_before {
-        let static_eval = evaluate(board, board.moving_team);
-        if depth <= 6 && static_eval - (1500 * (depth as i32)) > beta {
-            // Reverse Futility Pruning (Static Null Move Pruning)
-            return static_eval;
-        }
-
+    if false && !is_pv_node && !in_check_before {
         if depth >= 3 {
             // Null Move Pruning
 
@@ -288,22 +280,11 @@ pub fn search(
             } else {
                 depth - 2
             };
-            let static_eval = evaluate(board, board.moving_team);
 
-            // Futility Pruning
-            let fp_margin = ((working_depth as i32) * 1000) + 1000;
-            if is_quiet && working_depth < 4 && static_eval + fp_margin <= alpha {
+            if working_depth < 0 {
                 working_depth = 0;
             }
 
-            // Late Move Pruning
-            if is_quiet && working_depth < 3 && moves_tried >= (1 + (2 * working_depth)) {
-                working_depth = 0;
-            }
-
-            if working_depth <= 0 {
-                working_depth = 0;
-            }
             let eval = -search(
                 search_info,
                 board,

@@ -1,4 +1,4 @@
-use super::{can_control_sliding, get_actions_sliding, Piece};
+use super::{can_control_sliding, add_actions_sliding, Piece};
 use crate::boards::{Action, Board, PieceGenInfo};
 
 pub struct QueenPiece {
@@ -22,8 +22,8 @@ impl QueenPiece {
 }
 
 impl Piece for QueenPiece {
-    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
-        get_actions_sliding(&self.sliders, board, piece_info)
+    fn add_actions(&self, actions: &mut Vec<Action>, board: &mut Board, piece_info: &PieceGenInfo) {
+        add_actions_sliding(actions, &self.sliders, board, piece_info);
     }
 
     fn can_control(

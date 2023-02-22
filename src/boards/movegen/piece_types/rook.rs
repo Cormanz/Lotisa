@@ -1,4 +1,4 @@
-use super::{base_make_move, can_control_sliding, get_actions_sliding, MakeMoveResults, Piece};
+use super::{base_make_move, can_control_sliding, add_actions_sliding, MakeMoveResults, Piece};
 use crate::boards::{Action, Board, PieceGenInfo, StoredMove};
 
 pub struct RookPiece {
@@ -13,8 +13,8 @@ impl RookPiece {
 }
 
 impl Piece for RookPiece {
-    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
-        get_actions_sliding(&self.sliders, board, piece_info)
+    fn add_actions(&self, actions: &mut Vec<Action>, board: &mut Board, piece_info: &PieceGenInfo) {
+        add_actions_sliding(actions, &self.sliders, board, piece_info);
     }
 
     fn can_control(

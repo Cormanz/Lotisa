@@ -180,13 +180,15 @@ pub fn search(
         return quiescence(search_info, board, alpha, beta, starting_team, ply);
     }
 
+    assert!(ply >= 0, "ply >= 0");
+    assert!(beta >= alpha, "beta >= alpha");
+
     let hash = hash_board(board, board.moving_team, &board.zobrist) % search_info.max_tt_size;
     let mut pv_move: Option<Action> = None;
     let transposition_entry = search_info.transposition_table[hash].clone();
     if let Some(entry) = &transposition_entry {
         pv_move = entry.action;
         if entry.depth >= depth {
-            search_info.pv_table.update_pv(ply, entry.action);
             return entry.eval;
         }
     }

@@ -21,8 +21,8 @@ mod tests;
 mod util;
 
 fn main() {
-    //boards_bench();
-    //return;
+    boards_bench();
+    return;
 
     env::set_var("RUST_BACKTRACE", "1");
 

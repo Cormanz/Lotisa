@@ -35,7 +35,7 @@ pub fn generate_moves(board: &mut Board, required_team: i16) -> Vec<Action> {
             piece_type,
         };
         let piece_trait = board.piece_lookup.lookup(piece_type).duplicate();
-        actions.extend(piece_trait.get_actions(board, &piece_info));
+        piece_trait.add_actions(&mut actions, board, &piece_info);
     }
 
     actions

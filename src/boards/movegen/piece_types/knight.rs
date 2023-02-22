@@ -1,4 +1,4 @@
-use super::{can_control_delta, get_actions_delta, Piece};
+use super::{can_control_delta, add_actions_delta, Piece};
 use crate::boards::{Action, Board, PieceGenInfo};
 
 pub struct KnightPiece {
@@ -22,8 +22,8 @@ impl KnightPiece {
 }
 
 impl Piece for KnightPiece {
-    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
-        get_actions_delta(&self.deltas, board, piece_info)
+    fn add_actions(&self, actions: &mut Vec<Action>, board: &mut Board, piece_info: &PieceGenInfo) {
+        add_actions_delta(actions, &self.deltas, board, piece_info);
     }
 
     fn can_control(

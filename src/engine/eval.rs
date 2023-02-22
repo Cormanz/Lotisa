@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+
+use fnv::FnvHashMap;
 use rand::Rng;
 
 use crate::boards::{generate_legal_moves, generate_moves, Action, Board, PieceGenInfo, PieceInfo};
@@ -6,6 +9,10 @@ const INNER_CENTER_SQUARES: [i16; 4] = [54, 55, 64, 65];
 
 const CENTER_SQUARES: [i16; 16] = [
     43, 44, 45, 46, 53, 54, 55, 56, 63, 64, 65, 66, 73, 74, 75, 76,
+];
+
+const CENTER_BOX: [i16; 8] = [
+    53, 54, 55, 56, 63, 64, 65, 66,
 ];
 
 pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
@@ -34,6 +41,53 @@ pub fn weigh_mobility_move(board: &mut Board, action: &Action) -> i32 {
         if victim_material > attacker_material {
             score += 30;
         }
+    }
+
+    score
+}
+
+pub struct MobilityInfo {
+    piece_material: i32,
+    count: i16
+}
+
+fn weigh_mobility_moves(board: &mut Board, actions: &Vec<Action>, opposing_actions: &Vec<Action>) -> i32 {
+    let mut score: i32 = 0;
+    let mut map: FnvHashMap<i16, MobilityInfo> = FnvHashMap::with_capacity_and_hasher(16, Default::default());
+
+    let opposing_targets = opposing_actions.iter().map(|action| action.to).collect::<HashSet<_>>();
+
+    for action in actions {
+        let mut bonus = 2;
+        let contested = opposing_targets.contains(&action.to);
+
+        if !map.contains_key(&action.from) {
+            map.insert(action.from, MobilityInfo {
+                piece_material: board.piece_lookup.lookup(action.piece_type).get_material_value(),
+                count: 0
+            });
+        }
+
+        let targeting_white_zone = action.to >= 61;
+        let inside_white_zone = action.from >= 61;
+        let space_control = (action.team == 0 && !targeting_white_zone && inside_white_zone) || (action.team == 1 && targeting_white_zone && !inside_white_zone);
+        let center_control = INNER_CENTER_SQUARES.contains(&action.from);
+        
+        if space_control && center_control {
+            bonus += 4;
+        } else if space_control || center_control {
+            bonus += 1;
+        } else if contested {
+            bonus -= 1;
+        }
+        
+        map.get_mut(&action.from).unwrap().count += bonus;
+    }
+
+    for (_, info) in map {
+        let material_weight = (9000.0 - (info.piece_material as f64)) / 8000.0 * (3.0 / 4.0);
+        let gain = (10.0 * ((info.count as f64).sqrt() * (0.25 + material_weight))) as i32;
+        score += gain;
     }
 
     score
@@ -113,16 +167,10 @@ pub fn evaluate(board: &mut Board, pov_team: i16) -> i32 {
         }
     }
 
-    let moves = generate_moves(board, pov_team)
-        .iter()
-        .map(|action| weigh_mobility_move(board, action))
-        .sum::<i32>();
-    let opposing_moves: i32 = generate_moves(board, board.get_next_team(pov_team))
-        .iter()
-        .map(|action| weigh_mobility_move(board, action))
-        .sum::<i32>();
-
-    score += moves - opposing_moves;
+    let moves = generate_moves(board, pov_team);
+    let opposing_moves = generate_moves(board, board.get_next_team(pov_team));
+    score += weigh_mobility_moves(board, &moves, &opposing_moves);
+    score -= weigh_mobility_moves(board, &opposing_moves, &moves);
 
     score
 }

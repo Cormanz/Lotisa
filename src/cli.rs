@@ -81,7 +81,7 @@ pub fn run_uci(stdin: Stdin) {
             }
 
             if !found_capture {
-                max_time = 10_000;
+                max_time = 1_000;
             }
 
             let moving_team = uci.board.moving_team;

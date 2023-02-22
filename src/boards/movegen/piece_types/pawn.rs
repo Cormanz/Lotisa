@@ -34,9 +34,7 @@ fn add_promotion(board: &Board, actions: &mut Vec<Action>, action: Action, promo
 
 pub struct PawnPiece;
 impl Piece for PawnPiece {
-    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
-        let mut actions = Vec::with_capacity(2);
-
+    fn add_actions(&self, actions: &mut Vec<Action>, board: &mut Board, piece_info: &PieceGenInfo) {
         let PieceGenInfo {
             pos,
             row_gap,
@@ -61,7 +59,7 @@ impl Piece for PawnPiece {
         if can_move_once {
             add_promotion(
                 &board,
-                &mut actions,
+                actions,
                 Action {
                     from: pos,
                     to: target,
@@ -91,7 +89,7 @@ impl Piece for PawnPiece {
             if board.can_move(target) {
                 add_promotion(
                     &board,
-                    &mut actions,
+                    actions,
                     Action {
                         from: pos,
                         to: target,
@@ -125,7 +123,7 @@ impl Piece for PawnPiece {
         if capture_left {
             add_promotion(
                 &board,
-                &mut actions,
+                actions,
                 Action {
                     from: pos,
                     to: target_left,
@@ -148,7 +146,7 @@ impl Piece for PawnPiece {
         if capture_right {
             add_promotion(
                 &board,
-                &mut actions,
+                actions,
                 Action {
                     from: pos,
                     to: target_right,
@@ -176,7 +174,7 @@ impl Piece for PawnPiece {
         if en_passant_left {
             add_promotion(
                 &board,
-                &mut actions,
+                actions,
                 Action {
                     from: pos,
                     to: target_left,
@@ -199,7 +197,7 @@ impl Piece for PawnPiece {
         if en_passant_right {
             add_promotion(
                 &board,
-                &mut actions,
+                actions,
                 Action {
                     from: pos,
                     to: target_right,
@@ -211,8 +209,6 @@ impl Piece for PawnPiece {
                 promotion_row,
             );
         }
-
-        actions
     }
 
     fn make_move(&self, board: &mut Board, action: Action) {

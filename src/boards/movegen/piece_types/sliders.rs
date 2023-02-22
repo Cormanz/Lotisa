@@ -50,12 +50,12 @@ pub fn can_control_sliding(
     false
 }
 
-pub fn get_actions_sliding(
+pub fn add_actions_sliding(
+    actions: &mut Vec<Action>,
     sliders: &Vec<i16>,
     board: &Board,
     piece_info: &PieceGenInfo,
-) -> Vec<Action> {
-    let mut actions = Vec::with_capacity(sliders.len() * 2);
+) {
     let PieceGenInfo { pos, team, .. } = *piece_info;
 
     for slider in sliders {
@@ -90,6 +90,4 @@ pub fn get_actions_sliding(
             }
         }
     }
-
-    actions
 }

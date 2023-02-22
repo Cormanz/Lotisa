@@ -88,7 +88,12 @@ pub trait Piece {
         }
         can_control
     }
-    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action>;
+    fn add_actions(&self, actions: &mut Vec<Action>, board: &mut Board, piece_info: &PieceGenInfo);
+    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
+        let mut actions: Vec<Action> = Vec::with_capacity(16);
+        self.add_actions(&mut actions, board, piece_info);
+        actions
+    }
 
     fn get_material_value(&self) -> i32;
     fn get_icon(&self) -> &str;

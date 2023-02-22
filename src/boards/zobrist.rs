@@ -22,6 +22,7 @@ pub fn hash_board(board: &Board, moving_team: i16, zobrist: &Vec<usize>) -> usiz
     for piece in &board.state {
         let piece = *piece;
         if piece == 0 {
+            ind += 1;
             continue;
         }
 

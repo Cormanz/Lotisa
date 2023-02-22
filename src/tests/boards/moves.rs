@@ -1,4 +1,4 @@
-use crate::boards::Board;
+use crate::{boards::Board, communication::Communicator};
 
 #[test]
 fn black_promotion_test() {
@@ -31,15 +31,5 @@ fn team_switch() {
 fn capture_test() {
     let mut uci = Board::load_fen("8/1k6/8/8/4p3/5P2/1K6/8 b - -");
 
-    let moves = uci.board.generate_legal_moves();
-    let pawn_capture = moves.iter().find(|action| action.capture).unwrap();
-
-    println!("[ BEFORE ]");
-    uci.board.print_board();
-    println!("[ AFTER ]");
-    uci.board.make_move(*pawn_capture);
-    uci.board.print_board();
-    println!("[ REVERSAL ]");
-    uci.board.undo_move();
-    uci.board.print_board();
+    println!("{}", uci.decode_pos("a4".to_string()));
 }

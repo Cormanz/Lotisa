@@ -1,4 +1,4 @@
-use super::{base_make_move, can_control_delta, get_actions_delta, MakeMoveResults, Piece};
+use super::{base_make_move, can_control_delta, add_actions_delta, MakeMoveResults, Piece};
 use crate::boards::{
     in_check, Action, ActionType, Board, PersistentPieceInfo, PieceGenInfo, PieceInfo, ResetSquare,
     StoredMove, StoredMovePieceChange, StoredMoveType,
@@ -139,10 +139,8 @@ impl KingPiece {
 }
 
 impl Piece for KingPiece {
-    fn get_actions(&self, board: &mut Board, piece_info: &PieceGenInfo) -> Vec<Action> {
-        let mut actions = get_actions_delta(&self.deltas, board, piece_info);
-        actions.extend(get_actions_castling(&self.sliders, board, piece_info));
-        actions
+    fn add_actions(&self, actions: &mut Vec<Action>, board: &mut Board, piece_info: &PieceGenInfo) {
+        add_actions_delta(actions, &self.deltas, board, piece_info);
     }
 
     fn can_control(

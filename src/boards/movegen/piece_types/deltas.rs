@@ -2,17 +2,16 @@ use crate::boards::{Action, ActionType, Board, PieceGenInfo};
 
 use super::attempt_action;
 
-pub fn get_actions_delta(
+pub fn add_actions_delta(
+    actions: &mut Vec<Action>,
     deltas: &Vec<i16>,
     board: &Board,
     piece_info: &PieceGenInfo,
-) -> Vec<Action> {
-    let mut actions = Vec::with_capacity(deltas.len());
+) {
     let PieceGenInfo { pos, .. } = *piece_info;
     for delta in deltas {
-        attempt_action(&mut actions, board, piece_info, pos + delta);
+        attempt_action(actions, board, piece_info, pos + delta);
     }
-    actions
 }
 
 pub fn can_control_delta(
